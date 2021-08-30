@@ -15,43 +15,41 @@ for file_pattern in patterns:
         os.remove(file)
 
 subprocess.call("./autogen.sh".split(), cwd="secp256k1")
-command = "./configure --enable-experimental --enable-module-schnorrsig"
+command = "./configure --disable-tests --disable-benchmark --enable-experimental --enable-module-schnorrsig"
 subprocess.call(command.split(), cwd="secp256k1")
 subprocess.call("make".split(), cwd="secp256k1")
 
 ffi = cffi.FFI()
 
-secp256k1 = pathlib.Path().resolve() / "secp256k1"
-include_dir = secp256k1 / "include"
-h_file_name = include_dir / "secp256k1.h"
-shared_dir = secp256k1 / ".libs"
-shared_lib = shared_dir / "libsecp256k1.so"
-shared_lib2 = shared_dir / "libsecp256k1.so.0"
+headers = ["secp256k1_schnorrsig.h"]
 
-# with open(h_file_name) as h_file:
-#     lns = h_file.read().splitlines()
-#     flt = filter(lambda ln: not re.match(r" *#", ln), lns)
-#     flt = map(lambda ln: ln.replace("EXPORT_SYMBOL ", ""), flt)
-#     ffi.cdef(str("\n").join(flt))
-#     # ffi.cdef(str("\n").join(lns))
+for h in headers:
+    command = f"gcc -P -E secp256k1/include/{h}"
+    output = subprocess.run(command.split(), capture_output=True)
+    compiled_header = output.stdout.decode()
+    compiled_header = re.sub(" __.*;", ";", compiled_header)
+    compiled_header = re.sub("__.*\)\) ", "", compiled_header)
+    compiled_header = "\n".join(compiled_header.splitlines()[7:])
+    ffi.cdef(compiled_header)
 
-code = """
-typedef struct secp256k1_context_struct secp256k1_context;
-
-secp256k1_context* secp256k1_context_create(
-    unsigned int flags
-);
-"""
-ffi.cdef(code)
+ffi_header = ""
+for h in headers:
+    ffi_header += f'# include "secp256k1/include/{h}"' + "\n"
 
 ffi.set_source(
     "btclib_libsecp256k1",
-    f'#include "{h_file_name.as_posix()}"',
-    # extra_objects=[shared_lib.as_posix(), shared_lib2.as_posix()],
+    ffi_header,
+    extra_objects=["secp256k1/.libs/libsecp256k1.so"],
     # include_dirs=[include_dir.as_posix()],
     # libraries=["secp256k1"],
     # library_dirs=[shared_dir.as_posix()]
     # libraries=["stddef"],
+    extra_link_args=["-Wl,-rpath,secp256k1/.libs/"],
 )
 
 ffi.compile(verbose=True)
+
+
+import btclib_libsecp256k1
+
+ctx = btclib_libsecp256k1.lib.secp256k1_context_create(513)

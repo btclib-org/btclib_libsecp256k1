@@ -4,6 +4,10 @@ ctx = _btclib_libsecp256k1.lib.secp256k1_context_create(257)
 
 
 def verify(msg_bytes, pubkey_bytes, signature_bytes):
+
+    if len(pubkey_bytes) == 32:
+        pubkey_bytes = b"\x02" + pubkey_bytes
+
     pubkey = _btclib_libsecp256k1.ffi.new("secp256k1_pubkey *")
     _btclib_libsecp256k1.lib.secp256k1_ec_pubkey_parse(
         ctx, pubkey, pubkey_bytes, len(pubkey_bytes)

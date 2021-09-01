@@ -6,7 +6,7 @@ ctx = _btclib_libsecp256k1.lib.secp256k1_context_create(257)
 def verify(msg_bytes, pubkey_bytes, signature_bytes):
     signature = _btclib_libsecp256k1.ffi.new("secp256k1_ecdsa_signature *")
     _btclib_libsecp256k1.lib.secp256k1_ecdsa_signature_parse_der(
-        ctx, signature, signature_bytes, 71
+        ctx, signature, signature_bytes, len(signature_bytes)
     )
 
     pubkey = _btclib_libsecp256k1.ffi.new("secp256k1_pubkey *")

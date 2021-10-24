@@ -1,16 +1,17 @@
-import cffi
-import pathlib
-import os
-import re
 import glob
+import os
+import pathlib
+import re
 import subprocess
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
+import cffi
 
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
 
-patterns = ("*.o", "*.so", "*.obj", "*.dll", "*.exp", "*.lib", "cffi_example*")
+patterns = ("*.o", "*.so", "*.obj", "*.dll", "*.exp", "*.lib")
 for file_pattern in patterns:
     for file in glob.glob(file_pattern):
         os.remove(file)
@@ -18,25 +19,24 @@ for file_pattern in patterns:
 subprocess.call(["./autogen.sh"], cwd=secp256k1_dir)
 command = [
     "./configure",
-    "--disable-shared",
+    "--disable-tests",
+    "--disable-benchmark",
+    "--enable-experimental",
+    "--enable-module-schnorrsig",
     "--with-pic",
-    " --disable-tests",
-    " --disable-benchmark",
-    " --enable-experimental",
-    " --enable-module-schnorrsig",
+    "--disable-shared",
 ]
 subprocess.call(command, cwd=secp256k1_dir)
 subprocess.call(["make"], cwd=secp256k1_dir)
 
 ffi = cffi.FFI()
 
-headers = ["secp256k1_schnorrsig.h"]
+headers = ["secp256k1.h", "secp256k1_schnorrsig.h"]
 
 ffi_header = ""
 for h in headers:
     location = secp256k1_dir / "include" / h
     ffi_header += f'#include "{location.as_posix()}"' + "\n"
-# ffi_header += "#define PY_USE_BUNDLED"
 
 command = "gcc -P -E -".split()
 p = Popen(command, stdin=PIPE, stdout=PIPE)
@@ -54,5 +54,7 @@ ffi.set_source(
     library_dirs=[libs_dir.as_posix()],
 )
 
+ffi.compile(verbose=True)
+
 if __name__ == "__main__":
-    ffi.compile(verbose=True)
+    import benchmark

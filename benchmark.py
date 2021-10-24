@@ -1,18 +1,20 @@
-import btclib_libsecp256k1.dsa
-import btclib_libsecp256k1.ssa
-import coincurve
+import time
+
 import btclib.ecc.dsa
 import btclib.ecc.ssa
+import coincurve
 from btclib.hashes import reduce_to_hlen
 from btclib.to_pub_key import pub_keyinfo_from_prv_key
-import time
+
+import btclib_libsecp256k1.dsa
+import btclib_libsecp256k1.ssa
 
 prvkey = 1
 
 pubkey_bytes = pub_keyinfo_from_prv_key(prvkey)[0]
 msg_bytes = reduce_to_hlen("Satoshi Nakamoto".encode())
-dsa_signature_bytes = btclib.ecc.dsa.sign_(msg_bytes, prvkey).serialize()
-ssa_signature_bytes = btclib.ecc.ssa.sign_(msg_bytes, prvkey).serialize()
+dsa_signature_bytes = btclib_libsecp256k1.dsa.sign(msg_bytes, prvkey)
+ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
 
 
 def dsa_btclib():

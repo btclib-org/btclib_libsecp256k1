@@ -72,6 +72,10 @@ jobs:
     name: "Build Windows"
     runs-on: windows-latest
 
+    defaults:
+      run:
+        shell: msys2 {0}
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -82,11 +86,14 @@ jobs:
       with:
         update: true
         install: >-
-          mingw-w64-python
+          base-devel
+          mingw-w64-x86_64-python
+          mingw-w64-x86_64-python-pip
+          mingw-w64-clang-x86_64-make
 
     - name: Upgrade Python packaging tools
       run: |
-        pip install --upgrade pip setuptools wheel
+        pip install --user --upgrade pip setuptools wheel
         python --version
         pip --version
 
@@ -95,6 +102,23 @@ jobs:
     #
     # - name: Cross build
     #   run: python setup.py bdist_wheel --plat-name=win_amd64
+
+            # pacman -S --noconfirm libffi-devel
+
+    - name: Install cffi
+      run: pacman -S --noconfirm mingw-w64-x86_64-python-cffi
+
+    - name: Build
+      # run: python setup.py bdist_wheel --py-limited-api=cp36 --plat-name=win_amd64
+      run: python build.py --plat-name=win_amd64
+      # run: |
+      #   cd secp256k1
+      #   bash autogen.sh
+      #   bash configure
+      #   make
+      #   make clean
+      #   cd ..
+      #   python build.py
 
     - uses: actions/upload-artifact@v2
       with:

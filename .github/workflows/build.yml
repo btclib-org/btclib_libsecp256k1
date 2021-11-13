@@ -1,0 +1,100 @@
+name: build
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build-linux:
+    name: "Build Linux"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Upgrade Python packaging tools
+      run: |
+        pip install --upgrade pip setuptools wheel
+        python --version
+        pip --version
+
+    - name: Build
+      run: python setup.py bdist_wheel --py-limited-api=cp36
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: dist/*
+
+  build-macos:
+    name: "Build MacOs"
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Upgrade Python packaging tools
+      run: |
+        pip install --upgrade pip setuptools wheel
+        python --version
+        pip --version
+
+    - name: Install dependencies
+      run: bash ./.github/scripts/install-macos-deps.sh
+
+    - name: Build
+      run: python setup.py bdist_wheel --py-limited-api=cp36
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: dist/*
+
+  build-windows:
+    name: "Build Windows"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Upgrade Python packaging tools
+      run: |
+        pip install --upgrade pip setuptools wheel
+        python --version
+        pip --version
+
+    - name: Install deps
+      run: bash ./.github/scripts/install-cross-compile-deps.sh
+
+    - name: Cross build
+      run: python setup.py bdist_wheel --plat-name=win_amd64
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: dist/*

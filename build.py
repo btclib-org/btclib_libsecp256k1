@@ -3,6 +3,7 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 from subprocess import PIPE, Popen
 
 import cffi
@@ -16,9 +17,10 @@ for file_pattern in patterns:
     for file in glob.glob(file_pattern):
         os.remove(file)
 
-subprocess.call(["./autogen.sh"], cwd=secp256k1_dir)
+subprocess.call(["bash", "autogen.sh"], cwd=secp256k1_dir)
 command = [
-    "./configure",
+    "bash",
+    "configure",
     "--disable-tests",
     "--disable-benchmark",
     "--enable-experimental",
@@ -26,6 +28,10 @@ command = [
     "--with-pic",
     "--disable-shared",
 ]
+for x in sys.argv:
+    if x.startswith("--plat-name="):
+        if x.strip("--plat-name=") == "win_amd64":
+            command.append("--host=x86_64-w64-mingw32")
 subprocess.call(command, cwd=secp256k1_dir)
 subprocess.call(["make"], cwd=secp256k1_dir)
 

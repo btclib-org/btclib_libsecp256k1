@@ -8,7 +8,7 @@
 # No part of btclib including this file, may be copied, modified, propagated,
 # or distributed except according to the terms contained in the LICENSE file.
 
-from . import dsa, ssa
+# from . import dsa, ssa
 
 name = "btclib_libsecp256k1"
 __version__ = "0.0.1"

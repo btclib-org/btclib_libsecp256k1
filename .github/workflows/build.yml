@@ -70,17 +70,19 @@ jobs:
 
   build-windows:
     name: "Build Windows"
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
       with:
-        python-version: 3.8
+        update: true
+        install: >-
+          mingw-w64-python
 
     - name: Upgrade Python packaging tools
       run: |
@@ -88,11 +90,11 @@ jobs:
         python --version
         pip --version
 
-    - name: Install deps
-      run: bash ./.github/scripts/install-cross-compile-deps.sh
-
-    - name: Cross build
-      run: python setup.py bdist_wheel --plat-name=win_amd64
+    # - name: Install deps
+    #   run: bash ./.github/scripts/install-cross-compile-deps.sh
+    #
+    # - name: Cross build
+    #   run: python setup.py bdist_wheel --plat-name=win_amd64
 
     - uses: actions/upload-artifact@v2
       with:

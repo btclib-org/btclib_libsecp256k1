@@ -12,8 +12,6 @@ jobs:
   test:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    needs:
-      - build
     strategy:
       fail-fast: false
       matrix:

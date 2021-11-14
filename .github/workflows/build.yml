@@ -93,7 +93,7 @@ jobs:
 
     - name: Upgrade Python packaging tools
       run: |
-        pip install --user --upgrade pip setuptools wheel
+        pip install --user --upgrade pip setuptools wheel libpython
         python --version
         pip --version
 
@@ -101,7 +101,7 @@ jobs:
       run: pacman -S --noconfirm mingw-w64-x86_64-python-cffi
 
     - name: Build
-      # run: python setup.py bdist_wheel --py-limited-api=cp36 --windows
+      # run: python setup.py bdist_wheel --plat-name=win-amd64 --py-limited-api=cp36
       # run: python build.py --windows
       run: |
         cd secp256k1
@@ -110,7 +110,9 @@ jobs:
         make
         make clean
         cd ..
-        python setup.py bdist_wheel --py-limited-api=cp36 --plat-name=win-amd64
+        python setup.py bdist_wheel --plat-name=win-amd64
+        ls 'D:/a/_temp/msys64/mingw64/lib/python3.9/config-3.9'
+        cat ./_btclib_libsecp256k1.cp39-mingw_x86_64.def
         python test.py
 
     - uses: actions/upload-artifact@v2

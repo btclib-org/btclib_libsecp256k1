@@ -89,7 +89,7 @@ jobs:
           base-devel
           mingw-w64-x86_64-python
           mingw-w64-x86_64-python-pip
-          mingw-w64-clang-x86_64-make
+          mingw-w64-x86_64-gcc
 
     - name: Upgrade Python packaging tools
       run: |
@@ -97,28 +97,21 @@ jobs:
         python --version
         pip --version
 
-    # - name: Install deps
-    #   run: bash ./.github/scripts/install-cross-compile-deps.sh
-    #
-    # - name: Cross build
-    #   run: python setup.py bdist_wheel --plat-name=win_amd64
-
-            # pacman -S --noconfirm libffi-devel
-
     - name: Install cffi
       run: pacman -S --noconfirm mingw-w64-x86_64-python-cffi
 
     - name: Build
-      # run: python setup.py bdist_wheel --py-limited-api=cp36 --plat-name=win_amd64
-      run: python build.py --plat-name=win_amd64
-      # run: |
-      #   cd secp256k1
-      #   bash autogen.sh
-      #   bash configure
-      #   make
-      #   make clean
-      #   cd ..
-      #   python build.py
+      # run: python setup.py bdist_wheel --py-limited-api=cp36 --windows
+      # run: python build.py --windows
+      run: |
+        cd secp256k1
+        bash autogen.sh
+        bash configure --with-pic --disable-shared --disable-tests --disable-benchmark --enable-experimental --enable-module-schnorrsig --host=x86_64-w64-mingw32
+        make
+        make clean
+        cd ..
+        python setup.py bdist_wheel --py-limited-api=cp36 --plat-name=win-amd64
+        python test.py
 
     - uses: actions/upload-artifact@v2
       with:

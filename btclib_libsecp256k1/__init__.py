@@ -8,11 +8,14 @@
 # No part of btclib including this file, may be copied, modified, propagated,
 # or distributed except according to the terms contained in the LICENSE file.
 
-# from . import dsa, ssa
-
 name = "btclib_libsecp256k1"
 __version__ = "0.0.1"
 __author__ = "The btclib developers"
 __author_email__ = "devs@btclib.org"
 __copyright__ = "Copyright (C) 2021 The btclib developers"
 __license__ = "MIT License"
+
+import _btclib_libsecp256k1
+
+ffi = _btclib_libsecp256k1.ffi
+lib = _btclib_libsecp256k1.lib

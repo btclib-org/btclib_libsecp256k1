@@ -6,17 +6,18 @@ import subprocess
 import sys
 from subprocess import PIPE, Popen
 from sysconfig import get_paths
+import platform
 
 import cffi
 
 windows = False
-if "--plat-name=win-amd64" in sys.argv:
+if "--plat-name=win-amd64" in sys.argv or platform.system() == "Windows":
     windows = True
 
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
-gcc = "gcc" if not windows else "x86_64-w64-mingw32-gcc"
+gcc = "gcc"
 filename = "_btclib_libsecp256k1"
 libraries = ["secp256k1"]
 library_dirs = [libs_dir.as_posix()]
@@ -26,23 +27,22 @@ for file_pattern in patterns:
     for file in glob.glob(file_pattern):
         os.remove(file)
 
-subprocess.call(["bash", "autogen.sh"], cwd=secp256k1_dir)
-with open(secp256k1_dir / "Makefile.am", "a") as f:
-    f.write("\nLDFLAGS = -no-undefined\n")
-command = [
-    "bash",
-    "configure",
-    "--disable-tests",
-    "--disable-benchmark",
-    "--enable-experimental",
-    "--enable-module-schnorrsig",
-    "--with-pic",
-    "--disable-shared",
-]
-if windows:
-    command.append("--host=x86_64-w64-mingw32")
-subprocess.call(command, cwd=secp256k1_dir)
-subprocess.call(["make"], cwd=secp256k1_dir)
+if not windows:
+    subprocess.call(["bash", "autogen.sh"], cwd=secp256k1_dir)
+    with open(secp256k1_dir / "Makefile.am", "a") as f:
+        f.write("\nLDFLAGS = -no-undefined\n")
+    command = [
+        "bash",
+        "configure",
+        "--disable-tests",
+        "--disable-benchmark",
+        "--enable-experimental",
+        "--enable-module-schnorrsig",
+        "--with-pic",
+        "--disable-shared",
+    ]
+    subprocess.call(command, cwd=secp256k1_dir)
+    subprocess.call(["make"], cwd=secp256k1_dir)
 
 ffi = cffi.FFI()
 
@@ -67,4 +67,3 @@ ffi.cdef(definitions)
 ffi.set_source(filename, ffi_header, libraries=libraries, library_dirs=library_dirs)
 
 ffi.compile(verbose=True)
-

@@ -1,10 +1,17 @@
 from setuptools import find_packages, setup
+import sys
+import platform
 
-import btclib_libsecp256k1
+if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
+    kwargs = {
+        "data_files": [("dll", ["secp256k1/.libs/libsecp256k1-0.dll"])],
+    }
+else:
+    kwargs = {}
 
 setup(
-    name=btclib_libsecp256k1.name,
-    version=btclib_libsecp256k1.__version__,
+    name="btclib_libsecp256k1",
+    version="0.0.1",
     url="https://btclib.org",
     project_urls={
         "Download": "https://github.com/btclib-org/btclib_libsecp256k1/releases",
@@ -13,15 +20,13 @@ setup(
         "Issues": "https://github.com/btclib-org/btclib_libsecp256k1/issues",
         "Pull Requests": "https://github.com/btclib-org/btclib_libsecp256k1/pulls",
     },
-    license=btclib_libsecp256k1.__license__,
-    author=btclib_libsecp256k1.__author__,
-    author_email=btclib_libsecp256k1.__author_email__,
+    license="MIT",
+    author="Giacomo Caironi",
+    author_email="giacomo.caironi@gmail.com",
     description="A library for 'bitcoin cryptography'",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    # include_package_data=True,
-    # package_data={"btclib": ["_data/*", "ecc/_data/*", "mnemonic/_data/*", "py.typed"]},
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["build.py:ffi"],
     install_requires=["cffi>=1.0.0"],
@@ -39,4 +44,5 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    **kwargs
 )

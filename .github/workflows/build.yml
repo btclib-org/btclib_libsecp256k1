@@ -70,7 +70,7 @@ jobs:
 
   build-windows:
     name: "Build Windows"
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -82,35 +82,17 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: Setup MSYS2
-      uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          base-devel
-          mingw-w64-x86_64-gcc
-
     - name: Upgrade Python packaging tools
       run: |
-        pip install --user --upgrade pip setuptools wheel
+        pip install --upgrade pip setuptools wheel
         python --version
         pip --version
 
-    - name: Build c library
-      shell: msys2 {0}
-      # run: python setup.py bdist_wheel --plat-name=win-amd64 --py-limited-api=cp36
-      # run: python build.py --windows
-      run: |
-        cd secp256k1
-        bash autogen.sh
-        echo "LDFLAGS = -no-undefined" >> Makefile.am
-        bash configure --with-pic --disable-shared --disable-tests --disable-benchmark --enable-experimental --enable-module-schnorrsig --host=x86_64-w64-mingw32
-        make
-        cp .libs/libsecp256k1.a .libs/secp256k1.lib
-        ls .libs
+    - name: Install dependencies
+      run: sudo apt install -y mingw-w64
 
     - name: Build
-      run: python setup.py bdist_wheel
+      run: python setup.py bdist_wheel --plat-name=win_amd64 --py-limited-api=cp36
 
     - uses: actions/upload-artifact@v2
       with:

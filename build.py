@@ -5,13 +5,12 @@ import re
 import subprocess
 import sys
 from subprocess import PIPE, Popen
-from sysconfig import get_paths
 import platform
 
 import cffi
 
 windows = False
-if "--plat-name=win-amd64" in sys.argv or platform.system() == "Windows":
+if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
     windows = True
 
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
@@ -42,8 +41,11 @@ def build_c():
         "--enable-experimental",
         "--enable-module-schnorrsig",
         "--with-pic",
-        "--disable-shared",
     ]
+    if windows:
+        command.append("--host=x86_64-w64-mingw32")
+    else:
+        command.append("--disable-shared")
     subprocess.call(command, cwd=secp256k1_dir)
     subprocess.call(["make"], cwd=secp256k1_dir)
 
@@ -84,9 +86,9 @@ def build_unix():
 
 def build_windows():
     clean()
-    # build_c()
+    build_c()
     ffi = cffi.FFI()
-    ffi_header, _ = generate_def(headers)
+    _, definitions = generate_def(headers)
     ffi.cdef(definitions)
     ffi.set_source(filename, None)
     ffi.compile(verbose=True)

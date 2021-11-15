@@ -8,14 +8,22 @@
 # No part of btclib including this file, may be copied, modified, propagated,
 # or distributed except according to the terms contained in the LICENSE file.
 
-name = "btclib_libsecp256k1"
+__name__ = "btclib_libsecp256k1"
 __version__ = "0.0.1"
-__author__ = "The btclib developers"
-__author_email__ = "devs@btclib.org"
-__copyright__ = "Copyright (C) 2021 The btclib developers"
+__author__ = "Giacomo Caroni"
+__author_email__ = "giacomo.caironi@gmail.com"
+__copyright__ = "Copyright (C) 2021 Giacomo Caironi"
 __license__ = "MIT License"
 
 import _btclib_libsecp256k1
+import platform
+import site
+import pathlib
 
 ffi = _btclib_libsecp256k1.ffi
-lib = _btclib_libsecp256k1.lib
+if platform.system() == "Windows":
+    path = pathlib.Path(site.getsitepackages()[-1]).parent.parent / "dll"
+    dll = path / "libsecp256k1-0.dll"
+    lib = ffi.dlopen(str(dll))
+else:
+    lib = _btclib_libsecp256k1.lib

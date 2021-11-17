@@ -1,6 +1,7 @@
-from setuptools import find_packages, setup
-import sys
 import platform
+import sys
+
+from setuptools import find_packages, setup
 
 if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
     kwargs = {
@@ -23,7 +24,7 @@ setup(
     license="MIT",
     author="Giacomo Caironi",
     author_email="giacomo.caironi@gmail.com",
-    description="A library for 'bitcoin cryptography'",
+    description="Simple parser to libsecp256k1",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),

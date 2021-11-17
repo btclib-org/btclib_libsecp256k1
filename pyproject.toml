@@ -1,0 +1,2 @@
+[build-system]
+required = ['setuptools', 'wheel', 'cffi>=1.0.0']

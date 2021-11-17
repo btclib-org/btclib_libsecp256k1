@@ -1,11 +1,11 @@
 import glob
 import os
 import pathlib
+import platform
 import re
 import subprocess
 import sys
 from subprocess import PIPE, Popen
-import platform
 
 import cffi
 

@@ -2,8 +2,10 @@ name: test
 
 on:
   workflow_run:
-    workflows: ["build"]
-    branches: [master]
+    workflows:
+      - build
+    branches:
+      - master
     types:
       - completed
 

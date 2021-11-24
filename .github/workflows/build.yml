@@ -11,7 +11,7 @@ on:
 jobs:
   build-linux:
     name: "Build Linux"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
         pip --version
 
     - name: Build
-      run: python setup.py bdist_wheel --py-limited-api=cp36
+      run: python setup.py bdist_wheel --plat-name=manylinux2010_x86_64 --py-limited-api=cp36
 
     - uses: actions/upload-artifact@v2
       with:

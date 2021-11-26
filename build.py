@@ -6,12 +6,20 @@ import re
 import subprocess
 import sys
 from subprocess import PIPE, Popen
+import shutil
 
 import cffi
 
 windows = False
 if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
     windows = True
+static = False
+# if "--static" in sys.argv:
+#     static = True
+# if windows and static:
+#     raise Exception()
+if not windows:
+    static = True
 
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
@@ -23,9 +31,10 @@ headers = ["secp256k1.h", "secp256k1_schnorrsig.h"]
 
 
 def clean():
-    patterns = ("*.o", "*.so", "*.obj", "*.dll", "*.exp", "*.lib")
-    for file_pattern in patterns:
-        for file in glob.glob(file_pattern):
+    if (secp256k1_dir / ".libs").exists():
+        subprocess.call(["make", "clean"], cwd=secp256k1_dir)
+    for pattern in ["_btclib_libsecp256k1.*", "btclib_libsecp256k1/libsecp256k1.*"]:
+        for file in glob.glob(pattern):
             os.remove(file)
 
 
@@ -44,10 +53,15 @@ def build_c():
     ]
     if windows:
         command.append("--host=x86_64-w64-mingw32")
-    else:
+    if static:
         command.append("--disable-shared")
     subprocess.call(command, cwd=secp256k1_dir)
     subprocess.call(["make"], cwd=secp256k1_dir)
+    if windows:
+        shutil.copy(
+            str(libs_dir / "libsecp256k1-0.dll"),
+            str(pathlib.Path("btclib_libsecp256k1") / "libsecp256k1.dll"),
+        )
 
 
 def generate_def(headers):
@@ -68,7 +82,7 @@ def generate_def(headers):
     return ffi_header, definitions
 
 
-def build_unix():
+def build_static():
     clean()
     build_c()
     ffi = cffi.FFI()
@@ -84,7 +98,7 @@ def build_unix():
     return ffi
 
 
-def build_windows():
+def build_shared():
     clean()
     build_c()
     ffi = cffi.FFI()
@@ -95,7 +109,7 @@ def build_windows():
     return ffi
 
 
-if windows:
-    ffi = build_windows()
+if static:
+    ffi = build_static()
 else:
-    ffi = build_unix()
+    ffi = build_shared()

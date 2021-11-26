@@ -1,14 +1,4 @@
-import platform
-import sys
-
 from setuptools import find_packages, setup
-
-if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
-    kwargs = {
-        "data_files": [("dll", ["secp256k1/.libs/libsecp256k1-0.dll"])],
-    }
-else:
-    kwargs = {}
 
 setup(
     name="btclib_libsecp256k1",
@@ -28,6 +18,7 @@ setup(
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),
+    include_package_data=True,
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["build.py:ffi"],
     install_requires=["cffi>=1.0.0"],
@@ -45,5 +36,4 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    **kwargs
 )

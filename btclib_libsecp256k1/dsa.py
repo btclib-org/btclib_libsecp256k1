@@ -5,7 +5,7 @@ from . import ffi, lib
 ctx = lib.secp256k1_context_create(769)
 
 
-def sign(msg_bytes, prvkey):
+def sign(msg_bytes, prvkey, ndata=None):
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -17,9 +17,10 @@ def sign(msg_bytes, prvkey):
     sig_bytes = ffi.new("char[73]")
     length = ffi.new("size_t *", 73)
 
-    if not lib.secp256k1_ecdsa_sign(
-        ctx, sig, msg_bytes, prvkey_bytes, null, secrets.token_bytes(32)
-    ):
+    if not ndata:
+        ndata = secrets.token_bytes(32)
+    ndata = b"\x00" * (32 - len(ndata)) + ndata
+    if not lib.secp256k1_ecdsa_sign(ctx, sig, msg_bytes, prvkey_bytes, null, ndata):
         return 0
     if not lib.secp256k1_ecdsa_signature_serialize_der(ctx, sig_bytes, length, sig):
         return 0

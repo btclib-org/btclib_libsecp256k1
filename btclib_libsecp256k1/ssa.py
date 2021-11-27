@@ -5,7 +5,7 @@ from . import ffi, lib
 ctx = lib.secp256k1_context_create(769)
 
 
-def sign(msg_bytes, prvkey):
+def sign(msg_bytes, prvkey, aux_rand32=None):
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -17,9 +17,10 @@ def sign(msg_bytes, prvkey):
 
     sig = ffi.new("char[64]")
 
-    if lib.secp256k1_schnorrsig_sign(
-        ctx, sig, msg_bytes, keypair, secrets.token_bytes(32)
-    ):
+    if not aux_rand32:
+        aux_rand32 = secrets.token_bytes(32)
+    aux_rand32 = b"\x00" * (32 - len(aux_rand32)) + aux_rand32
+    if lib.secp256k1_schnorrsig_sign(ctx, sig, msg_bytes, keypair, aux_rand32):
         return ffi.unpack(sig, 64)
     return 0
 

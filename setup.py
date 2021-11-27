@@ -1,4 +1,7 @@
 from setuptools import find_packages, setup
+import sys
+
+sdist = "sdist" in sys.argv
 
 setup(
     name="btclib_libsecp256k1",
@@ -20,7 +23,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     setup_requires=["cffi>=1.0.0"],
-    cffi_modules=["build.py:ffi"],
+    cffi_modules=["build.py:ffi"] if not sdist else [],
     install_requires=["cffi>=1.0.0"],
     keywords=["bitcoin", "libsecp256k1"],
     python_requires=">=3.6",

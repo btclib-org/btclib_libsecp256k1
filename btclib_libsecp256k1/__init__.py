@@ -1,5 +1,4 @@
 import pathlib
-import platform
 
 import _btclib_libsecp256k1
 
@@ -8,6 +7,8 @@ if "lib" in dir(_btclib_libsecp256k1):
     lib = _btclib_libsecp256k1.lib
 else:
     path = pathlib.Path(_btclib_libsecp256k1.__file__).parent / "btclib_libsecp256k1"
-    ext = ".dll" if platform.system() == "Windows" else ".so"
-    dll = path / ("libsecp256k1" + ext)
-    lib = ffi.dlopen(str(dll))
+    for file in path.iterdir():
+        suffixes = [".dll", ".so", ".dylib"]
+        if file.stem == "libsecp256k1" and file.suffix in suffixes:
+            lib = ffi.dlopen(str(file))
+            break

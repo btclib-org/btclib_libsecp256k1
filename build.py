@@ -13,13 +13,9 @@ import cffi
 windows = False
 if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
     windows = True
-static = False
-# if "--static" in sys.argv:
-#     static = True
-# if windows and static:
-#     raise Exception()
-if not windows:
-    static = True
+static = True
+if windows or not pathlib.Path(".git").exists():
+    static = False
 
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
@@ -57,11 +53,14 @@ def build_c():
         command.append("--disable-shared")
     subprocess.call(command, cwd=secp256k1_dir)
     subprocess.call(["make"], cwd=secp256k1_dir)
-    if windows:
-        shutil.copy(
-            str(libs_dir / "libsecp256k1-0.dll"),
-            str(pathlib.Path("btclib_libsecp256k1") / "libsecp256k1.dll"),
-        )
+    if not static:
+        for file in libs_dir.iterdir():
+            print(file)
+            if file.suffix not in [".dll", ".so", ".dylib"]:
+                continue
+            new = "libsecp256k1" + file.suffix
+            shutil.copy(file, str(pathlib.Path("btclib_libsecp256k1") / new))
+            break
 
 
 def generate_def(headers):
@@ -82,34 +81,24 @@ def generate_def(headers):
     return ffi_header, definitions
 
 
-def build_static():
+def create_cffi(static):
     clean()
     build_c()
     ffi = cffi.FFI()
     ffi_header, definitions = generate_def(headers)
     ffi.cdef(definitions)
-    ffi.set_source(
-        filename,
-        ffi_header,
-        libraries=libraries,
-        library_dirs=library_dirs,
-    )
-    ffi.compile(verbose=True)
+    if static:
+        ffi.set_source(
+            filename,
+            ffi_header,
+            libraries=libraries,
+            library_dirs=library_dirs,
+        )
+    else:
+        ffi.set_source(filename, None)
     return ffi
 
 
-def build_shared():
-    clean()
-    build_c()
-    ffi = cffi.FFI()
-    _, definitions = generate_def(headers)
-    ffi.cdef(definitions)
-    ffi.set_source(filename, None)
+ffi = create_cffi(static)
+if __name__ == "__main__":
     ffi.compile(verbose=True)
-    return ffi
-
-
-if static:
-    ffi = build_static()
-else:
-    ffi = build_shared()

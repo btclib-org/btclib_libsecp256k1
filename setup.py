@@ -6,7 +6,7 @@ sdist = "sdist" in sys.argv
 
 setup(
     name="btclib_libsecp256k1",
-    version="0.0.1",
+    version="0.0.2",
     url="https://btclib.org",
     project_urls={
         "Download": "https://github.com/btclib-org/btclib_libsecp256k1/releases",
@@ -23,6 +23,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,
+    package_data={"btclib_libsecp256k1": ["py.typed"]},
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["build.py:ffi"] if not sdist else [],
     install_requires=["cffi>=1.0.0"],

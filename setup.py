@@ -18,7 +18,7 @@ setup(
     license="MIT",
     author="Giacomo Caironi",
     author_email="giacomo.caironi@gmail.com",
-    description="Simple parser to libsecp256k1",
+    description="Simple python bindins to libsecp256k1",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),

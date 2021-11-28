@@ -124,7 +124,8 @@ _site/
 Gemfile.lock
 ~*.docx
 
-_btclib_*
+_btclib_libsecp256k1.c
+*.o
 *.dll
 *.so
 

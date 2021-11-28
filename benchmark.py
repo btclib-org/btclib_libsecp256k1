@@ -47,8 +47,8 @@ def benchmark(func, mult=1):
     print(f"{func.__name__}:", (end - start) / mult)
 
 
-benchmark(dsa_btclib)
+benchmark(dsa_btclib, 100)
 benchmark(dsa_coincurve, 100)
 benchmark(dsa_libsecp256k1, 100)
-benchmark(ssa_btclib)
+benchmark(ssa_btclib, 100)
 benchmark(ssa_libsecp256k1, 100)

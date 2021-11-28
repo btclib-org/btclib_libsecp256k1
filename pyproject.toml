@@ -1,2 +1,18 @@
 [build-system]
 requires = ['setuptools', 'wheel', 'cffi>=1.0.0']
+
+[tool.mypy]
+show_column_numbers = true
+show_error_codes = true
+
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.master]
+extension-pkg-whitelist="_btclib_libsecp256k1"
+min-similarity-lines=6
+disable = ["duplicate-code"  # R0801]

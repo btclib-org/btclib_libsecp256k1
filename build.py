@@ -3,10 +3,10 @@ import os
 import pathlib
 import platform
 import re
+import shutil
 import subprocess
 import sys
 from subprocess import PIPE, Popen
-import shutil
 
 import cffi
 

@@ -1,5 +1,6 @@
-from setuptools import find_packages, setup
 import sys
+
+from setuptools import find_packages, setup
 
 sdist = "sdist" in sys.argv
 

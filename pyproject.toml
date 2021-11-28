@@ -15,4 +15,4 @@ max-line-length = 100
 [tool.pylint.master]
 extension-pkg-whitelist="_btclib_libsecp256k1"
 min-similarity-lines=6
-disable = ["duplicate-code"  # R0801]
+disable = ["duplicate-code"]  # R0801

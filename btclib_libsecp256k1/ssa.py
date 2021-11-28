@@ -13,8 +13,8 @@ ctx = lib.secp256k1_context_create(769)
 
 def sign(
     msg_bytes: bytes, prvkey: Union[bytes, int], aux_rand32: Optional[bytes] = None
-) -> int:
-    "Creates a Schhnorr signature"
+) -> bytes:
+    "Create a Schhnorr signature"
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -31,11 +31,11 @@ def sign(
     aux_rand32 = b"\x00" * (32 - len(aux_rand32)) + aux_rand32
     if lib.secp256k1_schnorrsig_sign(ctx, sig, msg_bytes, keypair, aux_rand32):
         return ffi.unpack(sig, 64)
-    return 0
+    raise Exception
 
 
 def verify(msg_bytes: bytes, pubkey_bytes: bytes, signature_bytes: bytes) -> int:
-    "Verifies a Schhnorr signature"
+    "Verify a Schhnorr signature"
 
     if len(pubkey_bytes) == 32:
         pubkey_bytes = b"\x02" + pubkey_bytes

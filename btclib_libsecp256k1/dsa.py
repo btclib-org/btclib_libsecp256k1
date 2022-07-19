@@ -21,14 +21,16 @@ def sign(
         prvkey_bytes = prvkey
 
     sig = ffi.new("secp256k1_ecdsa_signature *")
-    null = ffi.NULL
     sig_bytes = ffi.new("char[73]")
     length = ffi.new("size_t *", 73)
 
+    noncefc = ffi.NULL
     if not ndata:
-        ndata = secrets.token_bytes(32)
-    ndata = b"\x00" * (32 - len(ndata)) + ndata
-    if not lib.secp256k1_ecdsa_sign(ctx, sig, msg_bytes, prvkey_bytes, null, ndata):
+        ndata = ffi.NULL
+    else:
+        ndata = b"\x00" * (32 - len(ndata)) + ndata
+
+    if not lib.secp256k1_ecdsa_sign(ctx, sig, msg_bytes, prvkey_bytes, noncefc, ndata):
         raise Exception
     if not lib.secp256k1_ecdsa_signature_serialize_der(ctx, sig_bytes, length, sig):
         raise Exception

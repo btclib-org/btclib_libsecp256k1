@@ -2,14 +2,14 @@
 Secp256k1 point multiplication
 """
 
-from typing import Union
+from typing import Union, Tuple
 
 from . import ffi, lib
 
 ctx = lib.secp256k1_context_create(769)
 
 
-def mult(num: Union[bytes, int]) -> bytes:
+def mult(num: Union[bytes, int]) -> Tuple[int, int]:
     "Multply the generator point"
 
     if isinstance(num, int):

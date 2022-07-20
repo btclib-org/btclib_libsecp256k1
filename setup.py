@@ -6,7 +6,7 @@ sdist = "sdist" in sys.argv
 
 setup(
     name="btclib_libsecp256k1",
-    version="0.1.0",
+    version="0.1.1",
     url="https://btclib.org",
     project_urls={
         "Download": "https://github.com/btclib-org/btclib_libsecp256k1/releases",

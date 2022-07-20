@@ -33,7 +33,7 @@ jobs:
       run: |
         python setup.py sdist
         python setup.py bdist_wheel --plat-name=manylinux2010_x86_64 --py-limited-api=cp36
-    # python setup.py bdist_wheel --plat-name=manylinux2010_x86_64
+      # python setup.py bdist_wheel --plat-name=manylinux2010_x86_64
 
     - uses: actions/upload-artifact@v2
       with:
@@ -42,7 +42,7 @@ jobs:
 
   build-macos:
     name: "Build MacOs"
-    runs-on: macos-10.15
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -65,7 +65,7 @@ jobs:
 
     - name: Build
       run: python setup.py bdist_wheel --py-limited-api=cp36
-        # python setup.py bdist_wheel --plat-name=macosx_10_15_x86_64
+         # python setup.py bdist_wheel --plat-name=macosx_11_x86_64
 
     - uses: actions/upload-artifact@v2
       with:

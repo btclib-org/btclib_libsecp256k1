@@ -6,7 +6,7 @@ sdist = "sdist" in sys.argv
 
 setup(
     name="btclib_libsecp256k1",
-    version="0.0.2",
+    version="0.1.0",
     url="https://btclib.org",
     project_urls={
         "Download": "https://github.com/btclib-org/btclib_libsecp256k1/releases",
@@ -18,7 +18,7 @@ setup(
     license="MIT",
     author="Giacomo Caironi",
     author_email="giacomo.caironi@gmail.com",
-    description="Simple python bindins to libsecp256k1",
+    description="Simple python bindings to libsecp256k1",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),

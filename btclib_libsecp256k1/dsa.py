@@ -2,7 +2,6 @@
 Elliptic Curve Digital Signature Algorithm (ECDSA)
 """
 
-import secrets
 from typing import Optional, Union
 
 from . import ffi, lib

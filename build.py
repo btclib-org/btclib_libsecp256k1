@@ -69,21 +69,21 @@ def generate_def(headers):
         location = secp256k1_dir / "include" / h
         ffi_header += f'#include "{location.as_posix()}"' + "\n"
 
-    command = f"gcc -P -E -".split()
-    p = Popen(command, stdin=PIPE, stdout=PIPE)
-    definitions = p.communicate(input=ffi_header.encode())[0].decode()
-    definitions = re.sub("#pragma[\s\S]*?typedef", "typedef", definitions)
-    definitions = re.sub("__attribute__ \(\(.*\)\)", "", definitions)
-    # definitions = re.sub("__.*?__", "", definitions)
-    definitions = re.sub("__extension__", "", definitions)
-    definitions = re.sub("__restrict", "", definitions)
-    definitions = re.sub("__inline", "", definitions)
-    # definitions = re.sub("__builtin_va_list", "", definitions)
-    # definitions = re.sub("\(\(\)\)", "", definitions)
-    # definitions = re.sub("\(\(\([0-9]\)\)\)", "", definitions)
-    definitions = re.sub("typedef [\s\S]*?max_align_t;", "", definitions)
-    definitions = definitions.replace("\r", "")
-    return ffi_header, definitions
+    command = "gcc -P -E -".split()
+    with Popen(command, stdin=PIPE, stdout=PIPE) as p:
+        definitions = p.communicate(input=ffi_header.encode())[0].decode()
+        definitions = re.sub(r"#pragma[\s\S]*?typedef", "typedef", definitions)
+        definitions = re.sub(r"__attribute__ \(\(.*\)\)", "", definitions)
+        # definitions = re.sub(r"__.*?__", "", definitions)
+        definitions = re.sub(r"__extension__", "", definitions)
+        definitions = re.sub(r"__restrict", "", definitions)
+        definitions = re.sub(r"__inline", "", definitions)
+        # definitions = re.sub(r"__builtin_va_list", "", definitions)
+        # definitions = re.sub(r"\(\(\)\)", "", definitions)
+        # definitions = re.sub(r"\(\(\([0-9]\)\)\)", "", definitions)
+        definitions = re.sub(r"typedef [\s\S]*?max_align_t;", "", definitions)
+        definitions = definitions.replace("\r", "")
+        return ffi_header, definitions
 
 
 def create_cffi(static):

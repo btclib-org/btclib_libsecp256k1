@@ -19,7 +19,7 @@ setup(
     author="Giacomo Caironi",
     author_email="giacomo.caironi@gmail.com",
     description="Simple python bindins to libsecp256k1",
-    long_description=open("README.md", "r").read(),
+    long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(),
     include_package_data=True,

@@ -27,6 +27,8 @@ headers = ["secp256k1.h", "secp256k1_schnorrsig.h"]
 
 
 def clean():
+    subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)
+    subprocess.call(["git", "clean", "-fxd"], cwd=secp256k1_dir)
     if (secp256k1_dir / ".libs").exists():
         subprocess.call(["make", "clean"], cwd=secp256k1_dir)
     for pattern in ["_btclib_libsecp256k1.*", "btclib_libsecp256k1/libsecp256k1.*"]:
@@ -45,6 +47,7 @@ def build_c():
         "--disable-benchmark",
         "--enable-experimental",
         "--enable-module-schnorrsig",
+        "--enable-external-default-callbacks",
         "--with-pic",
     ]
     if windows:
@@ -52,7 +55,20 @@ def build_c():
     if static:
         command.append("--disable-shared")
     subprocess.call(command, cwd=secp256k1_dir)
+
+    # add source for safe callback
+    with open(secp256k1_dir / 'src' / "secp256k1.c", "a") as f:
+        f.write(
+            """
+        void secp256k1_default_illegal_callback_fn(const char* str, void* data) {
+        }
+        void secp256k1_default_error_callback_fn(const char* str, void* data) {
+        }
+        """
+        )
+
     subprocess.call(["make"], cwd=secp256k1_dir)
+    subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)
     if not static:
         for file in libs_dir.iterdir():
             print(file)

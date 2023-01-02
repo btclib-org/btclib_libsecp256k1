@@ -41,7 +41,7 @@ def ssa_libsecp256k1():
 
 def benchmark(func, mult=1):
     start = time.time()
-    for x in range(100 * mult):
+    for _ in range(100 * mult):
         func()
     end = time.time()
     print(f"{func.__name__}:", (end - start) / mult)

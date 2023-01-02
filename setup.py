@@ -25,7 +25,7 @@ setup(
     include_package_data=True,
     package_data={"btclib_libsecp256k1": ["py.typed"]},
     setup_requires=["cffi>=1.0.0"],
-    cffi_modules=["build.py:ffi"] if not sdist else [],
+    cffi_modules=[] if sdist else ["build.py:ffi"],
     install_requires=["cffi>=1.0.0"],
     keywords=["bitcoin", "libsecp256k1"],
     python_requires=">=3.6",

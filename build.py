@@ -10,13 +10,8 @@ from subprocess import PIPE, Popen
 
 import cffi
 
-windows = False
-if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
-    windows = True
-static = True
-if windows or not pathlib.Path(".git").exists():
-    static = False
-
+windows = "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows"
+static = bool(not windows and pathlib.Path(".git").exists())
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
@@ -74,7 +69,7 @@ def build_c():
             print(file)
             if file.suffix not in [".dll", ".so", ".dylib"]:
                 continue
-            new = "libsecp256k1" + file.suffix
+            new = f"libsecp256k1{file.suffix}"
             shutil.copy(file, str(pathlib.Path("btclib_libsecp256k1") / new))
             break
 

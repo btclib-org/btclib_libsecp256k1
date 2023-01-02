@@ -24,11 +24,7 @@ def sign(
     length = ffi.new("size_t *", 73)
 
     noncefc = ffi.NULL
-    if not ndata:
-        ndata = ffi.NULL
-    else:
-        ndata = b"\x00" * (32 - len(ndata)) + ndata
-
+    ndata = b"\x00" * (32 - len(ndata)) + ndata if ndata else ffi.NULL
     if not lib.secp256k1_ecdsa_sign(ctx, sig, msg_bytes, prvkey_bytes, noncefc, ndata):
         raise Exception
     if not lib.secp256k1_ecdsa_signature_serialize_der(ctx, sig_bytes, length, sig):

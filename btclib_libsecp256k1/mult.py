@@ -2,7 +2,7 @@
 Secp256k1 point multiplication
 """
 
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 from . import ffi, lib
 
@@ -12,11 +12,7 @@ ctx = lib.secp256k1_context_create(769)
 def mult(num: Union[bytes, int]) -> Tuple[int, int]:
     "Multply the generator point"
 
-    if isinstance(num, int):
-        num_bytes = num.to_bytes(32, "big")
-    else:
-        num_bytes = num
-
+    num_bytes = num.to_bytes(32, "big") if isinstance(num, int) else num
     point = ffi.new("secp256k1_pubkey *")
     lib.secp256k1_ec_pubkey_create(ctx, point, num_bytes)
 

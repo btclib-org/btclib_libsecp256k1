@@ -10,13 +10,8 @@ from subprocess import PIPE, Popen
 
 import cffi
 
-windows = False
-if "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows":
-    windows = True
-static = True
-if windows or not pathlib.Path(".git").exists():
-    static = False
-
+windows = "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows"
+static = bool(not windows and pathlib.Path(".git").exists())
 secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
@@ -26,7 +21,7 @@ library_dirs = [libs_dir.as_posix()]
 headers = ["secp256k1.h", "secp256k1_schnorrsig.h"]
 
 
-def clean():
+def clean() -> None:
     subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)
     subprocess.call(["git", "clean", "-fxd"], cwd=secp256k1_dir)
     if (secp256k1_dir / ".libs").exists():
@@ -36,7 +31,7 @@ def clean():
             os.remove(file)
 
 
-def build_c():
+def build_c() -> None:
     subprocess.call(["bash", "autogen.sh"], cwd=secp256k1_dir)
     with open(secp256k1_dir / "Makefile.am", "a") as f:
         f.write("\nLDFLAGS = -no-undefined\n")
@@ -57,7 +52,7 @@ def build_c():
     subprocess.call(command, cwd=secp256k1_dir)
 
     # add source for safe callback
-    with open(secp256k1_dir / 'src' / "secp256k1.c", "a") as f:
+    with open(secp256k1_dir / "src" / "secp256k1.c", "a") as f:
         f.write(
             """
         void secp256k1_default_illegal_callback_fn(const char* str, void* data) {
@@ -74,7 +69,7 @@ def build_c():
             print(file)
             if file.suffix not in [".dll", ".so", ".dylib"]:
                 continue
-            new = "libsecp256k1" + file.suffix
+            new = f"libsecp256k1{file.suffix}"
             shutil.copy(file, str(pathlib.Path("btclib_libsecp256k1") / new))
             break
 

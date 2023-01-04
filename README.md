@@ -1,5 +1,7 @@
 # btclib_libsecp256k1
-Simple python bindings to libsecp256k1. It is intended to be used with the [btclib](https://github.com/btclib-org/btclib) bitcoin library.
+
+Simple python bindings to libsecp256k1. It is intended to be used with the
+[btclib](https://github.com/btclib-org/btclib) bitcoin library.
 
 To install (and/or upgrade):
 

@@ -1,6 +1,4 @@
-"""
-Elliptic Curve Digital Signature Algorithm (ECDSA)
-"""
+"""Elliptic Curve Digital Signature Algorithm (ECDSA)."""
 
 from typing import Optional, Union
 
@@ -12,7 +10,7 @@ ctx = lib.secp256k1_context_create(769)
 def sign(
     msg_bytes: bytes, prvkey: Union[bytes, int], ndata: Optional[bytes] = None
 ) -> bytes:
-    "Create an ECDSA signature."
+    """Create an ECDSA signature."""
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -33,7 +31,7 @@ def sign(
 
 
 def verify(msg_bytes: bytes, pubkey_bytes: bytes, signature_bytes: bytes) -> int:
-    "Verify a ECDSA signature"
+    """Verify a ECDSA signature."""
 
     signature = ffi.new("secp256k1_ecdsa_signature *")
     lib.secp256k1_ecdsa_signature_parse_der(

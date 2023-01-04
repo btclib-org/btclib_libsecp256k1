@@ -1,5 +1,6 @@
 """
-Variant of Elliptic Curve Schnorr Signature Algorithm (ECSSA), according
+Variant of Elliptic Curve Schnorr Signature Algorithm (ECSSA), according.
+
 to BIP340-Schnorr: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
 """
 
@@ -14,7 +15,7 @@ ctx = lib.secp256k1_context_create(769)
 def sign(
     msg_bytes: bytes, prvkey: Union[bytes, int], aux_rand32: Optional[bytes] = None
 ) -> bytes:
-    "Create a Schhnorr signature"
+    """Create a Schhnorr signature."""
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -35,7 +36,7 @@ def sign(
 
 
 def verify(msg_bytes: bytes, pubkey_bytes: bytes, signature_bytes: bytes) -> int:
-    "Verify a Schhnorr signature"
+    """Verify a Schhnorr signature."""
 
     if len(pubkey_bytes) == 32:
         pubkey_bytes = b"\x02" + pubkey_bytes

@@ -1,6 +1,4 @@
-"""
-Secp256k1 point multiplication
-"""
+"""Secp256k1 point multiplication."""
 
 from typing import Tuple, Union
 
@@ -10,7 +8,7 @@ ctx = lib.secp256k1_context_create(769)
 
 
 def mult(num: Union[bytes, int]) -> Tuple[int, int]:
-    "Multply the generator point"
+    """Multply the generator point."""
 
     num_bytes = num.to_bytes(32, "big") if isinstance(num, int) else num
     point = ffi.new("secp256k1_pubkey *")

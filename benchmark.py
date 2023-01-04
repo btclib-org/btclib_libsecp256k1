@@ -12,7 +12,7 @@ import btclib_libsecp256k1.ssa
 prvkey = 1
 
 pubkey_bytes = pub_keyinfo_from_prv_key(prvkey)[0]
-msg_bytes = reduce_to_hlen("Satoshi Nakamoto".encode())
+msg_bytes = reduce_to_hlen(b"Satoshi Nakamoto")
 dsa_signature_bytes = btclib_libsecp256k1.dsa.sign(msg_bytes, prvkey)
 ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
 

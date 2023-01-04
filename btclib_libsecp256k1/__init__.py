@@ -1,6 +1,4 @@
-"""
-Pure python cffi bindings to libsecp256k1: https://github.com/bitcoin-core/secp256k1
-"""
+"""Pure python cffi bindings to libsecp256k1: https://github.com/bitcoin-core/secp256k1."""
 
 
 import pathlib

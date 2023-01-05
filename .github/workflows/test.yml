@@ -42,7 +42,7 @@ jobs:
           python --version
           pip --version
 
-      - uses: dawidd6/action-download-artifact@v2
+      - uses: dawidd6/action-download-artifact@v3
         with:
           workflow: build.yml
           name: artifacts

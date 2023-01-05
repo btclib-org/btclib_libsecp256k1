@@ -8,14 +8,14 @@
 
 """Secp256k1 point multiplication."""
 
-from typing import Tuple, Union
+from __future__ import annotations
 
 from . import ffi, lib
 
 ctx = lib.secp256k1_context_create(769)
 
 
-def mult(num: Union[bytes, int]) -> Tuple[int, int]:
+def mult(num: bytes | int) -> tuple[int, int]:
     """Multply the generator point."""
 
     num_bytes = num.to_bytes(32, "big") if isinstance(num, int) else num

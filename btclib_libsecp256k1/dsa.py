@@ -7,17 +7,14 @@
 # or distributed except according to the terms contained in the LICENSE file.
 
 """Elliptic Curve Digital Signature Algorithm (ECDSA)."""
-
-from typing import Optional, Union
+from __future__ import annotations
 
 from . import ffi, lib
 
 ctx = lib.secp256k1_context_create(769)
 
 
-def sign(
-    msg_bytes: bytes, prvkey: Union[bytes, int], ndata: Optional[bytes] = None
-) -> bytes:
+def sign(msg_bytes: bytes, prvkey: bytes | int, ndata: bytes | None = None) -> bytes:
     """Create an ECDSA signature."""
 
     if isinstance(prvkey, int):

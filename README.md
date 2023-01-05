@@ -57,3 +57,12 @@ and check out the appropriate commit.
     $ git submodule update
     Cloning into 'secp256k1'...
 <!-- markdownlint-enable MD013 -->
+
+Then build with:
+
+    python setup.py sdist
+    python setup.py bdist_wheel --py-limited-api=cp36
+
+Developers might also consider installing btclib_libsecp256k1 in editable way::
+
+    python -m pip install --upgrade -e ./

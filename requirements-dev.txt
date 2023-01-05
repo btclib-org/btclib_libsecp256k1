@@ -1,15 +1,12 @@
-# packages required to develop, build, and test btclib
+# packages required to develop, build, and test
 
+black
+check-manifest
+flake8
+isort
 pip
-wheel
-
-# only needed to package releases
+pylint
+pyproject-flake8
 setuptools
 twine
-
-black>=22.1.0
-check-manifest>=0.47
-flake8>=4.0.1
-pyproject-flake8
-isort>=5.10.1
-pylint>=2.12.2
+wheel

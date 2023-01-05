@@ -1,22 +1,24 @@
-"""
-Secp256k1 point multiplication
-"""
+# Copyright (C) The btclib developers
+#
+# This file is part of btclib. It is subject to the license terms in the
+# LICENSE file found in the top-level directory of this distribution.
+#
+# No part of btclib including this file, may be copied, modified, propagated,
+# or distributed except according to the terms contained in the LICENSE file.
 
-from typing import Union, Tuple
+"""Secp256k1 point multiplication."""
+
+from __future__ import annotations
 
 from . import ffi, lib
 
 ctx = lib.secp256k1_context_create(769)
 
 
-def mult(num: Union[bytes, int]) -> Tuple[int, int]:
-    "Multply the generator point"
+def mult(num: bytes | int) -> tuple[int, int]:
+    """Multply the generator point."""
 
-    if isinstance(num, int):
-        num_bytes = num.to_bytes(32, "big")
-    else:
-        num_bytes = num
-
+    num_bytes = num.to_bytes(32, "big") if isinstance(num, int) else num
     point = ffi.new("secp256k1_pubkey *")
     lib.secp256k1_ec_pubkey_create(ctx, point, num_bytes)
 

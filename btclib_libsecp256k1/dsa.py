@@ -1,18 +1,21 @@
-"""
-Elliptic Curve Digital Signature Algorithm (ECDSA)
-"""
+# Copyright (C) The btclib developers
+#
+# This file is part of btclib. It is subject to the license terms in the
+# LICENSE file found in the top-level directory of this distribution.
+#
+# No part of btclib including this file, may be copied, modified, propagated,
+# or distributed except according to the terms contained in the LICENSE file.
 
-from typing import Optional, Union
+"""Elliptic Curve Digital Signature Algorithm (ECDSA)."""
+from __future__ import annotations
 
 from . import ffi, lib
 
 ctx = lib.secp256k1_context_create(769)
 
 
-def sign(
-    msg_bytes: bytes, prvkey: Union[bytes, int], ndata: Optional[bytes] = None
-) -> bytes:
-    "Create an ECDSA signature."
+def sign(msg_bytes: bytes, prvkey: bytes | int, ndata: bytes | None = None) -> bytes:
+    """Create an ECDSA signature."""
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -24,20 +27,16 @@ def sign(
     length = ffi.new("size_t *", 73)
 
     noncefc = ffi.NULL
-    if not ndata:
-        ndata = ffi.NULL
-    else:
-        ndata = b"\x00" * (32 - len(ndata)) + ndata
-
+    ndata = b"\x00" * (32 - len(ndata)) + ndata if ndata else ffi.NULL
     if not lib.secp256k1_ecdsa_sign(ctx, sig, msg_bytes, prvkey_bytes, noncefc, ndata):
-        raise Exception
+        raise RuntimeError
     if not lib.secp256k1_ecdsa_signature_serialize_der(ctx, sig_bytes, length, sig):
-        raise Exception
+        raise RuntimeError
     return ffi.unpack(sig_bytes, length[0])
 
 
 def verify(msg_bytes: bytes, pubkey_bytes: bytes, signature_bytes: bytes) -> int:
-    "Verify a ECDSA signature"
+    """Verify a ECDSA signature."""
 
     signature = ffi.new("secp256k1_ecdsa_signature *")
     lib.secp256k1_ecdsa_signature_parse_der(

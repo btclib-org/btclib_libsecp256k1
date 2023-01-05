@@ -1,10 +1,19 @@
+# Copyright (C) The btclib developers
+#
+# This file is part of btclib. It is subject to the license terms in the
+# LICENSE file found in the top-level directory of this distribution.
+#
+# No part of btclib including this file, may be copied, modified, propagated,
+# or distributed except according to the terms contained in the LICENSE file.
+
 """
-Variant of Elliptic Curve Schnorr Signature Algorithm (ECSSA), according
+Variant of Elliptic Curve Schnorr Signature Algorithm (ECSSA), according.
+
 to BIP340-Schnorr: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
 """
+from __future__ import annotations
 
 import secrets
-from typing import Optional, Union
 
 from . import ffi, lib
 
@@ -12,9 +21,9 @@ ctx = lib.secp256k1_context_create(769)
 
 
 def sign(
-    msg_bytes: bytes, prvkey: Union[bytes, int], aux_rand32: Optional[bytes] = None
+    msg_bytes: bytes, prvkey: bytes | int, aux_rand32: bytes | None = None
 ) -> bytes:
-    "Create a Schhnorr signature"
+    """Create a Schhnorr signature."""
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")
@@ -31,11 +40,11 @@ def sign(
     aux_rand32 = b"\x00" * (32 - len(aux_rand32)) + aux_rand32
     if lib.secp256k1_schnorrsig_sign(ctx, sig, msg_bytes, keypair, aux_rand32):
         return ffi.unpack(sig, 64)
-    raise Exception
+    raise RuntimeError
 
 
 def verify(msg_bytes: bytes, pubkey_bytes: bytes, signature_bytes: bytes) -> int:
-    "Verify a Schhnorr signature"
+    """Verify a Schhnorr signature."""
 
     if len(pubkey_bytes) == 32:
         pubkey_bytes = b"\x02" + pubkey_bytes

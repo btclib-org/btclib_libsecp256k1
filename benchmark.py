@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable
+from typing import Callable
 
 import coincurve  # type: ignore
 from btclib.ecc import dsa, ssa  # type: ignore
@@ -20,11 +20,10 @@ import btclib_libsecp256k1.dsa
 import btclib_libsecp256k1.ssa
 
 prvkey = 1
-
-pubkey_bytes = pub_keyinfo_from_prv_key(prvkey)[0]
-msg_bytes = reduce_to_hlen(b"Satoshi Nakamoto")
-dsa_signature_bytes = btclib_libsecp256k1.dsa.sign(msg_bytes, prvkey)
-ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
+pubkey = pub_keyinfo_from_prv_key(prvkey)[0]
+msg = reduce_to_hlen(b"Satoshi Nakamoto")
+dsa_sig = btclib_libsecp256k1.dsa.sign(msg, prvkey)
+ssa_sig = btclib_libsecp256k1.ssa.sign(msg, prvkey)
 
 # [B101:assert_used] Use of assert detected. The enclosed code will be
 # removed when compiling to optimised byte code.
@@ -32,37 +31,31 @@ ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
 
 
 def dsa_btclib() -> None:
-    assert dsa.verify_(msg_bytes, pubkey_bytes, dsa_signature_bytes)  # nosec B101
+    assert dsa.verify_(msg, pubkey, dsa_sig)  # nosec B101
 
 
 def ssa_btclib() -> None:
-    assert ssa.verify_(msg_bytes, pubkey_bytes, ssa_signature_bytes)  # nosec B101
+    assert ssa.verify_(msg, pubkey, ssa_sig)  # nosec B101
 
 
 def dsa_coincurve() -> None:
-    assert coincurve.PublicKey(pubkey_bytes).verify(  # nosec B101
-        dsa_signature_bytes, msg_bytes, None
-    )
+    assert coincurve.PublicKey(pubkey).verify(dsa_sig, msg, None)  # nosec B101
 
 
 def dsa_libsecp256k1() -> None:
-    assert btclib_libsecp256k1.dsa.verify(  # nosec B101
-        msg_bytes, pubkey_bytes, dsa_signature_bytes
-    )
+    assert btclib_libsecp256k1.dsa.verify(msg, pubkey, dsa_sig)  # nosec B101
 
 
 def ssa_libsecp256k1() -> None:
-    assert btclib_libsecp256k1.ssa.verify(  # nosec B101
-        msg_bytes, pubkey_bytes, ssa_signature_bytes
-    )
+    assert btclib_libsecp256k1.ssa.verify(msg, pubkey, ssa_sig)  # nosec B101
 
 
-def benchmark(func: Callable[[], Any], mult: int = 1) -> None:
+def benchmark(func: Callable[[], None], mult: int = 1) -> None:
     start = time.time()
     for _ in range(100 * mult):
         func()
     end = time.time()
-    print(f"{func.__name__}:", (end - start) / mult)
+    print(f"{func.__name__:<17}: {((end - start) / mult):.6f}")
 
 
 benchmark(dsa_btclib, 100)

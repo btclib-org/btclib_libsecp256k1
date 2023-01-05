@@ -1,3 +1,11 @@
+# Copyright (C) The btclib developers
+#
+# This file is part of btclib. It is subject to the license terms in the
+# LICENSE file found in the top-level directory of this distribution.
+#
+# No part of btclib including this file, may be copied, modified, propagated,
+# or distributed except according to the terms contained in the LICENSE file.
+
 import sys
 
 from setuptools import find_packages, setup  # type: ignore
@@ -28,7 +36,7 @@ setup(
     cffi_modules=[] if sdist else ["build.py:ffi"],
     install_requires=["cffi>=1.0.0"],
     keywords=["bitcoin", "libsecp256k1"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.7",

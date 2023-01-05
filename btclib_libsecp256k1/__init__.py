@@ -10,11 +10,10 @@
 
 import pathlib
 
+import _btclib_libsecp256k1  # type: ignore
 import dsa  # type: ignore
 import mult  # type: ignore
 import ssa  # type: ignore
-
-import _btclib_libsecp256k1  # type: ignore
 
 ffi = _btclib_libsecp256k1.ffi
 if "lib" in dir(_btclib_libsecp256k1):

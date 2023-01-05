@@ -25,7 +25,8 @@
 ---
 
 Simple python bindings to
-[libsecp256k1](https://github.com/bitcoin-core/secp256k1).
+[libsecp256k1](https://github.com/bitcoin-core/secp256k1)
+([v0.2.0](https://github.com/bitcoin-core/secp256k1/releases/tag/v0.2.0)).
 It is intended to be used with the
 [btclib](https://github.com/btclib-org/btclib) library.
 
@@ -33,7 +34,7 @@ To install (and/or upgrade):
 
     python -m pip install --upgrade btclib_libsecp256k1
 
-## Build, test, and develop
+## Build, test, develop, and contribute
 
 Some development tools are required to develop and test btclib_libsecp256k1;
 they can be installed with:
@@ -44,11 +45,10 @@ The btclib_libsecp256k1 project includes
 [libsecp256k1](https://github.com/bitcoin-core/secp256k1)
 as submodule in the secp256k1 folder.
 By default, when cloning a project you get the directories that contain
-submodules, but none of the files within them yet.
+submodules, but none of the files within them.
 You must run `git submodule init` to initialize
 your local configuration file,
-and `git submodule update` to fetch all the data from
-[libsecp256k1](https://github.com/bitcoin-core/secp256k1)
+and `git submodule update` to fetch the submodule data
 and check out the appropriate commit.
 
 <!-- markdownlint-disable MD013 -->
@@ -58,7 +58,7 @@ and check out the appropriate commit.
     Cloning into 'secp256k1'...
 <!-- markdownlint-enable MD013 -->
 
-Then build with:
+To build:
 
     python setup.py sdist
     python setup.py bdist_wheel --py-limited-api=cp36
@@ -66,3 +66,15 @@ Then build with:
 Developers might also consider installing btclib_libsecp256k1 in editable way::
 
     python -m pip install --upgrade -e ./
+
+To test:
+
+    pytest
+
+To measure the code coverage provided by tests:
+
+    pytest --cov-report term-missing:skip-covered --cov=btclib_libsecp256k1
+
+Pre-commit hooks are provided, please check before a PR
+
+    pre-commit run --all-files

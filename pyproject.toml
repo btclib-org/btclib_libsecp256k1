@@ -2,8 +2,12 @@
 requires = ['setuptools', 'wheel', 'cffi>=1.0.0']
 
 [tool.mypy]
+strict = false
 show_column_numbers = true
 show_error_codes = true
+exclude = [
+    "build",
+]
 
 [tool.isort]
 profile = "black"

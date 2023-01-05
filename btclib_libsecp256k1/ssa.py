@@ -23,7 +23,7 @@ ctx = lib.secp256k1_context_create(769)
 def sign(
     msg_bytes: bytes, prvkey: bytes | int, aux_rand32: bytes | None = None
 ) -> bytes:
-    """Create a Schhnorr signature."""
+    """Create a Schnorr signature."""
 
     if isinstance(prvkey, int):
         prvkey_bytes = prvkey.to_bytes(32, "big")

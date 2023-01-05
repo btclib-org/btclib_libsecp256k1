@@ -15,7 +15,7 @@ from . import ffi, lib
 ctx = lib.secp256k1_context_create(769)
 
 
-def mult(num: bytes | int) -> tuple[int, int]:
+def mult_(num: bytes | int) -> bytes:
     """Multply the generator point."""
 
     num_bytes = num.to_bytes(32, "big") if isinstance(num, int) else num
@@ -25,8 +25,13 @@ def mult(num: bytes | int) -> tuple[int, int]:
     output = ffi.new("char[65]")
     length = ffi.new("size_t *", 65)
 
-    lib.secp256k1_ec_pubkey_serialize(ctx, output, length, point, 2)
+    if lib.secp256k1_ec_pubkey_serialize(ctx, output, length, point, 2):
+        return ffi.unpack(output, 65)
+    raise RuntimeError
 
-    result = ffi.unpack(output, 65).hex()
 
-    return (int(result[2:66], 16), int(result[66:130], 16))
+def mult(num: bytes | int) -> tuple[int, int]:
+    """Multply the generator point."""
+
+    result = mult_(num)
+    return int.from_bytes(result[1:33], "big"), int.from_bytes(result[34:], "big")

@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from typing import Callable
 
-import coincurve  # type: ignore
+import coincurve
 from btclib.ecc import dsa, ssa  # type: ignore
 from btclib.hashes import reduce_to_hlen  # type: ignore
 from btclib.to_pub_key import pub_keyinfo_from_prv_key  # type: ignore

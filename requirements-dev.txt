@@ -1,14 +1,15 @@
 # packages required to develop, build, and test
 
 black
-btclib
 check-manifest
 coincurve
 flake8
 isort
 pip
+pre-commit
 pylint
 pyproject-flake8
 setuptools
+tox
 twine
 wheel

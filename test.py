@@ -10,6 +10,10 @@ import btclib_libsecp256k1.dsa
 import btclib_libsecp256k1.ssa
 from btclib_libsecp256k1 import ffi, lib
 
+# [B101:assert_used] Use of assert detected. The enclosed code will be
+# removed when compiling to optimised byte code.
+# https://bandit.readthedocs.io/en/1.7.4/plugins/b101_assert_used.html
+
 
 def test_sign_and_verify() -> None:
     prvkey = 1
@@ -17,10 +21,14 @@ def test_sign_and_verify() -> None:
     msg_bytes = b"\xa0\xdce\xff\xcay\x98s\xcb\xea\n\xc2t\x01[\x95&P]\xaa\xae\xd3\x85\x15T%\xf73w\x04\x88>"
 
     dsa_signature_bytes = btclib_libsecp256k1.dsa.sign(msg_bytes, prvkey)
-    assert btclib_libsecp256k1.dsa.verify(msg_bytes, pubkey_bytes, dsa_signature_bytes)
+    assert btclib_libsecp256k1.dsa.verify(  # nosec B101
+        msg_bytes, pubkey_bytes, dsa_signature_bytes
+    )
 
     ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
-    assert btclib_libsecp256k1.ssa.verify(msg_bytes, pubkey_bytes, ssa_signature_bytes)
+    assert btclib_libsecp256k1.ssa.verify(  # nosec B101
+        msg_bytes, pubkey_bytes, ssa_signature_bytes
+    )
 
 
 def test_safe_abort() -> None:

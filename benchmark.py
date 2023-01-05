@@ -24,27 +24,35 @@ msg_bytes = reduce_to_hlen(b"Satoshi Nakamoto")
 dsa_signature_bytes = btclib_libsecp256k1.dsa.sign(msg_bytes, prvkey)
 ssa_signature_bytes = btclib_libsecp256k1.ssa.sign(msg_bytes, prvkey)
 
+# [B101:assert_used] Use of assert detected. The enclosed code will be
+# removed when compiling to optimised byte code.
+# https://bandit.readthedocs.io/en/1.7.4/plugins/b101_assert_used.html
+
 
 def dsa_btclib() -> None:
-    assert dsa.verify_(msg_bytes, pubkey_bytes, dsa_signature_bytes)
+    assert dsa.verify_(msg_bytes, pubkey_bytes, dsa_signature_bytes)  # nosec B101
 
 
 def ssa_btclib() -> None:
-    assert ssa.verify_(msg_bytes, pubkey_bytes, ssa_signature_bytes)
+    assert ssa.verify_(msg_bytes, pubkey_bytes, ssa_signature_bytes)  # nosec B101
 
 
 def dsa_coincurve() -> None:
-    assert coincurve.PublicKey(pubkey_bytes).verify(
+    assert coincurve.PublicKey(pubkey_bytes).verify(  # nosec B101
         dsa_signature_bytes, msg_bytes, None
     )
 
 
 def dsa_libsecp256k1() -> None:
-    assert btclib_libsecp256k1.dsa.verify(msg_bytes, pubkey_bytes, dsa_signature_bytes)
+    assert btclib_libsecp256k1.dsa.verify(  # nosec B101
+        msg_bytes, pubkey_bytes, dsa_signature_bytes
+    )
 
 
 def ssa_libsecp256k1() -> None:
-    assert btclib_libsecp256k1.ssa.verify(msg_bytes, pubkey_bytes, ssa_signature_bytes)
+    assert btclib_libsecp256k1.ssa.verify(  # nosec B101
+        msg_bytes, pubkey_bytes, ssa_signature_bytes
+    )
 
 
 def benchmark(func: Callable[[], Any], mult: int = 1) -> None:

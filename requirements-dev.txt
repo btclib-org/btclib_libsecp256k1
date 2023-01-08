@@ -2,7 +2,6 @@
 
 black
 check-manifest
-coincurve
 flake8
 isort
 pip
@@ -13,3 +12,6 @@ setuptools
 tox
 twine
 wheel
+
+coincurve
+secp256k1

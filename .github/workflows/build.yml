@@ -65,7 +65,7 @@ jobs:
         run: bash ./.github/scripts/install-macos-deps.sh
 
       - name: Build
-        run:
+        run: |
           python setup.py bdist_wheel --py-limited-api=cp36
           BTCLIB_LIBSECP256K1_DYNAMIC=true python setup.py bdist_wheel --py-limited-api=cp36
           # python setup.py bdist_wheel --plat-name=macosx_11_x86_64

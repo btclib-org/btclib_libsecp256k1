@@ -13,5 +13,6 @@ tox
 twine
 wheel
 
+# needed for comparison benchmarks
 coincurve
 secp256k1

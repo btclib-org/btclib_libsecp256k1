@@ -17,7 +17,7 @@ import shutil
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
 import sys
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen  # nosec B404
 
 import cffi
 

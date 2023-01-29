@@ -17,6 +17,7 @@ import shutil
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
 import sys
+from subprocess import PIPE, Popen
 
 import cffi
 
@@ -29,7 +30,7 @@ include_dir = secp256k1_dir / "include"
 filename = "_btclib_libsecp256k1"
 libraries = ["secp256k1"]
 library_dirs = [libs_dir.as_posix()]
-headers = ["secp256k1.h", "secp256k1_schnorrsig.h"]
+headers = ["secp256k1.h", "secp256k1_extrakeys.h", "secp256k1_schnorrsig.h"]
 
 
 # [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
@@ -92,28 +93,24 @@ def build_c() -> None:
             break
 
 
-def generate_def(headers):
+def generate_def():
     ffi_header = ""
     for h in headers:
         location = secp256k1_dir / "include" / h
-        ffi_header += f'#include "{location.as_posix()}"' + "\n"
+        with open(location) as f:
+            ffi_header += f.read() + "\n"
 
-    command = "gcc -P -E -".split()
-    with subprocess.Popen(  # nosec B603
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-    ) as p:
+    ffi_header = re.sub(r"#include .*", "", ffi_header)
+
+    command = "gcc -P -E -D SECP256K1_BUILD  -".split()
+    with Popen(command, stdin=PIPE, stdout=PIPE) as p:  # nosec B603
         definitions = p.communicate(input=ffi_header.encode())[0].decode()
-        definitions = re.sub(r"#pragma[\s\S]*?typedef", "typedef", definitions)
-        definitions = re.sub(r"__attribute__ \(\(.*\)\)", "", definitions)
-        # definitions = re.sub(r"__.*?__", "", definitions)
-        definitions = re.sub(r"__extension__", "", definitions)
-        definitions = re.sub(r"__restrict", "", definitions)
-        definitions = re.sub(r"__inline", "", definitions)
-        # definitions = re.sub(r"__builtin_va_list", "", definitions)
-        # definitions = re.sub(r"\(\(\)\)", "", definitions)
-        # definitions = re.sub(r"\(\(\([0-9]\)\)\)", "", definitions)
-        definitions = re.sub(r"typedef [\s\S]*?max_align_t;", "", definitions)
-        definitions = definitions.replace("\r", "")
+        definitions = definitions.replace(
+            '__attribute__ ((visibility ("default")))', ""
+        )
+        definitions = definitions.replace(
+            "__attribute__ ((__warn_unused_result__))", ""
+        )
         return ffi_header, definitions
 
 
@@ -121,7 +118,7 @@ def create_cffi(static):
     clean()
     build_c()
     ffi = cffi.FFI()
-    ffi_header, definitions = generate_def(headers)
+    ffi_header, definitions = generate_def()
     ffi.cdef(definitions)
     if static:
         ffi.set_source(

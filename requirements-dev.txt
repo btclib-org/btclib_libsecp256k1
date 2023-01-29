@@ -2,17 +2,17 @@
 
 black
 check-manifest
+
+# needed for comparison benchmarks
+coincurve
 flake8
 isort
 pip
 pre-commit
 pylint
 pyproject-flake8
+secp256k1
 setuptools
 tox
 twine
 wheel
-
-# needed for comparison benchmarks
-coincurve
-secp256k1

@@ -34,4 +34,4 @@ def mult(num: bytes | int) -> tuple[int, int]:
     """Multply the generator point."""
 
     result = mult_(num)
-    return int.from_bytes(result[1:33], "big"), int.from_bytes(result[34:], "big")
+    return int.from_bytes(result[1:33], "big"), int.from_bytes(result[33:], "big")

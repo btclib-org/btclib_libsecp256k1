@@ -23,7 +23,7 @@ import cffi
 
 windows = "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows"
 static = bool(not windows and pathlib.Path(".git").exists())
-static = static and os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
+# static = static and os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
 secp256k1_dir = pathlib.Path(__file__).parent.parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
@@ -85,7 +85,6 @@ def build_c() -> None:
     subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)  # nosec B603 B607
     if not static:
         for file in libs_dir.iterdir():
-            print(file)
             if file.suffix not in [".dll", ".so", ".dylib"]:
                 continue
             new = f"libsecp256k1{file.suffix}"

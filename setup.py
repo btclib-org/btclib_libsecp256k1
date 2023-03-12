@@ -7,7 +7,8 @@
 # or distributed except according to the terms contained in the LICENSE file.
 
 import sys
-
 from setuptools import setup  # type: ignore
 
-setup(cffi_modules=[] if "egg_info" in sys.argv else ["scripts/cffi_build.py:ffi"])
+egg_info = "egg_info" in sys.argv
+
+setup(cffi_modules=[] if egg_info else ["scripts/cffi_build.py:ffi"])

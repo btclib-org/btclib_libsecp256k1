@@ -70,3 +70,7 @@ max-line-length = 100
 [tool.pytest.ini_options]
 python_files = "test*.py"
 python_functions = "test*"
+
+[tool.cibuildwheel]
+test-command = "python {project}/scripts/test.py"
+build-frontend = "build"

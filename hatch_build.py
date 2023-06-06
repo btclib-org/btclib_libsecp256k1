@@ -1,7 +1,8 @@
+import os
 import platform
 import shutil
 from pathlib import Path
-import os
+
 from cffi import FFI
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
@@ -88,6 +89,7 @@ class CustomBuildHook(BuildHookInterface):
                         # error: no shared library?
                         pass
 
-            cross_compile = os.environ.get("HATCH_CFFI_PLATFORM", "false") == "true"
-            if cross_compile:
+            if self.platform == "Windows":
                 build_data["tag"] = "py3-none-win_amd64"
+            if self.platform == "Darwin":
+                build_data["tag"] = "py3-none-macosx_10_16_x86_64"

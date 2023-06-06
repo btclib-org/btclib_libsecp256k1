@@ -4,8 +4,6 @@ on:
   workflow_run:
     workflows:
       - build
-    branches:
-      - master
     types:
       - completed
 
@@ -48,4 +46,4 @@ jobs:
         run: python -m pip install --verbose --find-links dist/ btclib_libsecp256k1
 
       - name: Test
-        run: python test.py
+        run: python scripts/test.py

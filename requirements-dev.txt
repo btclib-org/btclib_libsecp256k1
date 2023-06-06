@@ -13,5 +13,4 @@ pyproject-flake8
 secp256k1
 setuptools
 tox
-twine
 wheel

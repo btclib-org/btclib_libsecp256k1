@@ -16,7 +16,7 @@ ffi = _btclib_libsecp256k1.ffi
 if "lib" in dir(_btclib_libsecp256k1):
     lib = _btclib_libsecp256k1.lib
 else:
-    path = pathlib.Path(_btclib_libsecp256k1.__file__).parent / "btclib_libsecp256k1"
+    path = pathlib.Path(_btclib_libsecp256k1.__file__).parent
     suffixes = [".dll", ".so", ".dylib"]
     for file in path.iterdir():
         if file.stem == "libsecp256k1" and file.suffix in suffixes:

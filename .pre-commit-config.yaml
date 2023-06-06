@@ -23,7 +23,6 @@ repos:
       - id: check-vcs-permalinks
       - id: detect-private-key
       - id: debug-statements
-      - id: requirements-txt-fixer
       - id: check-docstring-first
       # - id: name-tests-test
       - id: check-toml

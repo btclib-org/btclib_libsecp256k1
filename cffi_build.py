@@ -21,9 +21,10 @@ from subprocess import PIPE, Popen  # nosec B404
 
 import cffi
 
-windows = "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows"
-static = bool(not windows and pathlib.Path(".git").exists())
-# static = static and os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
+# windows = platform.system() == "Windows"
+cross_compile = os.environ.get("BTCLIB_LIBSECP256K1_CROSS_COMPILE", "false") == "true"
+static = os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
+
 secp256k1_dir = pathlib.Path(__file__).parent.parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
@@ -64,9 +65,9 @@ def build_c() -> None:
         "--enable-external-default-callbacks",
         "--with-pic",
     ]
-    if windows:
+    if cross_compile:
         command.append("--host=x86_64-w64-mingw32")
-    if static:
+    elif static:
         command.append("--disable-shared")
     subprocess.call(command, cwd=secp256k1_dir)  # nosec B603
 
@@ -83,13 +84,6 @@ def build_c() -> None:
 
     subprocess.call(["make"], cwd=secp256k1_dir)  # nosec B603 B607
     subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)  # nosec B603 B607
-    if not static:
-        for file in libs_dir.iterdir():
-            if file.suffix not in [".dll", ".so", ".dylib"]:
-                continue
-            new = f"libsecp256k1{file.suffix}"
-            shutil.copy(file, str(pathlib.Path("btclib_libsecp256k1") / new))
-            break
 
 
 def generate_def():
@@ -110,27 +104,41 @@ def generate_def():
         definitions = definitions.replace(
             "__attribute__ ((__warn_unused_result__))", ""
         )
-        return ffi_header, definitions
+        definitions = definitions.replace("\r", "\n")
+    return ffi_header, definitions
 
 
-def create_cffi(static):
-    clean()
+def create_cffi():
+    # on Windows we assume the library is already present
+    # cross-compile from a linux host
     build_c()
     ffi = cffi.FFI()
     ffi_header, definitions = generate_def()
+    if not static or cross_compile:
+        ffi_header = None
     ffi.cdef(definitions)
-    if static:
-        ffi.set_source(
-            filename,
-            ffi_header,
-            libraries=libraries,
-            library_dirs=library_dirs,
-        )
-    else:
-        ffi.set_source(filename, None)
+    ffi.set_source(
+        filename,
+        ffi_header,
+        libraries=libraries,
+        library_dirs=library_dirs,
+    )
     return ffi
 
 
-ffi = create_cffi(static)
-if __name__ == "__main__":
+def compile_cffi(ffi):
     ffi.compile(verbose=True)
+    if static:
+        return
+    for file in libs_dir.iterdir():
+        if file.suffix not in [".dll", ".so", ".dylib"]:
+            continue
+        shutil.copy(file, pathlib.Path(".") / file.name)
+        break
+
+
+clean()
+
+if __name__ == "__main__":
+    ffi = create_cffi()
+    compile_cffi(ffi)

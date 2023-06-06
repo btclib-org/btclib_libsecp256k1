@@ -24,7 +24,7 @@ import cffi
 windows = "--plat-name=win_amd64" in sys.argv or platform.system() == "Windows"
 static = bool(not windows and pathlib.Path(".git").exists())
 static = static and os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
-secp256k1_dir = pathlib.Path(__file__).parent.resolve() / "secp256k1"
+secp256k1_dir = pathlib.Path(__file__).parent.parent.resolve() / "secp256k1"
 libs_dir = secp256k1_dir / ".libs"
 include_dir = secp256k1_dir / "include"
 filename = "_btclib_libsecp256k1"

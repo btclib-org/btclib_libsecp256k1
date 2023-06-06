@@ -1,5 +1,4 @@
 # packages required to develop, build, and test
-
 black
 check-manifest
 

@@ -1,5 +1,49 @@
+[project]
+name="btclib_libsecp256k1"
+version="0.2.1"
+description="Simple python bindings to libsecp256k1"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7"
+authors = [
+    {name = "Giacomo Caironi", email = "giacomo.caironi@gmail.com"},
+]
+keywords=["bitcoin", "libsecp256k1"]
+classifiers=[
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Topic :: Security :: Cryptography",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ]
+dependencies = ['cffi>=1.0.0']
+
+[tool.setuptools.packages.find]
+include = ['btclib_libsecp256k1*']
+
+[project.urls]
+homepage = "https://btclib.org"
+documentation = "https://btclib.readthedocs.io/"
+repository = "https://github.com/btclib-org/btclib_libsecp256k1"
+download = "https://github.com/btclib-org/btclib_libsecp256k1/releases"
+changelog = "https://github.com/btclib-org/btclib_libsecp256k1/HISTORY.md"
+issues = "https://github.com/btclib-org/btclib_libsecp256k1/issues"
+pull_requests = "https://github.com/btclib-org/btclib_libsecp256k1/pulls"
+
 [build-system]
-requires = ['setuptools', 'wheel', 'cffi>=1.0.0']
+requires = ['setuptools', 'cffi>=1.0.0']
+build-backend = "setuptools.build_meta"
 
 [tool.mypy]
 strict = false

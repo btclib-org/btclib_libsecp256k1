@@ -34,62 +34,75 @@ class CustomBuildHook(BuildHookInterface):
         else:
             raise Exception
 
-    def initialize(self, version, build_data):
-        if self.target_name != "wheel":
-            return
-
+    def get_ffi_object(self, script: Path, ffi_name: str) -> FFI:
         build_script = Path("cffi_build.py")
         ffi_object_name = "create_cffi"
 
-        with open(build_script, "r") as f:
+        with open(Path(script)) as f:
             src = f.read()
-        code = compile(src, build_script.name, "exec")
-        build_vars = {"__name__": "__cffi__", "__file__": build_script.name}
+        code = compile(src, script, "exec")
+        build_vars = {"__name__": "__cffi__", "__file__": script}
         exec(code, build_vars, build_vars)
-        if ffi_object_name not in build_vars:
+        if ffi_name not in build_vars:
             raise Exception
-        ffi = build_vars[ffi_object_name]
+        ffi = build_vars[ffi_name]
         if not isinstance(ffi, FFI):
             ffi = ffi()
         if not isinstance(ffi, FFI):
             raise Exception
 
-        module_name, source, source_extension, kwds = ffi._assigned_source
+        return ffi
 
-        temp_dir = Path("build") / module_name
-        if temp_dir.exists():
-            shutil.rmtree(temp_dir)
-        ffi.compile(tmpdir=temp_dir)
-
-        build_data["pure_python"] = False
-
-        if source:  # static
-            so = next(temp_dir.glob(f"{module_name}*{self.compiled_extension}"))
-            filename = so.name
-            build_data["force_include"][str(temp_dir / filename)] = filename
-            build_data["infer_tag"] = True
-        else:  # dynamic
-            ext_fname = f"{module_name}.py"
-            build_data["force_include"][str(temp_dir / ext_fname)] = ext_fname
-            for lib in kwds["libraries"]:
-                found = False
-                for libs_dir in kwds["library_dirs"]:
-                    for file in Path(libs_dir).glob(
-                        f"lib{lib}*{self.shared_library_extension}*"
-                    ):
-                        if file.is_symlink():
-                            continue
-                        if found:
-                            # error: multiple shared libraries?
-                            pass
-
-                        build_data["force_include"][file] = file.name
-                        found = True
-                    if not found:
-                        # error: no shared library?
+    def include_shared_libraries(self, libraries, build_data):
+        for lib in libraries:
+            found = False
+            for libs_dir in kwds["library_dirs"]:
+                for file in Path(libs_dir).glob(
+                    f"lib{lib}*{self.shared_library_extension}*"
+                ):
+                    if file.is_symlink():
+                        continue
+                    if found:
+                        # error: multiple shared libraries?
                         pass
 
-            if self.platform == "Windows":
-                build_data["tag"] = "py3-none-win_amd64"
-            if self.platform == "Darwin":
-                build_data["tag"] = "py3-none-macosx_10_16_x86_64"
+                    build_data["force_include"][file] = file.name
+                    found = True
+                if not found:
+                    # error: no shared library?
+                    pass
+
+    def initialize(self, version, build_data):
+        if self.target_name != "wheel":
+            return
+
+        cffi_config = [x.split(":") for x in self.config.get("cffi_modules", [])]
+
+        for script, ffi_name in cffi_config:
+
+            ffi = self.get_ffi_object(script, ffi_name)
+            module_name, source, source_extension, kwds = ffi._assigned_source
+
+            temp_dir = Path("build") / module_name
+            if temp_dir.exists():
+                shutil.rmtree(temp_dir)
+            ffi.compile(tmpdir=temp_dir)
+
+            build_data["pure_python"] = False
+
+            if source:  # static
+                so = next(temp_dir.glob(f"{module_name}*{self.compiled_extension}"))
+                filename = so.name
+                build_data["force_include"][str(temp_dir / filename)] = filename
+                if not build_data.get("tag", None):
+                    build_data["infer_tag"] = True
+            else:  # dynamic
+                ext_fname = f"{module_name}.py"
+                build_data["force_include"][str(temp_dir / ext_fname)] = ext_fname
+
+                self.include_shared_libraries(kwds["libraries"], build_data)
+
+                if self.platform == "Windows":
+                    build_data["tag"] = "py3-none-win_amd64"
+                if self.platform == "Darwin":
+                    build_data["tag"] = "py3-none-macosx_10_16_x86_64"

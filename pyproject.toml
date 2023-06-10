@@ -46,6 +46,7 @@ requires = ["hatchling", "cffi>=1.0.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel.hooks.custom]
+cffi_modules = ["cffi_build.py:create_cffi"]
 
 [tool.mypy]
 strict = false

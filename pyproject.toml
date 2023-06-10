@@ -120,5 +120,6 @@ python_functions = "test*"
 norecursedirs = ["secp256k1"]
 
 [tool.cibuildwheel]
-test-command = "python {project}/test.py"
+test-command = "python {project}/tests/test.py"
 build-frontend = "build"
+archs = "auto64"

@@ -3,7 +3,7 @@
 set -e
 set -x
 
-brew update
+export HOMEBREW_NO_AUTO_UPDATE=1
 
 brew outdated openssl || brew upgrade openssl
 

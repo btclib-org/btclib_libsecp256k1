@@ -9,14 +9,12 @@
 import glob
 import os
 import pathlib
-import platform
 import re
 import shutil
 
 # [B404:blacklist] Consider possible security implications associated with the subprocess module.
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
-import sys
 from subprocess import PIPE, Popen  # nosec B404
 
 import cffi

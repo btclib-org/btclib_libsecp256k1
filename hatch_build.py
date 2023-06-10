@@ -35,28 +35,28 @@ class CustomBuildHook(BuildHookInterface):
             raise Exception
 
     def get_ffi_object(self, script: Path, ffi_name: str) -> FFI:
-        build_script = Path("cffi_build.py")
-        ffi_object_name = "create_cffi"
+        # Issue: [B102:exec_used] Use of exec detected.
+        # https://bandit.readthedocs.io/en/1.7.4/plugins/b102_exec_used.html
 
         with open(Path(script)) as f:
             src = f.read()
         code = compile(src, script, "exec")
         build_vars = {"__name__": "__cffi__", "__file__": script}
-        exec(code, build_vars, build_vars)
+        exec(code, build_vars, build_vars)  # nosec B102
         if ffi_name not in build_vars:
             raise Exception
         ffi = build_vars[ffi_name]
         if not isinstance(ffi, FFI):
-            ffi = ffi()
+            ffi = ffi()  # type: ignore
         if not isinstance(ffi, FFI):
             raise Exception
 
         return ffi
 
-    def include_shared_libraries(self, libraries, build_data):
+    def include_shared_libraries(self, libraries, library_dirs, build_data):
         for lib in libraries:
             found = False
-            for libs_dir in kwds["library_dirs"]:
+            for libs_dir in library_dirs:
                 for file in Path(libs_dir).glob(
                     f"lib{lib}*{self.shared_library_extension}*"
                 ):
@@ -79,7 +79,6 @@ class CustomBuildHook(BuildHookInterface):
         cffi_config = [x.split(":") for x in self.config.get("cffi_modules", [])]
 
         for script, ffi_name in cffi_config:
-
             ffi = self.get_ffi_object(script, ffi_name)
             module_name, source, source_extension, kwds = ffi._assigned_source
 
@@ -100,7 +99,9 @@ class CustomBuildHook(BuildHookInterface):
                 ext_fname = f"{module_name}.py"
                 build_data["force_include"][str(temp_dir / ext_fname)] = ext_fname
 
-                self.include_shared_libraries(kwds["libraries"], build_data)
+                self.include_shared_libraries(
+                    kwds["libraries"], kwds["library_dirs"], build_data
+                )
 
                 if self.platform == "Windows":
                     build_data["tag"] = "py3-none-win_amd64"

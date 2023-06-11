@@ -18,7 +18,10 @@ if "lib" in dir(_btclib_libsecp256k1):
 else:
     path = pathlib.Path(_btclib_libsecp256k1.__file__).parent
     suffixes = [".dll", ".so", ".dylib"]
-    for file in path.iterdir():
-        if file.stem == "libsecp256k1" and file.suffix in suffixes:
-            lib = ffi.dlopen(str(file))
-            break
+    for suffix in suffixes:
+        for file in path.glob(f"libsecp256k1*{suffix}*"):
+            try:
+                lib = ffi.dlopen(str(file))
+                break
+            except OSError:
+                pass

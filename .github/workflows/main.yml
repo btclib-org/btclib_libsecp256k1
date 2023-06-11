@@ -1,4 +1,4 @@
-name: build
+name: main
 
 on: [push, pull_request]
 
@@ -32,7 +32,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: static-wheels
           path: ./wheelhouse/*
 
 
@@ -55,20 +55,19 @@ jobs:
           pip install --upgrade pip build wheel auditwheel
           BTCLIB_LIBSECP256K1_DYNAMIC=true python -m build -w
           auditwheel repair dist/*
-          
-      - name: Test wheel
-        run: |
-          pip install --find-links wheelhouse/ btclib_libsecp256k1
-          pip install pytest
-          pytest
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dynamic-wheels
+          path: ./wheelhouse/*
 
       - name: Build source
         run: python -m build -s -o wheelhouse
 
       - uses: actions/upload-artifact@v3
         with:
-          name: wheels
-          path: ./wheelhouse/*
+          name: sdist
+          path: ./wheelhouse/*.tar.gz
 
 
   build-dynamic-macos:
@@ -94,15 +93,9 @@ jobs:
           BTCLIB_LIBSECP256K1_DYNAMIC=true HATCH_CFFI_PLATFORM=Darwin python -m build -w
           delocate-wheel -w wheelhouse dist/*
 
-      - name: Test wheel
-        run: |
-          pip install --find-links wheelhouse/ btclib_libsecp256k1
-          pip install pytest
-          pytest
-
       - uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: dynamic-wheels
           path: ./wheelhouse/*
 
 
@@ -130,11 +123,11 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: dynamic-wheels
           path: dist/*
 
 
-  test:
+  test-dynamic:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     strategy:
@@ -145,7 +138,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
       OS_NAME: ${{ matrix.os }}
-    needs: [build-cibuildwheel, build-windows]
+    needs: [build-windows, build-dynamic-linux, build-dynamic-macos]
 
     steps:
       - uses: actions/checkout@v3
@@ -165,12 +158,56 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          workflow: build.yml
-          name: wheels
+          name: dynamic-wheels
           path: dist
 
       - name: Install lib
-        run: python -m pip install --verbose --find-links dist/ btclib_libsecp256k1
+        run: |
+          python -m pip install cffi
+          python -m pip install --verbose --no-index --find-links dist/ btclib_libsecp256k1
+
+      - name: Test
+        run: pytest
+
+
+  test-static:
+    name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7", "pypy-3.8", "pypy-3.9"]
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
+      OS_NAME: ${{ matrix.os }}
+    needs: build-cibuildwheel
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade Python packaging tools
+        run: pip install --upgrade pip pytest
+
+      - name: Show runner information
+        run: |
+          python --version
+          pip --version
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: static-wheels
+          path: dist
+
+      - name: Install lib
+        run: |
+          python -m pip install cffi
+          python -m pip install --verbose --no-index --find-links dist/ btclib_libsecp256k1
 
       - name: Test
         run: pytest

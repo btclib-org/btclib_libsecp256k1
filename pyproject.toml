@@ -82,7 +82,7 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-skip = ["secp256k1", ".tox"]
+skip = ["secp256k1", ".nox"]
 
 [tool.black]
 force_exclude = "secp256k1"
@@ -120,6 +120,7 @@ python_functions = "test*"
 norecursedirs = ["secp256k1"]
 
 [tool.cibuildwheel]
-test-command = "python {project}/tests/test.py"
+test-requires = ["pytest"]
+test-command = "pytest {project}/tests/"
 build-frontend = "build"
 archs = "auto64"

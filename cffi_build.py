@@ -9,28 +9,20 @@
 import glob
 import os
 import pathlib
+import platform
 import re
 import shutil
 
 # [B404:blacklist] Consider possible security implications associated with the subprocess module.
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
+import sysconfig
 from subprocess import PIPE, Popen  # nosec B404
 
 import cffi
 
-# windows = platform.system() == "Windows"
 cross_compile = os.environ.get("BTCLIB_LIBSECP256K1_CROSS_COMPILE", "false") == "true"
 static = os.environ.get("BTCLIB_LIBSECP256K1_DYNAMIC", "false") != "true"
-
-secp256k1_dir = pathlib.Path(__file__).parent.parent.resolve() / "secp256k1"
-libs_dir = secp256k1_dir / ".libs"
-include_dir = secp256k1_dir / "include"
-filename = "_btclib_libsecp256k1"
-libraries = ["secp256k1"]
-library_dirs = [libs_dir.as_posix()]
-headers = ["secp256k1.h", "secp256k1_extrakeys.h", "secp256k1_schnorrsig.h"]
-
 
 # [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
 # https://bandit.readthedocs.io/en/1.7.4/plugins/b603_subprocess_without_shell_equals_true.html
@@ -39,104 +31,202 @@ headers = ["secp256k1.h", "secp256k1_extrakeys.h", "secp256k1_schnorrsig.h"]
 # https://bandit.readthedocs.io/en/1.7.4/plugins/b607_start_process_with_partial_path.html
 
 
-def clean() -> None:
-    subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)  # nosec B603 B607
-    subprocess.call(["git", "clean", "-fxd"], cwd=secp256k1_dir)  # nosec B603 B607
-    if (secp256k1_dir / ".libs").exists():
-        subprocess.call(["make", "clean"], cwd=secp256k1_dir)  # nosec B603 B607
-    for pattern in ["_btclib_libsecp256k1.*", "btclib_libsecp256k1/libsecp256k1.*"]:
-        for file in glob.glob(pattern):
-            os.remove(file)
+class FFIExtension:
+    def __init__(self):
+        self.clean()
+        self.platform = os.environ.get("CFFI_PLATFORM", platform.system())
+
+    @property
+    def compiled_extension(self):
+        if self.platform == "Windows":
+            return ".pyd"
+        elif self.platform == "Darwin":
+            return ".so"
+        elif self.platform == "Linux":
+            return ".so"
+        else:
+            raise Exception
+
+    @property
+    def shared_library_extension(self):
+        if self.platform == "Windows":
+            return ".dll"
+        elif self.platform == "Darwin":
+            return ".dylib"
+        elif self.platform == "Linux":
+            return ".so"
+        else:
+            raise Exception
+
+    def clean(self):
+        raise NotImplementedError
+
+    def build_c(self):
+        raise NotImplementedError
+
+    def generate_def(self):
+        raise NotImplementedError
+
+    def create_cffi(self, build_dir):
+        build_dir = pathlib.Path(build_dir)
+
+        self.build_c()
+        ffi = cffi.FFI()
+        ffi_header, definitions = self.generate_def()
+        if not self.static:
+            ffi_header = None
+        ffi.cdef(definitions)
+        ffi.set_source(self.name, ffi_header)
+
+        artifacts = []
+
+        if self.static:
+            c_filename = str(self.name) + ".c"
+            o_filename = str(self.name) + ".o"
+            so_filename = str(self.name) + f".{sysconfig.get_config_var('SOABI')}"
+            so_filename += self.compiled_extension
+            c_path = build_dir / c_filename
+            so_path = build_dir / so_filename
+
+            ffi.emit_c_code(str(c_path))
+            compile_command = [
+                "gcc",
+                f"-I{sysconfig.get_path('include')}",
+                f"-I{sysconfig.get_path('platinclude')}",
+                "-fPIC",
+                "-c",
+                str(c_filename),
+                "-o",
+                str(o_filename),
+            ]
+            link_command = [
+                "gcc",
+                "-shared",
+                str(o_filename),
+                *[f"-L{libs_dir}" for libs_dir in self.library_dirs],
+                *[f"-l{lib}" for lib in self.libraries],
+                "-o",
+                str(so_filename),
+            ]
+            subprocess.call(compile_command, cwd=build_dir)  # nosec B603 B607
+            subprocess.call(link_command, cwd=build_dir)  # nosec B603 B607
+            artifacts.append(so_path)
+        else:
+            py_filename = str(self.name) + ".py"
+            py_path = build_dir / py_filename
+
+            ffi.emit_python_code(str(py_path))
+            artifacts.append(py_path)
+            for lib in self.libraries:
+                found = False
+                for libs_dir in self.library_dirs:
+                    pattern = f"lib{lib}*{self.shared_library_extension}*"
+                    for file in pathlib.Path(libs_dir).glob(pattern):
+                        if file.is_symlink():
+                            continue
+                        if found:
+                            # error: multiple shared libraries?
+                            pass
+                        shutil.copy(file, build_dir / file.name)
+                        artifacts.append(build_dir / file.name)
+                        found = True
+                    if not found:
+                        # error: no shared library?
+                        pass
+
+        return ffi, artifacts
 
 
-def build_c() -> None:
-    subprocess.call(["bash", "autogen.sh"], cwd=secp256k1_dir)  # nosec B603 B607
-    with open(secp256k1_dir / "Makefile.am", "a") as f:
-        f.write("\nLDFLAGS = -no-undefined\n")
-    command = [
-        "bash",
-        "configure",
-        "--disable-tests",
-        "--disable-benchmark",
-        "--enable-experimental",
-        "--enable-module-schnorrsig",
-        "--enable-external-default-callbacks",
-        "--with-pic",
-    ]
-    if cross_compile:
-        command.append("--host=x86_64-w64-mingw32")
-    elif static:
-        command.append("--disable-shared")
-    subprocess.call(command, cwd=secp256k1_dir)  # nosec B603
+class Secp256k1CFFIExtension(FFIExtension):
+    def __init__(self):
+        self.name = "_btclib_libsecp256k1"
+        self.static = static or cross_compile
+        self.clean_patterns = [
+            "_btclib_libsecp256k1.*",
+            "btclib_libsecp256k1/libsecp256k1.*",
+        ]
+        # working directory
+        self.wd = pathlib.Path(__file__).parent.parent.resolve() / "secp256k1"
+        self.include_dir = self.wd / "include"
+        self.headers = [
+            "secp256k1.h",
+            "secp256k1_extrakeys.h",
+            "secp256k1_schnorrsig.h",
+        ]
+        self.library_dirs = [self.wd / ".libs"]
+        self.libraries = ["secp256k1"]
+        super().__init__()
 
-    # add source for safe callback
-    with open(secp256k1_dir / "src" / "secp256k1.c", "a") as f:
-        f.write(
+    def clean(self) -> None:
+        subprocess.call(["git", "reset", "--hard"], cwd=self.wd)  # nosec B603 B607
+        subprocess.call(["git", "clean", "-fxd"], cwd=self.wd)  # nosec B603 B607
+        clean_libs = False
+        for libs_dir in self.library_dirs:
+            if libs_dir.exists():
+                clean_libs = True
+        if clean_libs:
+            subprocess.call(["make", "clean"], cwd=self.wd)  # nosec B603 B607
+        for pattern in self.clean_patterns:
+            for file in glob.glob(pattern):
+                os.remove(file)
+
+    def build_c(self) -> None:
+        subprocess.call(["bash", "autogen.sh"], cwd=self.wd)  # nosec B603 B607
+        with open(self.wd / "Makefile.am", "a") as f:
+            f.write("\nLDFLAGS = -no-undefined\n")
+        command = [
+            "bash",
+            "configure",
+            "--disable-tests",
+            "--disable-benchmark",
+            "--enable-experimental",
+            "--enable-module-schnorrsig",
+            "--enable-external-default-callbacks",
+            "--with-pic",
+        ]
+        if cross_compile:
+            command.append("--host=x86_64-w64-mingw32")
+        elif static:
+            command.append("--disable-shared")
+        subprocess.call(command, cwd=self.wd)  # nosec B603
+
+        # add source for safe callback
+        with open(self.wd / "src" / "secp256k1.c", "a") as f:
+            f.write(
+                """
+            void secp256k1_default_illegal_callback_fn(const char* str, void* data) {
+            }
+            void secp256k1_default_error_callback_fn(const char* str, void* data) {
+            }
             """
-        void secp256k1_default_illegal_callback_fn(const char* str, void* data) {
-        }
-        void secp256k1_default_error_callback_fn(const char* str, void* data) {
-        }
-        """
-        )
+            )
 
-    subprocess.call(["make"], cwd=secp256k1_dir)  # nosec B603 B607
-    subprocess.call(["git", "reset", "--hard"], cwd=secp256k1_dir)  # nosec B603 B607
+        subprocess.call(["make"], cwd=self.wd)  # nosec B603 B607
+        subprocess.call(["git", "reset", "--hard"], cwd=self.wd)  # nosec B603 B607
 
+    def generate_def(self):
+        ffi_header = ""
+        for h in self.headers:
+            location = self.include_dir / h
+            with open(location) as f:
+                ffi_header += f.read() + "\n"
 
-def generate_def():
-    ffi_header = ""
-    for h in headers:
-        location = secp256k1_dir / "include" / h
-        with open(location) as f:
-            ffi_header += f.read() + "\n"
+        ffi_header = re.sub(r"#include .*", "", ffi_header)
 
-    ffi_header = re.sub(r"#include .*", "", ffi_header)
-
-    command = "gcc -P -E -D SECP256K1_BUILD  -".split()
-    with Popen(command, stdin=PIPE, stdout=PIPE) as p:  # nosec B603
-        definitions = p.communicate(input=ffi_header.encode())[0].decode()
-        definitions = definitions.replace(
-            '__attribute__ ((visibility ("default")))', ""
-        )
-        definitions = definitions.replace(
-            "__attribute__ ((__warn_unused_result__))", ""
-        )
-        definitions = definitions.replace("\r", "\n")
-    return ffi_header, definitions
+        command = "gcc -P -E -D SECP256K1_BUILD  -".split()
+        with Popen(command, stdin=PIPE, stdout=PIPE) as p:  # nosec B603
+            definitions = p.communicate(input=ffi_header.encode())[0].decode()
+            definitions = definitions.replace(
+                '__attribute__ ((visibility ("default")))', ""
+            )
+            definitions = definitions.replace(
+                "__attribute__ ((__warn_unused_result__))", ""
+            )
+            definitions = definitions.replace("\r", "\n")
+        return ffi_header, definitions
 
 
-def create_cffi():
-    # on Windows we assume the library is already present
-    # cross-compile from a linux host
-    build_c()
-    ffi = cffi.FFI()
-    ffi_header, definitions = generate_def()
-    if not static or cross_compile:
-        ffi_header = None
-    ffi.cdef(definitions)
-    ffi.set_source(
-        filename,
-        ffi_header,
-        libraries=libraries,
-        library_dirs=library_dirs,
-    )
-    return ffi
-
-
-def compile_cffi(ffi):
-    ffi.compile(verbose=True)
-    if static:
-        return
-    for file in libs_dir.iterdir():
-        if file.suffix not in [".dll", ".so", ".dylib"]:
-            continue
-        shutil.copy(file, pathlib.Path(".") / file.name)
-        break
-
-
-clean()
+ffi_ext = Secp256k1CFFIExtension()
 
 if __name__ == "__main__":
-    ffi = create_cffi()
-    compile_cffi(ffi)
+    ffi_ext.create_cffi(pathlib.Path("."))

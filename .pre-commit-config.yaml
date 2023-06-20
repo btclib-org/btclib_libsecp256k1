@@ -28,7 +28,7 @@ repos:
       # - id: name-tests-test
       - id: check-toml
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.7.1
+    rev: v0.8.1
     hooks:
       - id: markdownlint-cli2-fix
         name: markdownlint-cli2-fix (in place fixes)
@@ -39,7 +39,7 @@ repos:
         args: [--notice=COPYRIGHT]
         files: python
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.7.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
@@ -67,7 +67,7 @@ repos:
     hooks:
       - id: pydocstringformatter
   - repo: https://github.com/asottile/yesqa
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: yesqa
   - repo: https://github.com/psf/black

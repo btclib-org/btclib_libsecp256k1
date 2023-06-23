@@ -16,8 +16,9 @@ import shutil
 # [B404:blacklist] Consider possible security implications associated with the subprocess module.
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
-import sysconfig
+import sys
 from subprocess import PIPE, Popen  # nosec B404
+from sysconfig import get_config_var, get_path
 
 import cffi
 
@@ -35,17 +36,6 @@ class FFIExtension:
     def __init__(self):
         self.clean()
         self.platform = os.environ.get("CFFI_PLATFORM", platform.system())
-
-    @property
-    def compiled_extension(self):
-        if self.platform == "Windows":
-            return ".pyd"
-        elif self.platform == "Darwin":
-            return ".so"
-        elif self.platform == "Linux":
-            return ".so"
-        else:
-            raise Exception
 
     @property
     def shared_library_extension(self):
@@ -83,31 +73,32 @@ class FFIExtension:
         if self.static:
             c_filename = str(self.name) + ".c"
             o_filename = str(self.name) + ".o"
-            so_filename = str(self.name) + f".{sysconfig.get_config_var('SOABI')}"
-            so_filename += self.compiled_extension
+            so_filename = str(self.name) + get_config_var("EXT_SUFFIX")
             c_path = build_dir / c_filename
             so_path = build_dir / so_filename
 
             ffi.emit_c_code(str(c_path))
             compile_command = [
-                "gcc",
-                f"-I{sysconfig.get_path('include')}",
-                f"-I{sysconfig.get_path('platinclude')}",
-                "-fPIC",
+                *get_config_var("CC").split(),
+                f"-I{get_path('include')}",
+                f"-I{get_path('platinclude')}",
+                get_config_var("CCSHARED"),
                 "-c",
                 str(c_filename),
                 "-o",
                 str(o_filename),
             ]
             link_command = [
-                "gcc",
-                "-shared",
+                get_config_var("LDSHARED").split()[0],
                 str(o_filename),
+                *get_config_var("LDSHARED").split()[1:],
                 *[f"-L{libs_dir}" for libs_dir in self.library_dirs],
                 *[f"-l{lib}" for lib in self.libraries],
                 "-o",
                 str(so_filename),
             ]
+            print(compile_command)
+            print(link_command)
             subprocess.call(compile_command, cwd=build_dir)  # nosec B603 B607
             subprocess.call(link_command, cwd=build_dir)  # nosec B603 B607
             artifacts.append(so_path)
@@ -140,7 +131,7 @@ class FFIExtension:
 class Secp256k1CFFIExtension(FFIExtension):
     def __init__(self):
         self.name = "_btclib_libsecp256k1"
-        self.static = static or cross_compile
+        self.static = static and not cross_compile
         self.clean_patterns = [
             "_btclib_libsecp256k1.*",
             "btclib_libsecp256k1/libsecp256k1.*",

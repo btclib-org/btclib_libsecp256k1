@@ -90,7 +90,7 @@ jobs:
       - name: Build wheel
         run: |
           pip install --upgrade pip build wheel delocate
-          BTCLIB_LIBSECP256K1_DYNAMIC=true HATCH_CFFI_PLATFORM=Darwin python -m build -w
+          BTCLIB_LIBSECP256K1_DYNAMIC=true CFFI_PLATFORM=Darwin python -m build -w
           delocate-wheel -w wheelhouse dist/*
 
       - uses: actions/upload-artifact@v3
@@ -119,7 +119,7 @@ jobs:
       - name: Build Windows wheel
         run: |
           pip install --upgrade pip build wheel
-          BTCLIB_LIBSECP256K1_CROSS_COMPILE=true HATCH_CFFI_PLATFORM=Windows python -m build -w
+          BTCLIB_LIBSECP256K1_CROSS_COMPILE=true CFFI_PLATFORM=Windows python -m build -w
 
       - uses: actions/upload-artifact@v3
         with:

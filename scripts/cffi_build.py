@@ -16,7 +16,6 @@ import shutil
 # [B404:blacklist] Consider possible security implications associated with the subprocess module.
 # https://bandit.readthedocs.io/en/1.7.4/blacklists/blacklist_imports.html#b404-import-subprocess
 import subprocess  # nosec B404
-import sys
 from subprocess import PIPE, Popen  # nosec B404
 from sysconfig import get_config_var, get_path
 
@@ -97,8 +96,7 @@ class FFIExtension:
                 "-o",
                 str(so_filename),
             ]
-            print(compile_command)
-            print(link_command)
+
             subprocess.call(compile_command, cwd=build_dir)  # nosec B603 B607
             subprocess.call(link_command, cwd=build_dir)  # nosec B603 B607
             artifacts.append(so_path)

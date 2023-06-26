@@ -23,12 +23,11 @@ repos:
       - id: check-vcs-permalinks
       - id: detect-private-key
       - id: debug-statements
-      - id: requirements-txt-fixer
       - id: check-docstring-first
       # - id: name-tests-test
       - id: check-toml
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.7.1
+    rev: v0.8.1
     hooks:
       - id: markdownlint-cli2-fix
         name: markdownlint-cli2-fix (in place fixes)
@@ -39,13 +38,13 @@ repos:
         args: [--notice=COPYRIGHT]
         files: python
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.7.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
         # exclude: *fixtures
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.1.1
+    rev: v2.2.0
     hooks:
       - id: autoflake
         args:
@@ -67,7 +66,7 @@ repos:
     hooks:
       - id: pydocstringformatter
   - repo: https://github.com/asottile/yesqa
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: yesqa
   - repo: https://github.com/psf/black
@@ -85,6 +84,7 @@ repos:
     rev: 6.0.0
     hooks:
       - id: flake8
+        additional_dependencies: [Flake8-pyproject]
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
     hooks:
@@ -92,7 +92,7 @@ repos:
         # disable B101 (Test for use of assert)
         args: ["-s", "B101"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
+    rev: v1.4.1
     hooks:
       - id: mypy
   - repo: https://github.com/regebro/pyroma

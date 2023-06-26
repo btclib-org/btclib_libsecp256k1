@@ -107,7 +107,6 @@ class FFIExtension:
             ffi.emit_python_code(str(py_path))
             artifacts.append(py_path)
             for lib in self.libraries:
-                found = False
                 for libs_dir in self.library_dirs:
                     pattern = f"lib{lib}*{self.shared_library_extension}*"
                     for file in pathlib.Path(libs_dir).glob(pattern):
@@ -115,7 +114,6 @@ class FFIExtension:
                             continue
                         shutil.copy(file, build_dir / file.name)
                         artifacts.append(build_dir / file.name)
-                        found = True
         return ffi, artifacts
 
 

@@ -15,8 +15,7 @@ class CustomBuildHook(BuildHookInterface):
         # Issue: [B102:exec_used] Use of exec detected.
         # https://bandit.readthedocs.io/en/1.7.4/plugins/b102_exec_used.html
 
-        with open(Path(script)) as f:
-            src = f.read()
+        src = Path(script).read_text()
         code = compile(src, script, "exec")
         build_vars = {"__name__": "__cffi__", "__file__": script}
         exec(code, build_vars, build_vars)  # nosec B102
@@ -49,8 +48,8 @@ class CustomBuildHook(BuildHookInterface):
 
             if ffi._assigned_source[1]:  # static
                 if not static:
-                    pass
-                    # print warning, both dynamic and static extensions
+                    msg = "Warning: this wheel contains both dynamic and static extensions"
+                    print(msg)
             else:  # dynamic
                 static = False
 
@@ -67,4 +66,4 @@ class CustomBuildHook(BuildHookInterface):
             }
             os_tag = os_tag_dict[self.platform]
             # TODO: get os_tag from os variable if present
-            build_data["tag"] = "py3-none-" + os_tag
+            build_data["tag"] = f"py3-none-{os_tag}"

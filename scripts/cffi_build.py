@@ -70,8 +70,8 @@ class FFIExtension:
         artifacts = []
 
         if self.static:
-            c_filename = str(self.name) + ".c"
-            o_filename = str(self.name) + ".o"
+            c_filename = f"{str(self.name)}.c"
+            o_filename = f"{str(self.name)}.o"
             so_filename = str(self.name) + get_config_var("EXT_SUFFIX")
             c_path = build_dir / c_filename
             so_path = build_dir / so_filename
@@ -101,7 +101,7 @@ class FFIExtension:
             subprocess.call(link_command, cwd=build_dir)  # nosec B603 B607
             artifacts.append(so_path)
         else:
-            py_filename = str(self.name) + ".py"
+            py_filename = f"{str(self.name)}.py"
             py_path = build_dir / py_filename
 
             ffi.emit_python_code(str(py_path))
@@ -109,19 +109,20 @@ class FFIExtension:
             for lib in self.libraries:
                 found = False
                 for libs_dir in self.library_dirs:
-                    pattern = f"lib{lib}*{self.shared_library_extension}*"
+                    pattern = f"lib{lib}*{self.shared_library_extension}"
                     for file in pathlib.Path(libs_dir).glob(pattern):
-                        if file.is_symlink():
+                        if not file.is_file():
+                            continue
+                        if len(file.suffixes) > 1:
                             continue
                         if found:
-                            # error: multiple shared libraries?
-                            pass
+                            msg = f"multiple shared objects found for library: {lib}"
+                            raise Exception(msg)
                         shutil.copy(file, build_dir / file.name)
                         artifacts.append(build_dir / file.name)
                         found = True
                     if not found:
-                        # error: no shared library?
-                        pass
+                        raise Exception(f"no shared object found for library: {lib}")
 
         return ffi, artifacts
 

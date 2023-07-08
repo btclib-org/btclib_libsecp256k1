@@ -6,8 +6,6 @@ env:
   CIBW_BEFORE_BUILD_MACOS: "bash {project}/.github/scripts/install-macos-deps.sh"
 
 jobs:
-
-
   build-cibuildwheel:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -34,7 +32,6 @@ jobs:
         with:
           name: static-wheels
           path: ./wheelhouse/*
-
 
   build-dynamic-linux:
     name: Build dynamic wheel on linux
@@ -69,7 +66,6 @@ jobs:
           name: sdist
           path: ./wheelhouse/*.tar.gz
 
-
   build-dynamic-macos:
     name: Build dynamic wheel on Macos
     runs-on: macos-11
@@ -98,7 +94,6 @@ jobs:
           name: dynamic-wheels
           path: ./wheelhouse/*
 
-
   build-windows:
     name: "Build on Linux for Windows"
     runs-on: ubuntu-latest
@@ -126,7 +121,6 @@ jobs:
           name: dynamic-wheels
           path: dist/*
 
-
   test-dynamic:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
@@ -134,7 +128,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7", "pypy-3.8", "pypy-3.9"]
+        python-version:
+          ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.9", "pypy-3.10"]
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
       OS_NAME: ${{ matrix.os }}
@@ -169,7 +164,6 @@ jobs:
       - name: Test
         run: pytest
 
-
   test-static:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
@@ -177,7 +171,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7", "pypy-3.8", "pypy-3.9"]
+        python-version:
+          ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.9", "pypy-3.10"]
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
       OS_NAME: ${{ matrix.os }}

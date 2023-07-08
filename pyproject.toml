@@ -93,25 +93,6 @@ extension-pkg-whitelist="_btclib_libsecp256k1"
 min-similarity-lines=6
 disable = ["duplicate-code"]  # R0801
 
-[tool.flake8]
-max-line-length = 130
-exclude = [
-  ".git",
-  "__pycache__",
-  "build",
-  "dist",
-  "*egg",
-  ".nox",
-  "secp256k1",
-]
-select = ["C", "E", "F", "W", "B"]
-# # E203 and W503 are not PEP 8 compliant
-ignore = ["E203", "W503"]
-# # emit a warning for high McCabe complexity
-# # See https://en.wikipedia.org/wiki/Cyclomatic_complexity
-max-complexity = 10
-per-file-ignores = "__init__.py:F401"
-
 [tool.pytest.ini_options]
 python_files = "test*.py"
 python_functions = "test*"

@@ -168,6 +168,7 @@ class Secp256k1CFFIExtension(FFIExtension):
             "bash",
             "configure",
             "--disable-tests",
+            "--disable-exhaustive-tests",
             "--disable-benchmark",
             "--enable-experimental",
             "--enable-module-schnorrsig",

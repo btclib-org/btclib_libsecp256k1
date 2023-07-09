@@ -36,10 +36,8 @@ To install (and/or upgrade):
 
 ## Build, test, develop, and contribute
 
-Some development tools are required to develop and test btclib_libsecp256k1;
-they can be installed with:
-
-    python -m pip install --upgrade -r requirements-dev.txt
+Disclaimer: building and testing on Windows is not currently supported;
+Windows support is achieved with cross compilation
 
 The btclib_libsecp256k1 project includes
 [libsecp256k1](https://github.com/bitcoin-core/secp256k1)
@@ -58,10 +56,17 @@ and check out the appropriate commit.
     Cloning into 'secp256k1'...
 <!-- markdownlint-enable MD013 -->
 
+The project uses [hatch](https://hatch.pypa.io/latest/) as a project manager.
+
+Some additional tools are required to develop and test btclib_libsecp256k1;
+they can be installed with:
+
+    python -m pip install -U nox cibuildwheel pre-commit
+
 To build:
 
-    python setup.py sdist
-    python setup.py bdist_wheel --py-limited-api=cp36
+    hatch build -t sdist
+    hatch build -t wheel
 
 Developers might also consider installing btclib_libsecp256k1 in editable way::
 
@@ -69,12 +74,24 @@ Developers might also consider installing btclib_libsecp256k1 in editable way::
 
 To test:
 
-    pytest
+    hatch -e test run pytest
 
 To measure the code coverage provided by tests:
 
-    pytest --cov-report term-missing:skip-covered --cov=btclib_libsecp256k1
+    hatch -e test run pytest --cov-report term-missing:skip-covered --cov=btclib_libsecp256k1
 
-Pre-commit hooks are provided, please check before a PR
+It is however recommended to use nox to better isolate tests
 
-    pre-commit run --all-files
+    nox -s tests
+
+To format the code
+
+    hatch -e dev run format
+
+To run re-commit hooks
+
+    hatch -e dev run pre_commit
+
+Please run nox to check everything before a PR
+
+    nox

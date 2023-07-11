@@ -95,7 +95,3 @@ repos:
     rev: v1.4.1
     hooks:
       - id: mypy
-  - repo: https://github.com/regebro/pyroma
-    rev: "4.2"
-    hooks:
-      - id: pyroma

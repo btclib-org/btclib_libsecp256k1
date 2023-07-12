@@ -45,7 +45,7 @@ class FFIExtension:
         elif self.platform == "Linux":
             return ".so"
         else:
-            raise Exception
+            raise RuntimeError
 
     def clean(self):
         raise NotImplementedError
@@ -117,12 +117,12 @@ class FFIExtension:
                             continue
                         if found:
                             msg = f"multiple shared objects found for library: {lib}"
-                            raise Exception(msg)
+                            raise RuntimeError(msg)
                         shutil.copy(file, build_dir / file.name)
                         artifacts.append(build_dir / file.name)
                         found = True
                     if not found:
-                        raise Exception(f"no shared object found for library: {lib}")
+                        raise RuntimeError(f"no shared object found for library: {lib}")
 
         return ffi, artifacts
 
@@ -168,6 +168,7 @@ class Secp256k1CFFIExtension(FFIExtension):
             "bash",
             "configure",
             "--disable-tests",
+            "--disable-exhaustive-tests",
             "--disable-benchmark",
             "--enable-experimental",
             "--enable-module-schnorrsig",

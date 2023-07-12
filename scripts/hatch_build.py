@@ -20,7 +20,7 @@ class CustomBuildHook(BuildHookInterface):
         build_vars = {"__name__": "__cffi__", "__file__": script}
         exec(code, build_vars, build_vars)  # nosec B102
         if ext_name not in build_vars:
-            raise Exception
+            raise RuntimeError
         return build_vars[ext_name]
 
     def initialize(self, version, build_data):

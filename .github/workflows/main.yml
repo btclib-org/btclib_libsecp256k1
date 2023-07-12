@@ -6,8 +6,6 @@ env:
   CIBW_BEFORE_BUILD_MACOS: "bash {project}/.github/scripts/install-macos-deps.sh"
 
 jobs:
-
-
   build-cibuildwheel:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -27,14 +25,13 @@ jobs:
 
       - name: Build wheels
         run: |
-          pip install --upgrade pip build cibuildwheel
+          python -m pip install -U pip build cibuildwheel
           cibuildwheel
 
       - uses: actions/upload-artifact@v3
         with:
           name: static-wheels
           path: ./wheelhouse/*
-
 
   build-dynamic-linux:
     name: Build dynamic wheel on linux
@@ -52,7 +49,7 @@ jobs:
 
       - name: Build wheel
         run: |
-          pip install --upgrade pip build wheel auditwheel
+          python -m pip install -U pip build wheel auditwheel
           BTCLIB_LIBSECP256K1_DYNAMIC=true python -m build -w
           auditwheel repair dist/*
 
@@ -68,7 +65,6 @@ jobs:
         with:
           name: sdist
           path: ./wheelhouse/*.tar.gz
-
 
   build-dynamic-macos:
     name: Build dynamic wheel on Macos
@@ -89,7 +85,7 @@ jobs:
 
       - name: Build wheel
         run: |
-          pip install --upgrade pip build wheel delocate
+          python -m pip install -U pip build wheel delocate
           BTCLIB_LIBSECP256K1_DYNAMIC=true CFFI_PLATFORM=Darwin python -m build -w
           delocate-wheel -w wheelhouse dist/*
 
@@ -97,7 +93,6 @@ jobs:
         with:
           name: dynamic-wheels
           path: ./wheelhouse/*
-
 
   build-windows:
     name: "Build on Linux for Windows"
@@ -118,14 +113,13 @@ jobs:
 
       - name: Build Windows wheel
         run: |
-          pip install --upgrade pip build wheel
+          python -m pip install -U pip build wheel
           BTCLIB_LIBSECP256K1_CROSS_COMPILE=true CFFI_PLATFORM=Windows python -m build -w
 
       - uses: actions/upload-artifact@v3
         with:
           name: dynamic-wheels
           path: dist/*
-
 
   test-dynamic:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
@@ -134,7 +128,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7", "pypy-3.8", "pypy-3.9"]
+        python-version:
+          ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.8", "pypy-3.9"]
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
       OS_NAME: ${{ matrix.os }}
@@ -149,7 +144,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Upgrade Python packaging tools
-        run: pip install --upgrade pip pytest
+        run: python -m pip install -U pip pytest
 
       - name: Show runner information
         run: |
@@ -169,7 +164,6 @@ jobs:
       - name: Test
         run: pytest
 
-
   test-static:
     name: "Test ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
@@ -177,7 +171,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7", "pypy-3.8", "pypy-3.9"]
+        python-version:
+          ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.9", "pypy-3.10"]
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
       OS_NAME: ${{ matrix.os }}
@@ -192,7 +187,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Upgrade Python packaging tools
-        run: pip install --upgrade pip pytest
+        run: python -m pip install -U pip pytest
 
       - name: Show runner information
         run: |

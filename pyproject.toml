@@ -1,6 +1,6 @@
 [project]
 name="btclib_libsecp256k1"
-version="0.3.0"
+version="0.4.0"
 description="Simple python bindings to libsecp256k1"
 readme = "README.md"
 license = {text = "MIT"}

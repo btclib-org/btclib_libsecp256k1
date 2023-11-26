@@ -2,9 +2,17 @@
 
 Notable changes to the codebase are documented here.
 
-## v0.4.0 (unreleased)
+## v0.5.0 (unreleased)
 
 Major changes include:
+
+## v0.4.0
+
+Major changes include:
+
+- Wrapped
+  [libsecp256k1 0.4.0](https://github.com/bitcoin-core/secp256k1/releases/tag/v0.4.0)
+  (199d27c)
 
 ## v0.3.0
 

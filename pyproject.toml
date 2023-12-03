@@ -1,6 +1,6 @@
 [project]
 name="btclib_libsecp256k1"
-version="0.3.0"
+version="0.4.0"
 description="Simple python bindings to libsecp256k1"
 readme = "README.md"
 license = {text = "MIT"}
@@ -41,7 +41,7 @@ issues = "https://github.com/btclib-org/btclib_libsecp256k1/issues"
 pull_requests = "https://github.com/btclib-org/btclib_libsecp256k1/pulls"
 
 [build-system]
-requires = ["hatchling", "cffi>=1.0.0"]
+requires = ["hatchling", "cffi>=1.0.0", 'setuptools; python_version>="3.12"']
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel.hooks.custom]

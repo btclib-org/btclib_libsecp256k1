@@ -7,7 +7,7 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -27,7 +27,7 @@ repos:
       # - id: name-tests-test
       - id: check-toml
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.8.1
+    rev: v0.11.0
     hooks:
       - id: markdownlint-cli2-fix
         name: markdownlint-cli2-fix (in place fixes)
@@ -38,13 +38,13 @@ repos:
         args: [--notice=COPYRIGHT]
         files: python
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
         # exclude: *fixtures
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.0
+    rev: v2.2.1
     hooks:
       - id: autoflake
         args:
@@ -81,7 +81,7 @@ repos:
         # https://pre-commit.com/#top_level-default_language_version
         # language_version: python3.11
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies: [Flake8-pyproject]
@@ -92,6 +92,6 @@ repos:
         # disable B101 (Test for use of assert)
         args: ["-s", "B101"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
+    rev: v1.7.1
     hooks:
       - id: mypy

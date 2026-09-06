@@ -5521,6 +5521,57 @@ release-notes length in the first place, and are still in
   `git check-ignore -v --no-index -- envtest/` now exits 1 where it
   named the removed line.
 
+### `zkp/ecdsa_s2c.py`'s docstring names its anti-exfil calls, not their count
+
+- **The anti-exfil paragraph names `anti_exfil_host_commit`,
+  `anti_exfil_signer_commit`, `anti_exfil_sign` and
+  `anti_exfil_host_verify` instead of stating a total** (closes #747).
+  Section 9 of the organization standard refuses a stated total in
+  prose that lands: a fifth `anti_exfil_*` wrapper would have made the
+  sentence's "four" false with nothing failing when the line was not
+  edited. Both mentions in the docstring -- "the four `anti_exfil_*`
+  functions" and "the four calls" -- now name the functions instead, and
+  the reasoning either gives, the commit-reveal protocol the header's
+  own docstring lays out and the host's own reveal needing none of them,
+  is untouched.
+
+### `xonly.py`'s buffer-type comment names the sites its four-sites sentence covers
+
+- **"Those four sites are spelled this way regardless" now names
+  `ellswift.create`, `ellswift._encode_`, `ssa._sign32` and
+  `ssa._sign_custom`** (closes #748). Those four are the calls where
+  hoisting the buffer type saves nothing the session's own measurement
+  resolves; `CHANGELOG.md`'s own record of that session already says so
+  in the same words -- "Four of the eight save nothing the measurement
+  can resolve, and are spelled that way regardless" -- naming the two
+  `ellswift` calls and the two `ssa` calls this sentence means, from the
+  same session as the five modules' own figures, `CHANGELOG.md`'s own
+  block for it closing on "Every figure in the comments of `dsa.py`,
+  `recovery.py`, `hashes.py`, `ellswift.py`, `ssa.py` and the last
+  paragraph of `xonly.py`'s is from this session." Left as a bare
+  "four", the sentence agreed with neither the five modules named
+  earlier in the same comment nor their three-plus-two split, both of
+  which name modules rather than the four calls this sentence is about.
+
+### `bytes_like_test.py`'s sweep docstring justifies itself in the present tense
+
+- **The sweep's docstring says a selective sweep would miss
+  `keys.prvkey_negate` and `silentpayments._create_outputs_`, and that
+  each copies the scalar into a buffer of its own rather than reading
+  the caller's memory directly** (closes #751), dropping the past-tense
+  verdict "the two that were wrong were" and, with it, "each refusing
+  one cdecl and taking the other" -- true of neither site once its
+  anchor was gone, since `_secret.scalar_buffer`, which both call,
+  copies with `ffi.memmove` precisely so that it does not refuse a
+  caller's buffer, its own docstring giving that as the reason it is
+  not spelled `ffi.new(cdecl, ...)`. The verdict was on a revision of
+  this package the tree no longer holds, and a reader had nothing to
+  check it against. The reason neither site is visible from outside the
+  sweep is checkable in the present tense and needs no tracker pointer:
+  `keys.prvkey_negate` is reached only through `ssa.nonce_bip340`, for
+  half of all keys, and `silentpayments._create_outputs_` builds its
+  scalar buffers inside a generator expression.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

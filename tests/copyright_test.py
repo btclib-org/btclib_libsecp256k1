@@ -6,10 +6,11 @@
 
 btclib's own LICENSE named "Ferdinando M. Ametrano and btclib
 contributors" for years after the rest of that project had moved to "The
-btclib developers", with nothing comparing the two (btclib#389). LICENSE
-here named "Giacomo Caironi" the same way, against this project's own
-COPYRIGHT and `authors` already saying "The btclib developers" -- caught
-by hand, not by a check, which is what this one is.
+btclib developers", with nothing comparing the two
+(btclib-org/btclib#389). LICENSE here named "Giacomo Caironi" the same
+way, against this project's own COPYRIGHT and `authors` already saying
+"The btclib developers" -- caught by hand, not by a check, which is what
+this one is.
 
 `[tool.ruff.lint.flake8-copyright]`'s `notice-rgx` is COPYRIGHT's text
 transcribed by hand as a regex, and the CPY hook it configures checks

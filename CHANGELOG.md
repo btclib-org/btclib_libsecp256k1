@@ -5792,6 +5792,32 @@ release-notes length in the first place, and are still in
   search reading the citation's own line, which is the shape that leaves
   such a reference unmeasured.
 
+### A local hook catches a submodule exclude entry check-sdist cannot
+
+- **`.pre-commit-config.yaml` gains `sdist-exclude-tracked`, matching
+  `[tool.hatch.build.targets.sdist]`'s exclude list against the tracked
+  files living inside a submodule and failing on a nonempty
+  intersection** (closes #655). check-sdist's own hatchling plugin
+  subtracts that same list from what it reports missing, unconditionally
+  and regardless of `[tool.check-sdist]`'s `mode`, so an entry that
+  widens or misnames into a submodule's tracked territory at a pin bump
+  drops a file from the sdist with every gate, this one included,
+  staying green. Measured against `check_sdist/__main__.py`'s own
+  `compare()` at v1.6.0: `mode = "all"`, one of the two other answers
+  the issue named and did not choose between, does not gate that
+  subtraction either, so it does not fix this. The new hook is scoped to
+  submodule-tracked files rather than every tracked one because
+  `/COPYRIGHT` is excluded from the sdist on purpose and is tracked too,
+  so an unscoped match catches it; what that scope leaves uncaught is
+  the wrong entry naming one of this repository's own tracked files
+  (issue #770). The array is read by a line-based walk, `tomllib` being
+  3.11 and the floor 3.10, and the walk refuses a shape outside this
+  table's own convention rather than answering with the different
+  pattern set it would otherwise assemble. `pathspec`, which the check
+  matches with, joins the `test` dependency group: `tests/` imports the
+  script at module scope, and an import it cannot satisfy there is a
+  collection error rather than a skipped test.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

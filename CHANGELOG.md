@@ -22,6 +22,19 @@ release-notes length in the first place, and are still in
 
 ## v0.8.0.6 (work in progress, not released yet)
 
+### `release.yml`'s caller-permissions comment names the scope it is about
+
+- **The comment above the `test` job's `permissions:` block says what
+  omitting `contents` from the caller's list would do rather than what
+  omitting any scope would do** (closes btclib-org/.github#896):
+  `metadata` is where the wider reading fails, `actionlint` refusing it
+  as a scope a `permissions:` block may name while `test.yml`'s
+  `changes` job, reached through that call, logs `Metadata: read` all
+  the same. The issue asks one wording of every tree carrying the
+  sentence: the clause here is word-identical to `btclib`'s, landed
+  there as `8cba6dd7`, the two files wrapping the comment at different
+  points.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

@@ -6343,6 +6343,23 @@ release-notes length in the first place, and are still in
   them, are the comparison the sentence is: it has no content without
   them.
 
+### The entry on the empty-table docstring no longer waits on another tree
+
+- **This entry supersedes *`conventions_test.py`'s empty-table docstring
+  says what still fails*'s closing clause, that other repositories carry
+  a copy of the module with the same sentence so btclib-org/.github#904
+  stays open** (closes #810). That issue is closed, and each copy it
+  named carries the replacement wording: the module sits under `tests/`
+  in `btclib` and in `bitcoin-core-rpc`, and under `tests/unit/` in
+  `btclib-node`, whose own commit subject cites
+  `closes btclib-org/.github#904`. The path is worth writing down
+  because a sweep that assumes one reads the last of those as an
+  absence, which is what it looks like when the file is somewhere else.
+- **What the superseded entry is about stands.** The docstring here
+  still says what an unmatched table leaves failing, and the assertions
+  parametrized on the rows are still skipped for an empty parameter set.
+  Only the clause about what the other trees were waiting for is spent.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

@@ -79,9 +79,9 @@ on:
     # trigger's own run computes, so the closed run landed in *that*
     # group instead and would cancel the run testing the actual merge
     # commit -- observed doing exactly that to bitcoin-core-rpc's own
-    # main, after its #136 merged there. The concurrency block below
-    # groups by the pull request's own number instead, immune to that
-    # collision under any action
+    # main, after btclib-org/bitcoin-core-rpc#136 merged there. The
+    # concurrency block below groups by the pull request's own number
+    # instead, immune to that collision under any action
     types: [opened, reopened, synchronize, ready_for_review, closed]
   # allows the release workflow to reuse the whole build/test pipeline
   workflow_call:

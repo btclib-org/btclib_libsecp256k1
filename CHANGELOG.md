@@ -5893,6 +5893,46 @@ release-notes length in the first place, and are still in
   and stands as written: what this adds is the answer for the one buffer
   that `finally` does not reach.
 
+### The sdist exclude check answers about every tracked file
+
+- **`.github/scripts/check_sdist_exclude.py` matches
+  `[tool.hatch.build.targets.sdist]`'s exclude list against every file
+  `git ls-files --cached --recurse-submodules` answers, and fails on a
+  match its own `_DELIBERATE` tuple does not name** (closes #770). An
+  entry naming one of this repository's own tracked files drops that
+  file from the sdist with check-sdist blind to it exactly as an entry
+  naming a submodule's does, and those files are the ones written and
+  edited here. `pyproject.toml`'s own comment on `/_btclib_secp256k1.*`
+  names the case: unanchored, that pattern also matches the tracked
+  `stubs/_btclib_secp256k1.pyi` the strict mypy gate needs, and the
+  check fails on that spelling.
+- **`_DELIBERATE` names `COPYRIGHT`, and a member of it the exclude list
+  matches no tracked file for fails the check too.** That is what the
+  wider scope costs and how the cost is paid: an exemption is declared
+  rather than inferred from where a file sits, and it cannot part from
+  the entry it exempts without the hook saying so. The entry above under
+  *A local hook catches a submodule exclude entry check-sdist cannot*
+  describes the narrower scope, which this replaces; the hook it added is
+  this one.
+
+### Every hook pin `uv.lock` resolves is read against it
+
+- **`tests/hook_pins_test.py` reads the `additional_dependencies` of
+  every hook in `.pre-commit-config.yaml`, in both shapes a value is
+  written in, and asserts each `name==version` against `uv.lock`
+  wherever the lock resolves that package** (closes #779). The procedure
+  the module turns into a red test -- a pin moved by hand, with the lint
+  and test groups of the lock -- is not about mypy, and the
+  `sdist-exclude-tracked` hook's own `pathspec` pin, written in the
+  inline form on the key's line, is one the lock resolves. A pin the
+  lock does not resolve is left alone: `shellcheck-py` and `typos` are
+  tools installed for one hook each and declared by no dependency group,
+  so the pin is the only declaration there is.
+- **The mypy hook's pins keep the stronger reading, each having to be a
+  package the lock resolves at all.** They are what the checked files
+  import and the project installs, so a name the lock does not answer
+  for is a mistake there rather than a tool of the hook's own.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

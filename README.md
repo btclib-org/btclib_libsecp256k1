@@ -121,8 +121,9 @@ same reason the paragraph above gives for its own link. -->
 secp256k1-zkp (btclib-org/btclib-secp256k1#603) is vendored beside
 secp256k1, not in place of it, and carries no release of its own to
 track: it is pinned at
-[10366dbb](https://github.com/BlockstreamResearch/secp256k1-zkp/commit/10366dbbbfeb11457f2aae3b23e154ab7d6a1fe4),
-the tip of its `master` when #603 decided to vendor it. The published
+[037cc6d7](https://github.com/BlockstreamResearch/secp256k1-zkp/commit/037cc6d74cbb4a89e443117459b577d56a582e54),
+the commit merging BlockstreamResearch/secp256k1-zkp#368, that fork's
+sync of a batch of upstream secp256k1 pull requests. The published
 wheels do not build against it; #605 is what reads this submodule at
 all. A re-pin is a pull request of its own, reviewing the delta against
 the commit named here.
@@ -1158,8 +1159,10 @@ shared context and raising what it reported, and a wrapper module per
 secp256k1-zkp module wrapped. Which those are is
 [the API documentation](https://btclib-secp256k1.readthedocs.io) rather
 than a list here, that set growing a module at a time.
-`silentpayments` runs the other way: secp256k1-zkp has no such module at
-the commit Versioning names, so BIP352 is mainline's alone.
+`silentpayments` runs the other way: secp256k1-zkp's own copy of that
+module is mainline's, blob for blob at the two commits *Versioning*
+names, so the flagged extension declares none of it and BIP352 is
+reached through `btclib_secp256k1.silentpayments` alone.
 
 ## Thread safety
 

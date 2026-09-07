@@ -84,9 +84,10 @@ configure line requests each module the built extension wraps
 explicitly, rather than relying on upstream defaults, which are not part
 of upstream's API and which leave `recovery` off in both submodules --
 `ecdh`, `recovery`, `extrakeys`, `schnorrsig`, `musig`, `ellswift`,
-`silentpayments` for the primary extension, and every module
-secp256k1-zkp itself defines for the flagged one, secp256k1-zkp having no
-`silentpayments` at the pinned commit. One option is named for a
+`silentpayments` for the primary extension, and, for the flagged one,
+every module secp256k1-zkp defines but `silentpayments`, which
+upstream's own default turns on unasked
+(btclib-org/btclib-secp256k1#792). One option is named for a
 different reason: `SECP256K1_VALGRIND` is pinned `OFF` because its
 default answers with the build machine rather than with a value —
 `AUTO` is `find_package(Valgrind)`, so a runner that happens to have the

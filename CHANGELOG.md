@@ -6071,6 +6071,52 @@ release-notes length in the first place, and are still in
   puts `pathspec` in is one environment of three, which is what let the
   consequence it names happen in the other two.
 
+### The vendored secp256k1-zkp is pinned past the 0.8.0 sync
+
+- **The `secp256k1-zkp` submodule is pinned at the commit merging
+  `BlockstreamResearch/secp256k1-zkp#368`** (closes #777), the sync of
+  upstream secp256k1 pull requests that gives the fork a
+  `silentpayments` module. The pin it moves from is that merge's own
+  first parent, so the whole delta is that one sync, and Dependabot
+  tracks that fork's default branch: leaving the pin behind it means the
+  move arrives as a pull request nobody framed. `README.md`'s
+  *Versioning* section names the new commit, which is what
+  `.github/scripts/check_submodule_pin.py` compares the gitlink against.
+- **The flagged extension's header list gains no `silentpayments`
+  entry, so cffi declares none of that module's entry points.** The
+  module itself is compiled and linked, its own CMake option defaulting
+  `ON` upstream and no flag here turning it off, which `nm` over the
+  built extension confirms: what the header list decides is
+  reachability from Python, not whether the C is there.
+  Leaving it unreachable is what the fork's copy being mainline's blob
+  for blob argues for -- `git ls-tree -r` over the module's source
+  directory in each submodule and `diff` over
+  `include/secp256k1_silentpayments.h` answer that -- since
+  `btclib_secp256k1.silentpayments` already wraps that same source.
+  `scripts/cffi_build.py`'s `Secp256k1ZkpCFFIExtension` and `README.md`
+  carry the reason. *`README.md` and `SECURITY.md` say which vendored
+  library answered* above says the fork has no such module at the
+  pinned commit, and this entry supersedes that clause; what follows it
+  there stands on the ground this bullet gives instead, BIP352 being
+  mainline's because the fork's copy is mainline's rather than because
+  the fork has none. *The zkp docstrings and the workflow comments name
+  what they cite* says `scripts/cffi_build.py` states the pin as the
+  base that sync merges onto, and that issue #777 asks whether the pin
+  moves past it; this entry supersedes both, the docstring naming the
+  sync the pin merges and the first bullet above closing the issue.
+- **Two deprecated libsecp256k1 symbols leave the flagged build's
+  cdef**, the sync removing from the fork what mainline had already
+  removed: `secp256k1_schnorrsig_sign`, which leaves
+  `include/secp256k1_schnorrsig.h` byte-identical to the release's own,
+  and `secp256k1_context_no_precomp`. Neither is called anywhere in this
+  package. The header list's own comment names `musig` as what the
+  fork's copies declare that mainline's do not.
+- **`.github/workflows/vendored-vectors.yml` keeps Andrew Poelstra's
+  fingerprint.** He authored and signed the new pin with the key that
+  job already imports, which is what its own comment says a re-pin has
+  to be checked for; the signing date beside that comment moves with the
+  commit.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

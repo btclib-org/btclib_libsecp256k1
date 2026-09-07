@@ -314,8 +314,8 @@ jobs:
       # fails a signature made with a key whose stated expiry has since
       # passed exactly the same way it fails a forged one, and this key
       # has already been measured to be in that state -- expired
-      # 2026-07-28, and the pinned commit was signed 2026-08-19, three
-      # weeks *after* that date, on both the copy this key was imported
+      # 2026-07-28, and the pinned commit was signed 2026-09-05, weeks
+      # *after* that date, on both the copy this key was imported
       # from and GitHub's own independent copy of it. That is Andrew
       # Poelstra's own key hygiene lapsing, not a reason to doubt he
       # wrote the commit: nothing about an expired-but-not-revoked key

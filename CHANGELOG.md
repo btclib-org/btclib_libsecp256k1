@@ -5949,6 +5949,27 @@ release-notes length in the first place, and are still in
   says that `SECURITY.md` names the `silentpayments` secrets `into` does
   not reach, which is what a reader goes there for.
 
+### A hook's value is read whole or read as nothing
+
+- **`tests/hook_pins_test.py` cuts a flow sequence at the commas outside
+  its quotes, and reads the specifier set that survives as one thing:
+  the requirement pins whatever version one of its clauses names**
+  (closes #790). `name==1.2.3,!=1.2.4` is a pin at 1.2.3 and is
+  asserted against `uv.lock` like any other, where a cut at every comma
+  answers pieces that are requirements neither of them and that the
+  check for an unread value cannot tell from pieces that are.
+- **A specifier set naming no single version asks the lock nothing, and
+  that is the answer for `hatchling>=1.27,<2` and for `name==1.2.*`
+  alike.** The rejected alternative declines such a set outright and
+  makes the value red: it costs the pin in `name==1.2.3,!=1.2.4`, which
+  the file may declare and the lock can disagree with, and it reddens a
+  bounded range, which no reading of the lock is about.
+- **An item the walk cannot resolve into a requirement makes the whole
+  value nothing.** A pin carrying a yaml comment on its own line is
+  such an item, and `test_every_additional_dependencies_key_was_read`
+  fails on the nothing rather than asserting the pins beside it while
+  that one goes unread.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

@@ -41,12 +41,22 @@ it. Three shapes are narrow enough to match: a `[[package]]` table with a
 name and a version, and the two this file writes an
 `additional_dependencies` value in -- a bracketed list on the key's own
 line, and `- ` items indented under it.
+
+A value is read whole or not at all. The comma separates a flow
+sequence's items in yaml and a specifier set's clauses in PEP 440, so
+the split that reads the first has to know where a quoted scalar begins
+and ends, and the set that survives the split is read as one thing
+rather than as text around an `==`. An item the walk still cannot
+resolve into a requirement makes the whole value nothing, which
+`test_every_additional_dependencies_key_was_read` fails on rather than
+asserting the pins beside it while the rest goes unread.
 """
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 
@@ -65,9 +75,27 @@ _REV = re.compile(r"^    rev: v?(?P<version>[0-9][0-9a-z.]*)\s*$", re.MULTILINE)
 # an additional_dependencies key and whatever shares its line: nothing,
 # where the requirements are the "- " items indented under it
 _KEY = re.compile(r"^(?P<indent> *)additional_dependencies:(?P<inline>.*)$")
-# a requirement naming one version, as against the floors and the marker
-# gates [build-system]'s own requires are copied into this file as
-_PIN = re.compile(r"^(?P<name>[A-Za-z0-9_.-]+)==(?P<version>[^\s;]+)$")
+# a requirement's name, its specifier set, and the marker the set ends
+# at: [build-system]'s own requires, copied into this file verbatim,
+# write a floor and a marker where a hook's own pin writes a version
+_NAME = re.compile(r"^(?P<name>[A-Za-z0-9_.-]+)(?P<specifiers>[^;]*)(?:;.*)?$")
+# one clause of a specifier set, which PEP 440 writes comma-separated:
+# `===` ahead of `==` so that arbitrary equality is read as itself rather
+# than as `==` naming a version beginning with `=`
+_CLAUSE = re.compile(r"^(?P<op>===|==|!=|~=|<=|>=|<|>)\s*(?P<version>[^\s,;]+)$")
+
+
+class _Requirement(NamedTuple):
+    """One requirement of an `additional_dependencies` value.
+
+    Attributes:
+        name: the package it asks for.
+        pinned: the one version its specifier set names, or None where
+            it names none.
+    """
+
+    name: str
+    pinned: str | None
 
 
 def _unquoted(item: str) -> str:
@@ -88,6 +116,37 @@ def _unquoted(item: str) -> str:
     return item[1:-1] if quoted else item
 
 
+def _split(items: str) -> list[str]:
+    """Return `items` cut at the commas yaml reads as separators.
+
+    A comma inside a quoted scalar is that scalar's own, and a specifier
+    set is comma-separated: `"name==1.2.3,!=1.2.4"` is one requirement,
+    where a cut at every comma answers pieces that are requirements none
+    of them and that a check for an unread value cannot tell from pieces
+    that are.
+
+    Args:
+        items: what a flow sequence holds between its brackets.
+
+    Returns:
+        The items, as the file quotes them.
+    """
+    found: list[str] = []
+    start = 0
+    quote = ""
+    for index, char in enumerate(items):
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "\"'":
+            quote = char
+        elif char == ",":
+            found.append(items[start:index])
+            start = index + 1
+    found.append(items[start:])
+    return found
+
+
 def _flow(value: str) -> list[str]:
     """Return the requirements of a value written on the key's own line.
 
@@ -100,7 +159,7 @@ def _flow(value: str) -> list[str]:
     """
     if not (value.startswith("[") and value.endswith("]")):
         return []
-    items = (_unquoted(item.strip()) for item in value[1:-1].split(","))
+    items = (_unquoted(item.strip()) for item in _split(value[1:-1]))
     return [item for item in items if item]
 
 
@@ -132,7 +191,77 @@ def _items(lines: list[str], indent: int) -> list[str]:
     return found
 
 
-def _values(text: str) -> list[list[str]]:
+def _clauses(specifiers: str) -> tuple[tuple[str, str], ...] | None:
+    """Return the operator and version of each clause of a specifier set.
+
+    Args:
+        specifiers: what follows a requirement's name, up to its marker.
+
+    Returns:
+        One pair per clause, or None where a clause is not one: a set
+        read in part describes a requirement the file does not hold.
+    """
+    found: list[tuple[str, str]] = []
+    for clause in specifiers.split(","):
+        match = _CLAUSE.match(clause.strip())
+        if match is None:
+            return None
+        found.append((match["op"], match["version"]))
+    return tuple(found)
+
+
+def _read(item: str) -> _Requirement | None:
+    """Return the requirement `item` is, or None where it is not one.
+
+    A specifier set names a version where one of its clauses is an
+    equality naming one, so `name==1.2.3,!=1.2.4` pins 1.2.3 as plainly
+    as `name==1.2.3` does and is asserted against the lock the same way.
+    `hatchling>=1.27,<2` names a range and pins nothing, and `name==1.2.*`
+    is a range written with an equality.
+
+    Args:
+        item: one item of a value, unquoted.
+
+    Returns:
+        The requirement, or None where the walk cannot resolve `item`
+        into one -- a mapping, or a specifier followed by anything but a
+        marker, a yaml comment on the item's own line among them.
+    """
+    parts = _NAME.match(item)
+    if parts is None:
+        return None
+    specifiers = parts["specifiers"].strip()
+    clauses = _clauses(specifiers) if specifiers else ()
+    if clauses is None:
+        return None
+    pinned = [
+        version
+        for operator, version in clauses
+        if operator in ("==", "===") and "*" not in version
+    ]
+    return _Requirement(parts["name"], pinned[0] if len(pinned) == 1 else None)
+
+
+def _requirements(items: list[str]) -> list[_Requirement]:
+    """Return the requirements `items` are, or nothing where one is not.
+
+    Args:
+        items: one value's items, unquoted.
+
+    Returns:
+        One requirement per item, in the order the file writes them;
+        empty where the walk resolves any of them into no requirement.
+    """
+    found: list[_Requirement] = []
+    for item in items:
+        requirement = _read(item)
+        if requirement is None:
+            return []
+        found.append(requirement)
+    return found
+
+
+def _values(text: str) -> list[list[_Requirement]]:
     """Return the requirements of every `additional_dependencies` key.
 
     Args:
@@ -143,16 +272,18 @@ def _values(text: str) -> list[list[str]]:
     """
     lines = text.splitlines()
     return [
-        _flow(key["inline"].strip())
-        if key["inline"].strip()
-        else _items(lines[index + 1 :], len(key["indent"]))
+        _requirements(
+            _flow(key["inline"].strip())
+            if key["inline"].strip()
+            else _items(lines[index + 1 :], len(key["indent"]))
+        )
         for index, line in enumerate(lines)
         if (key := _KEY.match(line)) is not None
     ]
 
 
-def _pins(values: list[list[str]]) -> tuple[tuple[str, str], ...]:
-    """Return the `name==version` requirements among `values`.
+def _pins(values: list[list[_Requirement]]) -> tuple[tuple[str, str], ...]:
+    """Return the name and version of every pin among `values`.
 
     Args:
         values: the requirement lists to read.
@@ -163,10 +294,10 @@ def _pins(values: list[list[str]]) -> tuple[tuple[str, str], ...]:
         versions ask it two.
     """
     found = {
-        (pin["name"], pin["version"])
+        (requirement.name, requirement.pinned)
         for value in values
         for requirement in value
-        if (pin := _PIN.match(requirement)) is not None
+        if requirement.pinned is not None
     }
     return tuple(sorted(found))
 
@@ -228,6 +359,57 @@ def test_a_value_that_is_not_a_bracketed_list_reads_as_nothing() -> None:
         "pathspec==1.1.1",
         "typos==1.49.0",
     ]
+
+
+def test_a_quoted_comma_belongs_to_the_specifier_set_and_not_the_sequence() -> None:
+    """One separator serves yaml and PEP 440, and the quotes tell them apart.
+
+    Cut at every comma, a specifier set answers pieces that are
+    requirements none of them, and a piece is as truthy as a requirement
+    is: the value reads as declaring something, and every check below
+    quantifies over what is left of it.
+    """
+    assert _flow('["name==1.2.3,!=1.2.4", pytest==9.1.1]') == [
+        "name==1.2.3,!=1.2.4",
+        "pytest==9.1.1",
+    ]
+
+
+def test_a_specifier_set_pins_where_one_of_its_clauses_names_a_version() -> None:
+    """A pin beside another clause is a pin, and a range is not one.
+
+    The lock resolves one version per package, so a requirement naming
+    one is a question to ask it however many clauses stand beside that
+    one; a range and a wildcard name no version and ask it nothing.
+    """
+    assert _read("name==1.2.3,!=1.2.4") == ("name", "1.2.3")
+    assert _read("name===1.2.3") == ("name", "1.2.3")
+    assert _read("hatchling>=1.27,<2") == ("hatchling", None)
+    assert _read("name==1.2.*") == ("name", None)
+
+
+def test_an_item_that_is_no_requirement_makes_the_whole_value_nothing() -> None:
+    """A comment on an item's own line is a shape the walk does not read.
+
+    `_items` above ends a value at a line that is no item, which a line
+    carrying an item and a comment is not; what the walk cannot resolve
+    is declined here instead, so that
+    `test_every_additional_dependencies_key_was_read` sees the nothing.
+    Reading the items around it would assert the pins it recognized and
+    drop the rest with nothing red.
+    """
+    text = (
+        "        additional_dependencies:\n"
+        "          - cffi==2.1.1\n"
+        "          - pathspec==1.1.1  # why this one carries a version"
+    )
+
+    assert _items(text.splitlines()[1:], 8) == [
+        "cffi==2.1.1",
+        "pathspec==1.1.1  # why this one carries a version",
+    ]
+    assert _values(text) == [[]]
+    assert _read("{pathspec: 1.1.1}") is None
 
 
 def test_a_block_value_ends_at_the_first_line_that_is_not_an_item() -> None:

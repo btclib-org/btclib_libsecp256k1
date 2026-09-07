@@ -836,7 +836,7 @@ repos:
   # source tree instead, for an answer before pushing rather than after
   # the build
   - repo: https://github.com/regebro/pyroma
-    rev: "5.1b1"
+    rev: "5.0.1"
     hooks:
       - id: pyroma
         # the backend, in pyroma's own environment, because pyroma builds

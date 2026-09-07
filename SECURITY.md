@@ -217,12 +217,17 @@ These are known and inherent, not vulnerabilities:
     `ffi.cast("unsigned char[32]", ...)` over 8 octets is accepted, cffi
     having no way to report what was really allocated.
 
-    Four calls copy the octets into a buffer of their own instead, and
-    have to: `keys.prvkey_negate`, `keys.prvkey_tweak_add`,
-    `keys.prvkey_tweak_mul` have libsecp256k1 write the answer through
-    that pointer, and the sender side of `silentpayments` wipes it on the
-    way out — so passing the caller's memory would negate or zero the key
-    they handed in. Each of those answers a *new* secret, which is what
+    The calls that copy the octets into a buffer of their own instead,
+    and have to, are these. `keys.prvkey_negate`,
+    `keys.prvkey_tweak_add` and `keys.prvkey_tweak_mul` have
+    libsecp256k1 write the answer through that pointer, and
+    `zkp.generator.pedersen_blind_generator_blind_sum` has secp256k1-zkp
+    write the correction through the last element of its
+    `blinding_factor` array, which the header declares In/Out. The
+    sender side of `silentpayments`, `zkp.generator.pedersen_blind_sum`
+    and that same call wipe what they copied on the way out — so passing
+    the caller's memory would negate, overwrite or zero the secret they
+    handed in. Each of those answers a *new* secret, which is what
     `into` above is for
 
     ```python

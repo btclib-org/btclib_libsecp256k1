@@ -5970,6 +5970,49 @@ release-notes length in the first place, and are still in
   fails on the nothing rather than asserting the pins beside it while
   that one goes unread.
 
+### pre-commit.ci checks the vendored submodules out
+
+- **`.pre-commit-config.yaml`'s `ci:` block sets `submodules: true`, so
+  that service's checkout carries `secp256k1` and `secp256k1-zkp`**
+  (closes #766). A checkout registering neither is the state
+  `submodules-checked-out` exists to fail on, and the one where `git
+  ls-files --cached --recurse-submodules` hands `check-sdist` gitlinks
+  the sdist has no member for; issue #664 records that pair of hooks
+  failing on the runs it lists. `submodule-pin` keeps its place in the
+  `skip` list, the clone the key delivers being shallow with no
+  `fetch-depth` key to ask that service for its tags.
+  The entry closing `#664` earlier in this section stays where it is,
+  and what it says stops holding of the tree this lands in:
+  `REPOSITORY.md` and the `ci:` comment no longer name
+  `submodules-checked-out` and `check-sdist` as red on that service, its
+  checkout registers both submodules, and the question that entry left
+  to issue #766 -- whether the key also clears `check-sdist`'s
+  comparison against the built sdist -- is what this entry answers.
+- **That `ci:` block is where this repository states what pre-commit.ci
+  can and cannot run, and `REPOSITORY.md` points at it** (closes #772).
+  The block holds the `submodules` key and the `skip` list themselves,
+  so the reason an entry is in that list sits beside the list somebody
+  edits; `REPOSITORY.md` keeps what its own subject is, that the branch
+  rule names no check of that service.
+- **`CLAUDE.md` and `.github/scripts/check_submodules_checked_out.py`
+  name a plain `git clone` for the never-registered submodule state.**
+  That is the state where `git ls-files --cached --recurse-submodules`
+  lists the gitlink instead of dropping it, and pre-commit.ci is no
+  longer an instance of it.
+  The entry closing `#765` earlier in this section stays where it is,
+  and one clause of it stops holding: it points at `REPOSITORY.md` for
+  the `pre-commit.ci` instance of that state, which that file no longer
+  carries and that service is no longer in. The condition that entry
+  adds -- the drop needing the submodule configured active rather than
+  merely empty -- is untouched.
+- **The `sdist-exclude-tracked` comment, `check_submodule_pin.py`'s
+  `why_no_tag` and that function's test stop naming that service as a
+  clone their hooks answer wrongly about.** `why_no_tag` names instead
+  the checkouts that reach its absent state and its shallow one: a
+  worktree before `git submodule update --init` runs in it, and a
+  checkout made with a depth, which is what `lint.yml`'s
+  `fetch-depth: 0` is for.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

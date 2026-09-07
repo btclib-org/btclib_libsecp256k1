@@ -5835,6 +5835,64 @@ release-notes length in the first place, and are still in
   would be the one that goes stale instead. Other repositories carry a
   copy with the same gap, so btclib-org/.github#690 stays open.
 
+### `zkp.generator`'s two blind sequences take a caller-held buffer alike
+
+- **`pedersen_blind_generator_blind_sum` copies its `blinding_factors`
+  into `unsigned char[32]` buffers, the item type the `generator_blinds`
+  beside them are copied into** (closes #775). A `char[32]` there
+  refused a caller holding a blinding factor in memory of their own,
+  with cffi's own `initializer for ctype 'char[32]' must be a bytes or
+  list or tuple, not cdata 'unsigned char[32]'` -- a type name the
+  caller never wrote -- where `pedersen_blind_sum` and the generator
+  blinds of this same call accepted one: `ffi.new` takes a cdata as an
+  initializer only where the item type matches, and
+  `_scalar._owned_octets` re-views a caller's own octets as
+  `unsigned char[32]` whatever they declared them. README.md's *Which
+  item type the array was declared as does not matter* paragraph is the
+  contract that refusal contradicted, and it stands as written rather
+  than being narrowed to exclude the call. The declaration decides
+  nothing else here: `_secret.take` reads the answer through
+  `ffi.buffer`, which asks the buffer for its length rather than for its
+  item type, and `_ptr_array` takes either item type into an
+  `unsigned char *[]`. `tests/zkp_generator_test.py` drives both
+  sequences with a buffer allocated through mainline's own `ffi`, which
+  is the one a caller holds, and asserts the octets the stand-in reports
+  being handed and the caller's own buffers still holding them
+  afterwards.
+
+### `silentpayments`'s sender side answers nothing for an `into` to receive
+
+- **The clause closing SECURITY.md's and README.md's enumeration of the
+  calls that copy a caller's scalar octets names `into` for the members
+  that answer a new secret, and says the sender side of
+  `silentpayments` is not one of them** (closes #776). It read "Each of
+  those answers a *new* secret, which is what `into` above is for", and
+  `silentpayments.create_outputs` answers the x-only public keys of the
+  outputs: an `ast` walk of that module's top-level defs finds `into` on
+  none of them, against a positive control that the word does occur in
+  the file, in prose. The copy that side takes is owed for the wiping
+  reason alone, the second of the two `_secret.scalar_buffer`'s own
+  docstring gives. SECURITY.md's `into` enumeration, earlier in the same
+  file, already lists the entry points that take one and names no member
+  of `silentpayments`; the clause there points at that list rather than
+  restating it.
+
+### `zkp.generator` says why the amounts are not wiped where the blinds are
+
+- **`pedersen_blind_generator_blind_sum`'s `uint64_t` array of the
+  caller's amounts is not wiped, and the comment above it and
+  SECURITY.md's *known and inherent* wipe bullet both say why** (closes
+  #780). Zeroing it would not take back the last copy: an amount reaches
+  that call only as a python `int`, `values` being a `Sequence[int]` and
+  anything else refused, so the object nothing can overwrite exists
+  before the call. A blinding factor beside it can be handed in as a
+  cffi array the caller wipes, which is what makes taking that copy
+  back worth its `finally`, and `pedersen_commit` takes its own `value`
+  as a plain C argument with no buffer to wipe at all. The entry closing
+  #762 earlier in this section states the wipe of the blinding factors
+  and stands as written: what this adds is the answer for the one buffer
+  that `finally` does not reach.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

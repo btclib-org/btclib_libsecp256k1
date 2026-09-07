@@ -50,6 +50,7 @@ from typing import Any
 import cffi
 import pytest
 
+from btclib_secp256k1 import ffi as caller_ffi
 from btclib_secp256k1 import zkp
 from btclib_secp256k1.zkp import context as zkp_context
 from btclib_secp256k1.zkp import generator as g
@@ -694,3 +695,67 @@ def test_pedersen_blind_generator_blind_sum_wipes_what_a_failure_leaves(
 
     assert stand_in.lib.blinding_factors_read == [secret]
     assert set(recorder.scalars()) == {bytes(32)}
+
+
+def test_pedersen_blind_sum_takes_a_caller_held_blind(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A blind held in the caller's own memory is accepted (#775).
+
+    `caller_ffi` is mainline's own `ffi`, which is the one a caller of
+    this package holds a scalar in; the module under test allocates
+    through the subpackage's, so this also drives the crossing between
+    the two.
+
+    What says the held octets were read is the fake's own record of what
+    it was handed, taken during the call -- not the answer, which the
+    fake computes and this recomputes here from the same two secrets.
+    The buffer is still intact afterwards because the wrapper wiped a
+    copy of it and not it: nothing else in this call would leave it
+    holding anything but zeros.
+    """
+    stand_in = _install(monkeypatch)
+    octets = bytes(range(1, 33))
+    held = caller_ffi.new("unsigned char[32]", octets)
+
+    total = g.pedersen_blind_sum([held, 1], 2)
+
+    assert stand_in.lib.blinds_read == [octets, bytes(31) + b"\x01"]
+    assert bytes(caller_ffi.buffer(held)) == octets
+    assert total == (int.from_bytes(octets, "big") + 1).to_bytes(32, "big")
+
+
+def test_pedersen_blind_generator_blind_sum_takes_caller_held_blinds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both of its blind sequences take a caller-held buffer (#775).
+
+    The blinding factor here is the *last* element, which is the one
+    secp256k1-zkp writes the correction through and `_secret.take`
+    reads: the caller's own buffer still holding what they put in it,
+    and the correction coming back as the answer, is what says the copy
+    this package owes was taken.
+
+    `bytes(range(32))` is what the fake writes through that element, so
+    the answer is asserted against the fake's own convention rather than
+    against anything read back out of the wrapper; the two `_read`
+    lists are the fake reporting the octets it was handed.
+    """
+    stand_in = _install(monkeypatch)
+    generator_octets = bytes(range(1, 33))
+    factor_octets = bytes(range(64, 96))
+    held_generator_blind = caller_ffi.new("unsigned char[32]", generator_octets)
+    held_blinding_factor = caller_ffi.new("unsigned char[32]", factor_octets)
+
+    corrected = g.pedersen_blind_generator_blind_sum(
+        [10, 20], [held_generator_blind, 2], [3, held_blinding_factor], 1
+    )
+
+    assert stand_in.lib.generator_blinds_read == [
+        generator_octets,
+        bytes(31) + b"\x02",
+    ]
+    assert stand_in.lib.blinding_factors_read == [bytes(31) + b"\x03", factor_octets]
+    assert bytes(caller_ffi.buffer(held_generator_blind)) == generator_octets
+    assert bytes(caller_ffi.buffer(held_blinding_factor)) == factor_octets
+    assert corrected == bytes(range(32))

@@ -528,6 +528,16 @@ def pedersen_blind_generator_blind_sum(
             )
         if isinstance(value, bool) or not 0 <= value < 2**64:
             raise ValueError(f"value at index {i} must be an int in [0, 2**64)")
+    # this one is not wiped, where every blinding factor below is, and
+    # SECURITY.md's own *known and inherent* wipe bullet says so too:
+    # zeroing it would not take back the last copy. An amount reaches
+    # here only as a python `int`, `values` being a `Sequence[int]` and
+    # anything else refused above, so the object nothing can overwrite
+    # exists before the call. What makes the wipe below worth its
+    # `finally` is the opposite -- a caller may hand a blinding factor in
+    # as a cffi array and have no un-zeroizable copy of it made anywhere.
+    # `pedersen_commit` is the other side of the same point: it takes its
+    # own `value` as a plain C argument, with no buffer to wipe at all
     value_array = ffi.new(f"uint64_t[{n_total}]", list(values))
     # every element of both lists holds a copy of one of the caller's own
     # blinding factors, and this package owns it: the `finally` takes
@@ -546,11 +556,18 @@ def pedersen_blind_generator_blind_sum(
             )
             for i, blind in enumerate(generator_blinds)
         )
-        # char, matching pedersen_blind_sum's own blind_out: only the last
-        # element is read back, through _secret.take
+        # unsigned char, as the generator blinds above: `ffi.new` takes a
+        # cdata initializer only where the item type matches, and
+        # `_scalar._owned_octets` re-views a caller's own octets as
+        # `unsigned char[32]`, so the declaration is what decides whether
+        # a caller holding a blinding factor in memory of their own is
+        # accepted here on the same terms as beside it. It decides
+        # nothing else here: `_secret.take` goes through `ffi.buffer`,
+        # which asks the buffer for its length rather than its type, and
+        # `_ptr_array` takes either into an `unsigned char *[]`
         blinding_factor_buffers.extend(
             ffi.new(
-                f"char[{_BLIND_SIZE}]",
+                f"unsigned char[{_BLIND_SIZE}]",
                 scalar(blind, f"blinding factor at index {i}"),
             )
             for i, blind in enumerate(blinding_factors)

@@ -5818,6 +5818,23 @@ release-notes length in the first place, and are still in
   script at module scope, and an import it cannot satisfy there is a
   collection error rather than a skipped test.
 
+### `conventions_test.py`'s docstring says what this module reads
+
+- **The docstring's second paragraph no longer restates section 7's own
+  point about how the organization's suites name convention tests, and
+  says instead what this module reads and where it departs** (issue
+  btclib-org/.github#690). The paragraph it replaces named the same
+  shapes section 7 already lists -- a module per bullet, or several
+  folded into the one file about a single module -- and repeating that
+  choice here is the second statement section 9 refuses; what belongs to
+  this module instead is that it transcribes section 7's conventions
+  into `_CONVENTIONS` rather than reading them off the standard, because
+  the standard is another repository's file, so a copy is the only form
+  the list takes here. That inverts `btclib-org/.github`'s own copy,
+  where the standard and the declaration share a commit, so a copy there
+  would be the one that goes stale instead. Other repositories carry a
+  copy with the same gap, so btclib-org/.github#690 stays open.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

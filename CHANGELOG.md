@@ -6360,6 +6360,27 @@ release-notes length in the first place, and are still in
   parametrized on the rows are still skipped for an empty parameter set.
   Only the clause about what the other trees were waiting for is spent.
 
+### `signer_test.py`'s and `keys.py`'s docstrings drop a stale count
+
+- **`test_a_signer_signs_what_the_function_signs`'s docstring stated a
+  number of assertions below it, fewer than `ast.walk` counts today
+  in the body** (closes #809). The sentence's own point survives
+  without the number: the aux is fixed, so a BIP340 signature is a
+  value rather than a distribution, which is what makes comparing the
+  signer's output to the module function it wraps byte for byte
+  meaningful, rather than two correct implementations that would never
+  match. The docstring now argues that instead of counting, and names
+  the lengths `sign_custom` is exercised at and the verification a
+  signature from each entry point, taken again without that aux, is put
+  through afterward.
+- **`keys.parse`'s `name` docstring said `silentpayments` passes a
+  stated number of kinds of public key, one more than the module's
+  distinct `name` strings give it** (closes #813). The reasoning ties a
+  "kind" to the exact string an exception can quote, so the docstring
+  now names them instead of counting: a scan public key, a spend
+  public key, and one left to the default, which `git grep -n
+  "keys.parse("` over `silentpayments.py` still shows.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

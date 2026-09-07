@@ -5610,6 +5610,39 @@ release-notes length in the first place, and are still in
   re-derived at the same time, and `rewind` joins the walk's exemption
   beside `label` and `_label_`.
 
+### `xonly.py`'s DER-exception clause names dsa's own reason
+
+- **The DER-exception clause now names the mutation-testing reason
+  `dsa.py`'s own comment gives, rather than attributing this session's
+  own primitive figure to it** (closes #753). "`dsa`'s DER capacity
+  excepted for the reason its own comment gives: 0.0690 against 0.0520
+  microseconds on the primitive alone" read as though `dsa.py`'s
+  comment stated that figure; it does not, and never has --
+  `dsa.py`'s own comment above `_DER_BUFFER_TYPE` gives a
+  mutation-testing reason instead, naming
+  `.github/mutation/bindings.toml` and `test_der_reaches_all_72_octets`.
+  The figure is real: it is this session's own measurement of the
+  primitive itself, `ffi.unpack` of a 64-byte buffer -- 0.0690 the
+  baseline and 0.0520 what shipped -- and the paragraph now introduces
+  it as that rather than as `dsa`'s.
+
+### `bytes_like_test.py`'s negating-half test drops its closing verdict
+
+- **`test_the_negating_half_of_a_nonce_takes_a_buffer_too`'s docstring no
+  longer closes on "With a buffer-held key it was a coin flip on the key: 5
+  and 7 answered, 6 raised"** (closes #759). That was a verdict on a revision
+  of this package the tree does not hold: before `479c3148`, `_scalar.scalar`
+  had no cdata branch at all -- confirmed by `_owned_octets`, the name that
+  branch is built on, being absent from `_scalar.py` at `479c3148^` and
+  present at `479c3148` -- so a buffer-held key raised regardless of parity,
+  in `xonly.from_prvkey`, before `ssa.nonce_bip340` ever reaches the parity
+  branch that calls `keys.prvkey_negate`. The parity-dependent behaviour the
+  clause recorded belongs to that commit's own work rather than to any
+  revision `main` ever held, and the test's own body now asserts the opposite
+  for both parities it drives. The two present-tense sentences that say why
+  the sweep above cannot reach the branch stand on their own; what a
+  buffer-held key used to do is `git log`'s.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

@@ -6013,6 +6013,47 @@ release-notes length in the first place, and are still in
   checkout made with a depth, which is what `lint.yml`'s
   `fetch-depth: 0` is for.
 
+### The token census reads a declaration's position, not the end of a line
+
+- **`REPOSITORY.md`'s *Token permissions* hands the reader `git grep -nE
+  '^ +[a-z-]+: write([[:blank:]]+#|$)' -- .github/workflows`** (issue
+  btclib-org/.github#897): the `: write$` form it replaces drops a
+  declaration carrying a trailing comment along with the comment lines it
+  was there to exclude, and it matches a comment line that itself ends in
+  `: write`. What keeps a comment out now is the key's own
+  position, a comment line opening with a `#` where `[a-z-]` has to
+  match, and the sentence above the command says that rather than naming
+  the `$`. No workflow here writes a grant with a trailing comment, so
+  both forms answer the same lines here, and that agreement is a property
+  of the files rather than of either pattern.
+- **Two entries above name the command as it was spelled**: *What the
+  workflow table and the `paths` filter name* calls the `git grep` beside
+  that paragraph anchored, and *`REPOSITORY.md` says what the rulesets
+  and the grants are, not how many* names `git grep -n ': write$'`
+  outright. What each says of the paragraph holds of the command that
+  replaces it -- it names every job asking for more than the read-only
+  default, and the block enumerates the grants rather than the jobs --
+  and the spelling is the half this entry supersedes.
+- **The comment branch takes `[[:blank:]]` rather than a space**: a tab
+  between a grant and its comment is a shape `actionlint` accepts and
+  `yamllint` reports as a syntax error, so what keeps it out of these
+  files is the lint gate, and the census answers with the parser rather
+  than with the gate.
+- **`actionlint` reads every shape named beside the command as a
+  grant**: `permissions: write-all`, a flow mapping and a quoted key or
+  value all pass it, and `prettier` rewrites none of them into what the
+  pattern reads, as it does a double space or a trailing space.
+  `zizmor`'s excessive-permissions audit reports a job's own
+  `write-all`, and passes a workflow-level one in a file of a single job
+  at the persona the hook runs, which is the default:
+  `--persona=pedantic` reports it. So that shape can sit in a workflow
+  here with the census reporting nothing.
+- **Folding a shape into the pattern would leave the next one out**:
+  `contents: >-` with `write` on the line below is a grant `actionlint`
+  accepts and `prettier` hands back unchanged, and a line-oriented
+  pattern reads a spelling where a permission is a value in a parsed
+  document.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

@@ -42,6 +42,11 @@ citations they would add. A released section is that release's
 account of itself, so a test renamed afterwards does not make it wrong,
 and a check over it would ask for the record to be edited whenever the
 tree moves -- rewriting history rather than fixing a reference.
+
+The open section is out of scope for a reason of its own rather than by
+extension: the entry renaming every module under `tests/` states that
+`CHANGELOG.md` is where the names as they were survive, and gives
+`git grep` answering it alone as what the rename buys.
 """
 
 from __future__ import annotations

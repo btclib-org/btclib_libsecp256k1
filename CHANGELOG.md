@@ -6117,6 +6117,23 @@ release-notes length in the first place, and are still in
   to be checked for; the signing date beside that comment moves with the
   commit.
 
+### The open section is out of the citations guard's scope for its own reason
+
+- **`tests/citations_test.py`'s docstring says why the open section of
+  `CHANGELOG.md` is out of scope, rather than leaving it to be reached by
+  extension from the released one** (closes #787). The entry renaming
+  every module under `tests/` states that `CHANGELOG.md` is where the
+  names as they were survive, and gives `git grep` answering it alone as
+  what the rename buys -- a decision about the open section, written
+  in the open section, where nobody editing the guard looks for it. The
+  released-section reason beside it is about a record a later rename
+  cannot make wrong, which is a different reason and stays as written.
+- **The rejected alternative rewrites the open entries into the
+  `*_test.py` spelling and widens the guard over the section.** It buys a
+  release whose record resolves against `tests/`, and it costs the rename
+  entry its own claim: that `git grep` answers `CHANGELOG.md` alone
+  because the spellings from before the rename live here.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

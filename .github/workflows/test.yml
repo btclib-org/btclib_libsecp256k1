@@ -825,6 +825,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # tests/module_flags_test.py reads each vendored submodule's
+          # CMakeLists.txt, so the suite this job runs needs them on
+          # disk. Nothing else in the job does: what installs is
+          # `pip install dist/*.tar.gz`, which builds the sdist it
+          # downloaded in a directory of its own, and what this checkout
+          # supplies is tests/ and pyproject.toml. The thinness this job
+          # is for is in the install -- no uv, no lock, pip resolving as
+          # a user does -- and the checkout is no part of it
+          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python

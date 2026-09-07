@@ -6229,6 +6229,55 @@ release-notes length in the first place, and are still in
   alternative. The wording is `btclib-node`'s, landed there as
   `8e0a0a4`, and the paragraph here is byte-identical to it.
 
+### The module flag lists name every module, the ones turned off included
+
+- **`Secp256k1ZkpCFFIExtension` passes
+  `-DSECP256K1_ENABLE_MODULE_SILENTPAYMENTS=OFF`** (closes #792). The
+  lists turned modules on and turned none off, so a module upstream
+  defaults `ON` was built whether or not this repository asked for it.
+  `configure`'s own parameter docstring already calls `module_flags`
+  "the `-DSECP256K1_ENABLE_MODULE_*` CMake arguments this submodule's
+  modules are turned on or off with, explicit rather than left to
+  upstream's own defaults", and naming every module is what makes that
+  sentence true of the code under it. `silentpayments` is the module
+  the fork declares and this extension does not declare to cffi, so it
+  is the one the new flag turns off.
+- **`tests/module_flags_test.py` compares each extension's flags with
+  the `option(SECP256K1_ENABLE_MODULE_*)` its submodule declares**, and
+  fails on a difference in either direction. The next sync that adds a
+  module goes red at the commit that moves the pin, which is where `ON`
+  or `OFF` can still be decided rather than discovered afterwards. The
+  flags are read out of the syntax tree instead of by importing
+  `scripts/cffi_build.py`, whose extensions cannot be constructed from
+  a test: `FFIExtension.__init__` begins with the `clean()` that
+  removes the artifacts the suite is running against.
+- **`Secp256k1CFFIExtension` gains no flag**, already naming every
+  module mainline declares, so the wheels this repository publishes
+  build the same library as before. What changes is the extension
+  behind `BTCLIB_LIBSECP256K1_ZKP`, which no published wheel carries.
+- **`scripts/README.md` and `Secp256k1ZkpCFFIExtension`'s docstring say
+  the module is off rather than on unasked**, the sentence #792 was
+  cited from being what this entry answers. `scripts/cffi_build.py`'s
+  comment over `module_flags` says why an `OFF` is needed as well as an
+  `ON`: a default is upstream's answer whichever way it falls.
+- **`test.yml`'s `suite-sdist` job checks out the submodules.** The new
+  test reads each one's `CMakeLists.txt` from the repository root, and
+  that job's checkout supplies `tests/` and `pyproject.toml` alone --
+  what it installs is the downloaded sdist, which pip builds in a
+  directory of its own, so the thinness the job is for is untouched. The
+  rejected alternative lets the assertion stand down where the
+  submodules are absent, which is the shape this entry is about.
+- **This entry supersedes *The vendored secp256k1-zkp is pinned past the
+  0.8.0 sync*'s clause that the module is compiled and linked with no
+  flag turning it off.** What that bullet is about stands: the flagged
+  extension declares none of `silentpayments`'s entry points to cffi,
+  and the fork's copy being mainline's blob for blob is still why this
+  repository wraps mainline's. What changes is that the C is no longer
+  built either. *`cffi_build.py` grows a fourth, flag-gated path over
+  secp256k1-zkp*'s clause that the flagged extension turns on every one
+  of the fork's own modules goes with it, and for the same reason:
+  `silentpayments` is the module that is not.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

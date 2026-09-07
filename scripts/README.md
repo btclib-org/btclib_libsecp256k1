@@ -80,18 +80,23 @@ the submodule read, which `Secp256k1CFFIExtension` and
 
 **Build the vendored library.** CMake, on every platform, out of tree
 into `build/<submodule>`: the submodule is only ever read from. The
-configure line requests each module the built extension wraps
-explicitly, rather than relying on upstream defaults, which are not part
-of upstream's API and which leave `recovery` off in both submodules --
-`ecdh`, `recovery`, `extrakeys`, `schnorrsig`, `musig`, `ellswift`,
-`silentpayments` for the primary extension, and, for the flagged one,
-every module secp256k1-zkp defines but `silentpayments`, which
-upstream's own default turns on unasked
-(btclib-org/btclib-secp256k1#792). One option is named for a
-different reason: `SECP256K1_VALGRIND` is pinned `OFF` because its
-default answers with the build machine rather than with a value —
-`AUTO` is `find_package(Valgrind)`, so a runner that happens to have the
-header ships a library compiled with `-DVALGRIND`, which is a wheel this
+configure line names every module its submodule declares an option for,
+rather than relying on upstream defaults, which are not part of
+upstream's API and which answer in both directions: `recovery` is off by
+default in both submodules, and `silentpayments` is on by default in
+secp256k1-zkp, whose extension declares none of that module's entry
+points to cffi. So `ecdh`, `recovery`, `extrakeys`, `schnorrsig`,
+`musig`, `ellswift`, `silentpayments` for the primary extension, and
+every module secp256k1-zkp defines for the flagged one, `silentpayments`
+`OFF` and the rest `ON` (btclib-org/btclib-secp256k1#792).
+`tests/module_flags_test.py` compares each list against its submodule's
+`CMakeLists.txt` and fails where a module is named in one and not the
+other; which value a named module carries is the configure line's to
+state, and no test here holds it. `SECP256K1_VALGRIND` is named for a
+different reason: it is pinned `OFF` because its default answers with
+the build machine rather than with a value — `AUTO` is
+`find_package(Valgrind)`, so a runner that happens to have the header
+ships a library compiled with `-DVALGRIND`, which is a wheel this
 repository cannot tell from any other. Upstream's own tests, benchmarks
 and install rules are all turned off. A stale CMake cache is deleted
 first, because it remembers the previous configuration.

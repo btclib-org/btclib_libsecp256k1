@@ -743,11 +743,10 @@ repos:
   # message differently between its own releases, so the exit code is
   # what this rests on.
   # --inject-junk plants an egg-info directory beside the sources for
-  # the length of the run. git-only below cannot be what keeps it out --
-  # it is read against files git tracks, and an injected directory is
-  # never one -- .gitignore's own "*.egg-info/" is what hatchling's
-  # sdist target drops it on, the same VCS-ignore reading the comment
-  # above names for .python-version's absence
+  # the length of the run: .gitignore's own "*.egg-info/" is what
+  # hatchling's sdist target drops it on, a VCS-ignore reading.
+  # [tool.check-sdist] below carries no entry at all
+  # (btclib-org/btclib-secp256k1#743)
   - repo: https://github.com/henryiii/check-sdist
     rev: v1.6.0
     hooks:

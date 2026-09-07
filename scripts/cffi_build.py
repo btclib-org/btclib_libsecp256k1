@@ -825,12 +825,14 @@ class Secp256k1ZkpCFFIExtension(VendoredCMakeExtension):
     beyond mainline's own alone: #603 measured trimming the shared ones
     (ecdh, recovery, ellswift, musig) at 85 KB of a 1.5 MB library, and
     zkp's own musig -- the adaptor-capable one, a superset of mainline's
-    -- is needed regardless. secp256k1-zkp has no silentpayments module
-    at the pinned commit: that commit is the base
-    BlockstreamResearch/secp256k1-zkp#368 merges onto, and that sync is
-    what adds the module. So this extension's header list and module
-    flags have no entry for it where `Secp256k1CFFIExtension`'s does,
-    and whether the pin moves past the sync is issue #777.
+    -- is needed regardless. silentpayments is the sync's, the pinned
+    commit merging BlockstreamResearch/secp256k1-zkp#368, and upstream's
+    own default is what turns it on rather than a flag below; the header
+    list leaves it out where `Secp256k1CFFIExtension`'s does not, so it
+    is compiled and linked with none of its entry points declared to
+    cffi. The fork's copy of that module is mainline's blob for blob at
+    the commit the other extension builds, and that one declares and
+    wraps it.
     """
 
     def __init__(self) -> None:
@@ -860,9 +862,8 @@ class Secp256k1ZkpCFFIExtension(VendoredCMakeExtension):
             # rangeproof before surjectionproof, which needs its types --
             # the same #include-stripped concatenation this file's other
             # extension needs, over zkp's own copies of the headers the
-            # two submodules share, which differ from mainline's own
-            # (zkp's musig and schnorrsig each add the adaptor-signature
-            # entry points, and secp256k1.h a deprecated alias)
+            # two submodules share, which is where its musig declares
+            # the adaptor-signature entry points mainline's does not
             headers=[
                 "secp256k1.h",
                 "secp256k1_ecdh.h",

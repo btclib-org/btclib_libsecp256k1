@@ -26,7 +26,9 @@ from __future__ import annotations
 
 import doctest
 import importlib
+import inspect
 import pkgutil
+import re
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -39,6 +41,13 @@ _ROOT = Path(__file__).parents[1]
 
 # the subpackage whose examples need the flagged extension to run
 _ZKP = f"{btclib_secp256k1.__name__}.zkp"
+
+# `doctest`'s own `_EXAMPLE_RE` reads this as a prompt only at the start
+# of a line, preceded by spaces; `[ \t]*` here is deliberately looser --
+# it can flag a tab-indented line `doctest` would not -- so this errs
+# toward finding more prompts rather than fewer, and anchoring it at all
+# keeps a mention of the prompt in running prose from being read as one
+_DOCTEST_PROMPT = re.compile(r"^[ \t]*>>> ", re.MULTILINE)
 
 
 def _unimportable(name: str) -> NoReturn:
@@ -90,6 +99,112 @@ def _needs_the_zkp_extension(name: str) -> bool:
     return name == _ZKP or name.startswith(f"{_ZKP}.")
 
 
+def _carries_a_doctest_prompt(name: str) -> bool:
+    """Whether the module's own source text carries a doctest prompt.
+
+    Read from the file on disk rather than from a list kept in this
+    file, so a module gains or loses this the moment its source does,
+    with nothing here to fall out of step with it: the population this
+    guards is derived from the tree, never typed out by hand.
+
+    This is a text-level check, not `doctest`'s own parser: it can
+    answer `True` for a module `DocTestFinder` finds nothing reachable
+    in -- a comment carrying a line-anchored prompt, or a nested
+    function's docstring, which `DocTestFinder` does not descend into.
+    It cannot answer `True` for a module that carries no `>>> ` anywhere
+    in its source.
+
+    Args:
+        name: the dotted name of the module.
+
+    Returns:
+        Whether its source carries the doctest prompt.
+    """
+    try:
+        source = inspect.getsource(importlib.import_module(name))
+    except OSError:  # pragma: no cover -- a module with no source file
+        return False
+    return bool(_DOCTEST_PROMPT.search(source))
+
+
+def _module_name(source_file: Path, root: Path, package: str) -> str:
+    """Compute the dotted name `_modules()` would report for a source file.
+
+    Args:
+        source_file: a `.py` file under `root`.
+        root: `package`'s own directory, holding its `__init__.py`.
+        package: the top package's dotted name.
+
+    Returns:
+        The dotted name, matching `_modules()`'s own naming: `root`
+        itself names `package`, and an `__init__.py` names the
+        directory that holds it rather than adding a segment for
+        itself.
+    """
+    parts = source_file.relative_to(root).with_suffix("").parts
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join([package, *parts])
+
+
+def _modules_expected_from_the_source_tree() -> set[str]:
+    """Every module the source tree declares that carries a doctest prompt.
+
+    Read from `src/<package>` under the repository root -- present in
+    every job that runs this suite, wheel or editable, because it is
+    the checkout the suite itself runs from -- rather than from
+    `btclib_secp256k1.__path__`, which is what `_modules()` reads and
+    exactly what an enumeration defect stops reaching. Deriving the
+    population `_modules()` ought to cover from a second source is what
+    makes a name silently missing from `_modules()`'s own answer
+    assertable, instead of invisible to a check that reads `_modules()`
+    twice.
+
+    Returns:
+        The dotted names of every module whose own source carries a
+        doctest prompt.
+    """
+    package = btclib_secp256k1.__name__
+    root = _ROOT / "src" / package
+    named = {path: _module_name(path, root, package) for path in root.rglob("*.py")}
+    return {
+        name
+        for path, name in named.items()
+        if _DOCTEST_PROMPT.search(path.read_text(encoding="utf-8"))
+    }
+
+
+def test_no_module_carrying_examples_is_missing_from_the_enumeration() -> None:
+    """Require every module the source tree carries examples in to be found.
+
+    `test_the_examples_of_a_module_run` is parametrized once, at
+    collection time, from `_modules()` itself: a name `_modules()` does
+    not return gets no test case at all, so nothing above asserts
+    anything about it -- the shape `walk_packages` replacing
+    `iter_modules` closed for one regression and not for any other.
+    This test derives the expected population independently, from the
+    source tree rather than from `_modules()`, so a name it drops is
+    what fails here instead of what neither test above can see.
+
+    `Path.rglob` on a directory that does not exist yields nothing and
+    raises nothing, so a missing or relocated `src/` would leave
+    `expected` empty, the set difference below empty too, and this test
+    passing having read nothing. Two tests further down this file guard
+    their own populations against exactly that shape already; `expected`
+    is required to be non-empty first, for the same reason.
+    """
+    expected = _modules_expected_from_the_source_tree()
+    assert expected, (
+        f"{_ROOT / 'src' / btclib_secp256k1.__name__} carries no module"
+        " with a doctest prompt: the source tree was not read"
+    )
+    missing = expected - set(_modules())
+    assert not missing, (
+        f"{sorted(missing)} carry a doctest prompt in source but"
+        " _modules() does not report them"
+    )
+
+
 @pytest.mark.parametrize(
     "name",
     [
@@ -108,6 +223,12 @@ def test_the_examples_of_a_module_run(name: str) -> None:
     test modules under `tests/` use, and `pyproject.toml`'s comment on
     the marker says why one does not stand for the other.
 
+    Where the module's own source carries a doctest prompt, `attempted`
+    is required to be positive too: a module can stay in `_modules()`
+    while `DocTestFinder` stops reaching its docstrings, and a total of
+    zero examples passes `results.failed == 0` exactly as a module that
+    never carried one does.
+
     Args:
         name: the dotted name of the module.
     """
@@ -118,6 +239,11 @@ def test_the_examples_of_a_module_run(name: str) -> None:
         f"{results.failed} of {results.attempted} examples failed in {name};"
         " the captured output above is what doctest reported"
     )
+    if _carries_a_doctest_prompt(name):
+        assert results.attempted > 0, (
+            f"{name}'s source carries a doctest prompt, but doctest"
+            " attempted none of it"
+        )
 
 
 def test_the_package_carries_examples_at_all() -> None:

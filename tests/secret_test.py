@@ -298,34 +298,37 @@ def test_calls_reads_nothing_from_a_call_that_names_no_function() -> None:
 def test_every_function_that_takes_a_secret_out_offers_into() -> None:
     """Found by walking the package, so that a ninth producer is caught.
 
-    A hardcoded list of the eight cannot notice a ninth, which is what
-    this test is for; `_secret.take` is the one thing every producer of
-    a secret has in common, so its call sites are the population. They
-    are not the whole of it: a public half answers the secret its
-    private half read out, without calling `take` itself, so whatever
-    calls a producer is asked the same question -- `ecdh.shared_secret`
-    is that shape, and being caught by its own name is what keeps a
-    ninth written that way from being checked by hand. Two names are
-    exempt, and naming them here is what keeps SECURITY.md's sentence
-    honest.
+    A hardcoded list of the eleven cannot notice a twelfth, which is
+    what this test is for; `_secret.take` is the one thing every
+    producer of a secret has in common, so its call sites are the
+    population. They are not the whole of it: a public half answers the
+    secret its private half read out, without calling `take` itself, so
+    whatever calls a producer is asked the same question --
+    `ecdh.shared_secret` is that shape, and being caught by its own name
+    is what keeps a twelfth written that way from being checked by hand.
+    Three names are exempt, and naming them here is what keeps
+    SECURITY.md's sentence honest.
+
+    The walk descends into `zkp` the same way it descends into the
+    primary package: the secret adaptor `zkp.musig.extract_adaptor`
+    recovers and the blinding factors `zkp.generator.pedersen_blind_sum`
+    and `zkp.generator.pedersen_blind_generator_blind_sum` answer are
+    each read out through `take`, so each is a producer this test
+    already reaches without a module-specific case; `zkp.rangeproof
+    .rewind` calls `take` too and is exempt for the same reason `label`
+    is, below (#640).
 
     What the walk cannot see is a secret that never goes through `take`
     at all. `silentpayments._found_output` reads the per-output tweak
     out of the struct as a `bytes` of its own, so no population defined
     this way can contain it, and SECURITY.md names the tweak it answers
     for that reason.
-    The subpackage answers its secrets the same way: the secret
-    adaptor `zkp.musig.extract_adaptor` recovers, the blinding factors
-    `zkp.generator.pedersen_blind_sum` and
-    `zkp.generator.pedersen_blind_generator_blind_sum` answer, and the
-    one `zkp.rangeproof.rewind` recovers, each read out of a buffer of
-    its own with `ffi.unpack`. The walk descends into those modules and
-    reports no producer in them (#640).
     """
-    # the tweak of a label, in both halves that answer it: it is one
-    # member of a returned tuple, where an argument could not say which
-    # it names; SECURITY.md says so too
-    exempt = {"_label_", "label"}
+    # the tweak of a label, in both halves that answer it, and the
+    # blinding factor `rangeproof.rewind` recovers: each is one member
+    # of a returned tuple, where an argument could not say which it
+    # names; SECURITY.md says so too
+    exempt = {"_label_", "label", "rewind"}
     functions: dict[tuple[str, str], FunctionType] = {}
     called: dict[tuple[str, str], set[str]] = {}
     for module in _modules(btclib_secp256k1):
@@ -361,7 +364,14 @@ def test_every_function_that_takes_a_secret_out_offers_into() -> None:
 
 
 def test_the_two_spellings_of_a_producer_agree() -> None:
-    """Each entry point answers through `into` what it answers as bytes."""
+    """Each entry point answers through `into` what it answers as bytes.
+
+    `zkp.musig.extract_adaptor`, `zkp.generator.pedersen_blind_sum` and
+    `zkp.generator.pedersen_blind_generator_blind_sum` offer `into` too,
+    and are not in `calls` below: this build carries no
+    `BTCLIB_LIBSECP256K1_ZKP`, and their own test files check the same
+    round trip where the extension they need is present or faked.
+    """
     ell = ellswift.create(2, bytes(32))
     calls = (
         (keys.prvkey_negate, (7,)),

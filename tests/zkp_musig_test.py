@@ -369,6 +369,25 @@ def test_adaptor_round_trip() -> None:
     assert extracted == sec_adaptor
 
 
+def test_extract_adaptor_into_a_caller_s_buffer() -> None:
+    """With `into` the adaptor lands there, not in a returned `bytes` (#640)."""
+    sec_adaptor = hashlib.sha256(b"btclib_secp256k1 zkp musig adaptor into").digest()
+    adaptor_point = keys.pubkey_from_prvkey(sec_adaptor)
+
+    cache, secnonces, session = two_of_two_session(adaptor_bytes=adaptor_point)
+    partial_sigs = [
+        secnonce.partial_sign(prvkey, cache, session)
+        for secnonce, prvkey in zip(secnonces, PRVKEYS, strict=True)
+    ]
+    pre_sig = session.partial_sig_agg(partial_sigs)
+    parity = session.nonce_parity()
+    signature = musig.adapt(pre_sig, sec_adaptor, parity)
+
+    into = bytearray(32)
+    assert musig.extract_adaptor(signature, pre_sig, parity, into=into) is None
+    assert bytes(into) == sec_adaptor
+
+
 def test_adapt_refuses_an_overflowing_argument() -> None:
     """`adapt` fails on a pre-signature or secret adaptor that overflows."""
     with pytest.raises(ValueError, match="invalid pre-signature or secret adaptor"):

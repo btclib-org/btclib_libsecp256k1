@@ -106,11 +106,15 @@ These are known and inherent, not vulnerabilities:
     constant-time properties of libsecp256k1 apply to the C side of the
     boundary, not to what the caller does before and after it.
     The copy in the middle is not a Python object and is overwritten: a
-    private key or a shared secret libsecp256k1 writes into a cffi buffer
-    — the output of a tweak or a negation, an ECDH secret, the
-    `secp256k1_keypair` a BIP340 signature is made with, the nonce
-    `dsa.nonce_rfc6979` and `ssa.nonce_bip340` answer with — is read out
-    and the buffer zeroed before it is dropped. That is one copy taken back,
+    private key or a shared secret libsecp256k1 or secp256k1-zkp writes
+    into a cffi buffer — the output of a tweak or a negation, an ECDH
+    secret, the `secp256k1_keypair` a BIP340 signature is made with, the
+    nonce `dsa.nonce_rfc6979` and `ssa.nonce_bip340` answer with, the
+    adaptor `zkp.musig.extract_adaptor` recovers, a blinding factor
+    `zkp.generator.pedersen_blind_sum` or
+    `zkp.generator.pedersen_blind_generator_blind_sum` answers, or the
+    one `zkp.rangeproof.rewind` recovers — is read out and the buffer
+    zeroed before it is dropped. That is one copy taken back,
     not safety: the `bytes` handed to the caller holds the same secret
     and cannot be overwritten
 - **`into` moves that last copy somewhere the caller can overwrite,**
@@ -125,12 +129,16 @@ These are known and inherent, not vulnerabilities:
     anything else as `memoryview(x)`, which copies nothing. They are
     `keys.prvkey_negate`, `keys.prvkey_tweak_add`,
     `keys.prvkey_tweak_mul`, `xonly.prvkey_tweak_add`,
-    `ecdh.shared_secret`, `ellswift.xdh`, `dsa.nonce_rfc6979` and
-    `ssa.nonce_bip340`. **The two secrets `silentpayments` answers do
+    `ecdh.shared_secret`, `ellswift.xdh`, `dsa.nonce_rfc6979`,
+    `ssa.nonce_bip340`, `zkp.musig.extract_adaptor`,
+    `zkp.generator.pedersen_blind_sum` and
+    `zkp.generator.pedersen_blind_generator_blind_sum`. **Three secrets do
     not**, each being one member of a returned tuple, where an argument
-    could not say which: the tweak of `label`, and the per-output tweak
-    `scan_outputs` hands back. Both are `bytes` and neither can be
-    zeroed, which is the limitation above and not this narrowing of it.
+    could not say which: the tweak of `silentpayments.label`, the
+    per-output tweak `silentpayments.scan_outputs` hands back, and the
+    blinding factor `zkp.rangeproof.rewind` recovers. All three are
+    `bytes` and none can be zeroed, which is the limitation above and not
+    this narrowing of it.
     What the caller then does with the buffer is theirs: this does not
     wipe it for them, and a buffer they never overwrite is exactly the
     un-zeroizable copy `into` was reached for to avoid. The obligation is

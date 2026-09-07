@@ -25,15 +25,24 @@ btclib_secp256k1.zkp.generator`, the same reason
 `btclib_secp256k1.zkp.context`'s own `__getattr__` docstring gives for
 deferring its own `ctx` -- so that importing that module never reaches
 for the extension on its own.
+
+`pedersen_blind_sum` and `pedersen_blind_generator_blind_sum` answer a
+blinding factor through `btclib_secp256k1._secret.take`, the same
+function the primary package's own wrappers use, rather than through a
+local equivalent: `take` overwrites through `ffi.buffer(buffer)` and
+asks that buffer for its own length rather than typing it, so it does
+not care which `ffi` built what it is reading, the same trade
+`zkp.musig`'s own module docstring makes for `_secret.wipe`.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, overload
 
-from btclib_secp256k1 import BytesLike, CData
+from btclib_secp256k1 import BytesLike, CData, MutableBytesLike
 from btclib_secp256k1._scalar import in_range, octets, scalar
+from btclib_secp256k1._secret import take
 
 from . import context
 
@@ -299,7 +308,25 @@ def pedersen_commit(
     return pedersen_commitment_serialize(commit)
 
 
-def pedersen_blind_sum(blinds: Sequence[BytesLike | int], npositive: int) -> bytes:
+@overload
+def pedersen_blind_sum(blinds: Sequence[BytesLike | int], npositive: int) -> bytes: ...
+@overload
+def pedersen_blind_sum(
+    blinds: Sequence[BytesLike | int], npositive: int, *, into: MutableBytesLike
+) -> None: ...
+@overload
+def pedersen_blind_sum(
+    blinds: Sequence[BytesLike | int],
+    npositive: int,
+    *,
+    into: MutableBytesLike | None,
+) -> bytes | None: ...
+def pedersen_blind_sum(
+    blinds: Sequence[BytesLike | int],
+    npositive: int,
+    *,
+    into: MutableBytesLike | None = None,
+) -> bytes | None:
     """Sum blinding factors, first `npositive` positive, the rest negative.
 
     Args:
@@ -307,16 +334,21 @@ def pedersen_blind_sum(blinds: Sequence[BytesLike | int], npositive: int) -> byt
             each.
         npositive: how many of `blinds`, from the start, are summed with
             a positive sign; the rest are summed with a negative one.
+        into: a writable 32-byte buffer to receive the sum, instead of
+            the `bytes` this otherwise returns. See `_secret.take` and
+            SECURITY.md for what that does and does not buy.
 
     Returns:
-        The 32-byte sum.
+        The 32-byte sum -- or None where `into` was given and holds it.
 
     Raises:
-        TypeError: if `npositive` is not an int.
+        TypeError: if `npositive` is not an int, or if `into` is not a
+            writable buffer of contiguous one-dimensional octets.
         ValueError: if one of `blinds` is not 32 bytes, does not fit in
             them, or is out of range -- named by its position in the
             sequence, `blinds[0]` being "blinding factor at index 0" --
-            or if `npositive` is out of [0, len(blinds)].
+            if `npositive` is out of [0, len(blinds)], or if `into` is
+            not 32 bytes.
         RuntimeError: if libsecp256k1-zkp refuses one of the factors,
             which is a ~2**-127 event for a random one.
     """
@@ -329,15 +361,13 @@ def pedersen_blind_sum(blinds: Sequence[BytesLike | int], npositive: int) -> byt
         )
         for i, blind in enumerate(blinds)
     ]
-    # char, not unsigned char: ffi.unpack of the latter answers a list of
-    # ints rather than bytes, and this is the buffer read back below
     blind_out = ffi.new(f"char[{_BLIND_SIZE}]")
     blinds_array = _ptr_array(ffi, "unsigned char *[]", blind_buffers)
     if not lib.secp256k1_pedersen_blind_sum(
         ctx, blind_out, blinds_array, len(blind_buffers), npositive
     ):
         raise RuntimeError("blinding factor sum failed")
-    return bytes(ffi.unpack(blind_out, _BLIND_SIZE))
+    return take(blind_out, into=into)
 
 
 def pedersen_verify_tally(
@@ -383,12 +413,39 @@ def pedersen_verify_tally(
     )
 
 
+@overload
 def pedersen_blind_generator_blind_sum(
     values: Sequence[int],
     generator_blinds: Sequence[BytesLike | int],
     blinding_factors: Sequence[BytesLike | int],
     n_inputs: int,
-) -> bytes:
+) -> bytes: ...
+@overload
+def pedersen_blind_generator_blind_sum(
+    values: Sequence[int],
+    generator_blinds: Sequence[BytesLike | int],
+    blinding_factors: Sequence[BytesLike | int],
+    n_inputs: int,
+    *,
+    into: MutableBytesLike,
+) -> None: ...
+@overload
+def pedersen_blind_generator_blind_sum(
+    values: Sequence[int],
+    generator_blinds: Sequence[BytesLike | int],
+    blinding_factors: Sequence[BytesLike | int],
+    n_inputs: int,
+    *,
+    into: MutableBytesLike | None,
+) -> bytes | None: ...
+def pedersen_blind_generator_blind_sum(
+    values: Sequence[int],
+    generator_blinds: Sequence[BytesLike | int],
+    blinding_factors: Sequence[BytesLike | int],
+    n_inputs: int,
+    *,
+    into: MutableBytesLike | None = None,
+) -> bytes | None:
     """Correct the last blinding factor so every sum cancels.
 
     For blinded generators `A' = A + r*G`, a Pedersen commitment
@@ -412,21 +469,28 @@ def pedersen_blind_generator_blind_sum(
             `len(values)`: the library's own `ARG_CHECK(n_total >
             n_inputs)` refuses `n_inputs == len(values)`, the `0, 0` case
             -- empty sequences included -- among them.
+        into: a writable 32-byte buffer to receive the corrected
+            blinding factor, instead of the `bytes` this otherwise
+            returns. See `_secret.take` and SECURITY.md for what that
+            does and does not buy.
 
     Returns:
         The corrected last blinding factor, 32 bytes -- the caller's own
         `blinding_factors` with its last element replaced by this is the
-        array libsecp256k1-zkp's own in/out semantics describe.
+        array libsecp256k1-zkp's own in/out semantics describe -- or
+        None where `into` was given and holds it.
 
     Raises:
-        TypeError: if `n_inputs` is not an int, or if one of `values` is
-            not an int.
+        TypeError: if `n_inputs` is not an int, if one of `values` is
+            not an int, or if `into` is not a writable buffer of
+            contiguous one-dimensional octets.
         ValueError: if the three sequences are not the same length, if
             `n_inputs` is not in [0, len(values)), if one of `values` is
-            a bool or does not fit in 8 bytes, or if one of the blinding
+            a bool or does not fit in 8 bytes, if one of the blinding
             factors is not 32 bytes, does not fit in them, or is out of
-            range. A bad element is named by its position in its own
-            sequence, `values[0]` being "value at index 0".
+            range, or if `into` is not 32 bytes. A bad element is named
+            by its position in its own sequence, `values[0]` being
+            "value at index 0".
         RuntimeError: if libsecp256k1-zkp refuses one of the factors,
             which is a ~2**-127 event for random ones.
     """
@@ -460,8 +524,8 @@ def pedersen_blind_generator_blind_sum(
         )
         for i, blind in enumerate(generator_blinds)
     ]
-    # char, not unsigned char, for the reason pedersen_blind_sum's own
-    # blind_out is: only the last element is read back with ffi.unpack
+    # char, matching pedersen_blind_sum's own blind_out: only the last
+    # element is read back, through _secret.take
     blinding_factor_buffers = [
         ffi.new(
             f"char[{_BLIND_SIZE}]",
@@ -487,4 +551,4 @@ def pedersen_blind_generator_blind_sum(
         n_inputs,
     ):
         raise RuntimeError("blinding factor correction failed")
-    return bytes(ffi.unpack(blinding_factor_buffers[-1], _BLIND_SIZE))
+    return take(blinding_factor_buffers[-1], into=into)

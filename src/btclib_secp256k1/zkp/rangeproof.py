@@ -30,6 +30,13 @@ would go unnoticed by anything here.
 Every function here needs `BTCLIB_LIBSECP256K1_ZKP`'s extension, and none
 of them reaches for it at import time, for the reason
 `btclib_secp256k1.zkp.generator`'s own module docstring gives.
+
+`rewind` takes its blinding factor out through
+`btclib_secp256k1._secret.take`, the same cross-`ffi`-safe function
+`zkp.generator`'s own module docstring names, but offers no `into`: the
+blinding factor is one member of the 5-tuple `rewind` answers, where an
+argument could not say which -- SECURITY.md gives the same reason for
+the two `silentpayments` secrets that offer none either.
 """
 
 from __future__ import annotations
@@ -38,6 +45,7 @@ from typing import Any
 
 from btclib_secp256k1 import BytesLike, CData
 from btclib_secp256k1._scalar import in_range, octets, scalar
+from btclib_secp256k1._secret import take
 
 from . import context, generator
 
@@ -190,7 +198,9 @@ def rewind(
     gen = _gen(lib, gen_bytes)
 
     # char, not unsigned char: ffi.unpack of the latter answers a list of
-    # ints rather than bytes, and both of these are read back below
+    # ints rather than bytes, which message_out is read back as below;
+    # blind_out matches for the same reason and is read back through
+    # _secret.take instead, which does not care which it is
     blind_out = ffi.new(f"char[{generator._BLIND_SIZE}]")
     value_out = ffi.new("uint64_t *")
     message_out = ffi.new(f"char[{MAX_MESSAGE_LEN}]")
@@ -217,7 +227,7 @@ def rewind(
     if not ok:
         raise ValueError("proof does not verify, or rewind failed")
     return (
-        ffi.unpack(blind_out, 32),
+        take(blind_out),
         int(value_out[0]),
         ffi.unpack(message_out, int(outlen[0])),
         int(min_value[0]),
@@ -318,8 +328,8 @@ def sign(  # noqa: PLR0913
     gen = _gen(lib, gen_bytes)
 
     buffer_size = int(lib.secp256k1_rangeproof_max_size(ctx, 2**64 - 1, 0))
-    # char, not unsigned char, for the reason blind_out and message_out
-    # above are: this is read back with ffi.unpack too
+    # char, not unsigned char, for the reason message_out above is: this
+    # is read back with ffi.unpack too
     proof = ffi.new(f"char[{buffer_size}]")
     plen = ffi.new("size_t *", buffer_size)
     ok = lib.secp256k1_rangeproof_sign(

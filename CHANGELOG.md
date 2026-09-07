@@ -5589,6 +5589,27 @@ release-notes length in the first place, and are still in
   trailing field and reads a key that never arrived as a pin that
   verifies.
 
+### `zkp`'s secrets are read out through `_secret.take`, not `ffi.unpack`
+
+- **`zkp.musig.extract_adaptor`, `zkp.generator.pedersen_blind_sum` and
+  `zkp.generator.pedersen_blind_generator_blind_sum` now zero the cffi
+  buffer their secret came out of, and each takes a keyword-only `into`
+  the way `keys.prvkey_negate` and `ecdh.shared_secret` do** (closes
+  #640). Each used to read its buffer with `ffi.unpack` and drop it with
+  the secret still inside: `tests/secret_test.py`'s walk defines its
+  population as `_secret.take`'s call sites, and none of the three ever
+  called it, so the walk never reached them.
+- **`zkp.rangeproof.rewind`'s blinding factor goes through the same
+  `take`, and offers no `into`**: it is one member of the 5-tuple
+  `rewind` answers, where an argument could not say which, the same
+  reason `silentpayments.label` and `silentpayments.scan_outputs` offer
+  none of their own tweak either.
+- SECURITY.md's *known and inherent* wipe paragraph and its `into`
+  enumeration now name each of these, where before neither mentioned
+  any of them. `tests/secret_test.py`'s own walk docstring is
+  re-derived at the same time, and `rewind` joins the walk's exemption
+  beside `label` and `_label_`.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

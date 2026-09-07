@@ -7,12 +7,13 @@
 The same files `tests/vectors_test.py` reads for
 `btclib_secp256k1.musig` -- `tests/README.md` has their provenance, and
 nothing here re-pins it. #607's own issue names this as the
-API-compatibility check secp256k1-zkp#330 was opened to make possible:
-zkp's `musig_pubkey_agg`, `nonce_agg`, `nonce_process` (over its own
-five shared arguments, the adaptor left NULL) and `partial_sig_agg` are
-BIP327's algorithm, so the same published values hold. What has no
-vector here is the adaptor extension -- BIP327 does not define one --
-which `tests/zkp_musig_test.py` checks by round trip instead.
+API-compatibility check BlockstreamResearch/secp256k1-zkp#330 was opened
+to make possible: zkp's `musig_pubkey_agg`, `nonce_agg`, `nonce_process`
+(over its own five shared arguments, the adaptor left NULL) and
+`partial_sig_agg` are BIP327's algorithm, so the same published values
+hold. What has no vector here is the adaptor extension -- BIP327 does
+not define one -- which `tests/zkp_musig_test.py` checks by round trip
+instead.
 
 Structured the same way as `tests/vectors_test.py`'s own musig section,
 over `btclib_secp256k1.zkp.musig` rather than `btclib_secp256k1.musig`:

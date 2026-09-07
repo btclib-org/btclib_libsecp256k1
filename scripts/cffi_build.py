@@ -826,10 +826,11 @@ class Secp256k1ZkpCFFIExtension(VendoredCMakeExtension):
     (ecdh, recovery, ellswift, musig) at 85 KB of a 1.5 MB library, and
     zkp's own musig -- the adaptor-capable one, a superset of mainline's
     -- is needed regardless. secp256k1-zkp has no silentpayments module
-    at the pinned commit, secp256k1-zkp#368's 0.8.0 sync that would add
-    one not yet merged upstream (#603's own survey), so this extension's
-    header list and module flags have no entry for it where
-    `Secp256k1CFFIExtension`'s does.
+    at the pinned commit: that commit is the base
+    BlockstreamResearch/secp256k1-zkp#368 merges onto, and that sync is
+    what adds the module. So this extension's header list and module
+    flags have no entry for it where `Secp256k1CFFIExtension`'s does,
+    and whether the pin moves past the sync is issue #777.
     """
 
     def __init__(self) -> None:

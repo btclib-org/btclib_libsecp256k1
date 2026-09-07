@@ -67,13 +67,13 @@ make it.
 the files `tests/vectors_test.py` already reads for
 `btclib_secp256k1.musig` -- run unchanged against this module in
 `tests/zkp_musig_vectors_test.py`, which is the API-compatibility check
-secp256k1-zkp#330 was opened to make possible and this package can run
-without waiting for that split. The adaptor path has no published
-vector -- zkp's own tests draw the adaptor secret with `testrand256`,
-and a downstream caller checked for one to lift and found none -- so it
-is checked by round trip instead, in `tests/zkp_musig_test.py`:
-pre-sign, adapt with a known secret, extract the secret back out of the
-two signatures.
+BlockstreamResearch/secp256k1-zkp#330 was opened to make possible and
+this package can run without waiting for that split. The adaptor path
+has no published vector -- zkp's own tests draw the adaptor secret with
+`testrand256`, and a downstream caller checked for one to lift and found
+none -- so it is checked by round trip instead, in
+`tests/zkp_musig_test.py`: pre-sign, adapt with a known secret, extract
+the secret back out of the two signatures.
 """
 
 from __future__ import annotations

@@ -5770,6 +5770,28 @@ release-notes length in the first place, and are still in
   configured active and its directory empty and not where it was never
   registered.
 
+### The zkp docstrings and the workflow comments name what they cite
+
+- **`scripts/cffi_build.py`, `src/btclib_secp256k1/zkp/musig.py` and
+  `tests/zkp_musig_vectors_test.py` cite the vendored library as
+  `BlockstreamResearch/secp256k1-zkp#N`** (closes #758). `secp256k1-zkp`
+  is this tree's submodule path, and the repository whose tracker holds
+  the number is the one `.gitmodules` gives the URL of, so the short
+  form leaves the owner for a reader to supply. That owner is what
+  `src/btclib_secp256k1/zkp/__init__.py`'s own opening line and
+  `tests/citations_test.py`'s citation strings write.
+  `BlockstreamResearch/secp256k1-zkp#368` is among them, and
+  `scripts/cffi_build.py` states the pin as the base that sync merges
+  onto; issue #777 asks whether the pin moves past the sync.
+- **`.github/workflows/docs.yml`, `lint.yml` and `test.yml` name
+  `btclib-org/bitcoin-core-rpc#136` in full where the concurrency
+  comment cites the run it observed** (closes #758). A bare `#136`
+  resolves in this repository instead, to the merged *Open 0.8.0.1*
+  pull request, which is not what the comment is about. An antecedent
+  wrapped onto a citation's previous physical line is out of reach of a
+  search reading the citation's own line, which is the shape that leaves
+  such a reference unmeasured.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

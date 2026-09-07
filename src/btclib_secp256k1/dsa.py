@@ -4,8 +4,8 @@
 
 """Elliptic Curve Digital Signature Algorithm (ECDSA).
 
-A signature crosses this boundary in one of its two serializations, DER
-or the 64-byte compact form, and `parse_der`, `parse_compact`,
+A signature crosses this boundary in one of its serializations, DER or
+the 64-byte compact form, and `parse_der`, `parse_compact`,
 `serialize_der` and `serialize_compact` are what open and close each of
 them. They are here for the reason `keys.parse` is: a caller doing more
 than one thing with one signature -- asking whether it is low-s and then
@@ -40,7 +40,7 @@ __all__ = [
     "verify",
 ]
 
-# the two buffers a signature is serialized into, and the lengths that go
+# the buffers a signature is serialized into, and the lengths that go
 # with them in both directions: `_parsed` accepts a compact signature of
 # the width `serialize_compact` writes, so one statement of it answers
 # for the argument check as well. `ffi.sizeof` of a cdata is asked at
@@ -49,17 +49,18 @@ __all__ = [
 # 0.012 and 0.006 in the session `xonly.py` names, and not a figure this
 # site can be held to between sessions: that comment says why.
 #
-# The compact width is an int and the DER capacity is not, which is the
-# one place this module departs from the other five, and `length[0]` is
-# the reason: what `serialize_der` unpacks is the length libsecp256k1
-# reports back, so a capacity above 72 is absorbed on the way out and no
-# test can tell it from 72 -- verified, 73 leaves the suite passing where
-# 71 fails `test_der_reaches_all_72_octets`. Written as an int it would
-# be a number the mutation operator reaches and nothing checks, which is
-# the shape `.github/mutation/bindings.toml` records as closed, six of
-# thirteen survivors having been it. So it stays inside the cdecl, where
-# the width is still stated once and `ffi.sizeof` derives the capacity
-# from the buffer's own type -- at import, not per call.
+# The compact width is an int and the DER capacity is not, inverting the
+# pairing every other buffer type in this package is built with, and
+# `length[0]` is the reason: what `serialize_der` unpacks is the length
+# libsecp256k1 reports back, so a capacity above 72 is absorbed on the
+# way out and no test can tell it from 72 -- verified, 73 leaves the
+# suite passing where 71 fails `test_der_reaches_all_72_octets`. Written
+# as an int it would be a number the mutation operator reaches and
+# nothing checks, which is the shape `.github/mutation/bindings.toml`
+# records as closed, six of thirteen survivors having been it. So it
+# stays inside the cdecl, where the width is still stated once and
+# `ffi.sizeof` derives the capacity from the buffer's own type -- at
+# import, not per call.
 #
 # 72 is the maximum a signature of this curve can encode to, and it is
 # structural rather than generous: secp256k1_ecdsa_sig_serialize writes
@@ -336,9 +337,10 @@ def _checked(
         raise RuntimeError("signing produced a signature that does not verify")
 
 
-# six arguments here for the reason `sign` below carries at greater
-# length: the four ECDSA questions plus the two this package adds, and
-# `pubkey` is `verify`'s argument rather than a group with any of them
+# more arguments here than PLR0913 allows, for the reason `sign` below
+# carries at greater length: ECDSA's own questions plus the ones this
+# package adds, and `pubkey` is `verify`'s argument rather than a group
+# with any of them
 def _sign_(  # noqa: PLR0913
     msg_bytes: BytesLike,
     prvkey: BytesLike | int,
@@ -418,12 +420,13 @@ def _sign_(  # noqa: PLR0913
     return signature
 
 
-# six arguments, where PLR0913 allows five. The alternative is an options
+# more arguments than PLR0913 allows. The alternative is an options
 # object, and it would be one for this function alone: `aux_rand32`,
-# `compact` and `grind` are ECDSA's own three questions, `verify` is the
-# fourth these bindings add, and none of the four is a group with either
-# of the others. `verify` is keyword-only, as the two before it should
-# have been, so what a call site actually carries is named
+# `compact` and `grind` are ECDSA's own questions, `verify` is one these
+# bindings add, and no one of them is a group with any of the others.
+# `pubkey` is `verify`'s argument rather than a group with any of them.
+# `verify` is keyword-only, as `compact` and `grind` should have been, so
+# what a call site actually carries is named
 def sign(  # noqa: PLR0913
     msg_bytes: BytesLike,
     prvkey: BytesLike | int,

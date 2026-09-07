@@ -7,7 +7,7 @@
 A generator is a second base point, unrelated to `G` by any known
 discrete logarithm, that a Pedersen commitment `x*G + v*gen` blinds a
 value `v` under. `h()` is the static one the header itself fixes and
-`generate`/`generate_blinded` are the two ways to make another; `parse`
+`generate`/`generate_blinded` are the ways to make another; `parse`
 and `serialize` are the octet boundary for either, and
 `pedersen_commitment_parse`/`pedersen_commitment_serialize` are the same
 boundary for the 33-byte commitment `pedersen_commit` builds.

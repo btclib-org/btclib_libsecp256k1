@@ -235,11 +235,11 @@ def rewind(
     )
 
 
-# ten arguments, where PLR0913 allows five. `dsa.sign`'s own such comment
-# has the reasoning for keeping them rather than folding them into an
-# options object: six of the ten are keyword-only, `commit_bytes`,
-# `blind`, `nonce` and `value` being what every call needs and the rest
-# being the header's own tuning knobs, none of which groups with another
+# more arguments than PLR0913 allows. `dsa.sign`'s own such comment has
+# the reasoning for keeping them rather than folding them into an options
+# object: `commit_bytes`, `blind`, `nonce` and `value` are what every
+# call needs, and the keyword-only ones after them are the header's own
+# tuning knobs, none of which groups with another
 def sign(  # noqa: PLR0913
     commit_bytes: BytesLike,
     blind: BytesLike | int,

@@ -273,14 +273,14 @@ def scalar_buffer(prvkey: BytesLike | int | CData, name: str) -> CData:
 def keypair(prvkey: BytesLike | int) -> CData:
     """Build the libsecp256k1 keypair of a private key.
 
-    Three modules need one -- `ssa` to sign, `xonly` to tweak a taproot
-    private key, `silentpayments` to spend a taproot input -- and each
-    wipes it on the way out, `wipe` above being how. That is why the
-    building of it lives here beside the wiping rather than in `keys`:
-    what a keypair holds is the private key in libsecp256k1's own
-    layout, so a caller of this owes the buffer a `wipe`, and the two
-    halves of that obligation are better read together than looked up in
-    two places.
+    `ssa` needs one to sign, `xonly` to tweak a taproot private key,
+    `silentpayments` to spend a taproot input, and `musig` to generate a
+    counter-based nonce and to sign a share; each wipes it on the way
+    out, `wipe` above being how. That is why the building of it lives
+    here beside the wiping rather than in `keys`: what a keypair holds is
+    the private key in libsecp256k1's own layout, so a caller of this
+    owes the buffer a `wipe`, and that obligation is better read beside
+    `wipe` than looked up elsewhere.
 
     Args:
         prvkey: the private key, 32 bytes or an int below 2**256.

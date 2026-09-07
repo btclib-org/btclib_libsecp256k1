@@ -6278,6 +6278,71 @@ release-notes length in the first place, and are still in
   of the fork's own modules goes with it, and for the same reason:
   `silentpayments` is the module that is not.
 
+### `src/`'s comments and docstrings name their enumerations
+
+- **A comment or a docstring that gives its members no longer says how
+  many they are** (closes #804). The types `BytesLike` names, the
+  obligations `_scalar._owned_octets` lists, the modules that need a
+  keypair and the obligation that comes with one, the serializations a
+  signature crosses `dsa`'s boundary in, the buffers `dsa` and `keys`
+  serialize into, the names `keys.pubkey_tweak_mul_sum` is spelled with,
+  the uses `keys._parsed`'s proof is put to, the widths `musig` and
+  `silentpayments` fix, the ways a `musig.SecretNonce` and a
+  `zkp.generator` generator are obtained, and the globals
+  `zkp.context._load` writes: each names its members, and the number
+  beside it was that list written a second time. The test is the one
+  `README.md` and `SECURITY.md` were repaired against -- where a new
+  member leaves every other word reading correctly, the number is a
+  restatement.
+- **Where the members were not named beside it, the alias is.**
+  `MutableBytesLike`'s comment counted the types it names in a sentence
+  whose neighbour names an `mmap` and an `array.array("B")`, so what the
+  number pointed at was not decidable from the prose; `_scalar.octets`
+  counted the types it takes, in its docstring and again in the comment
+  below it. Each now names the alias its own signature is annotated
+  with, which is one referent rather than a count of an unstated set.
+- **`_secret.keypair`'s list had aged, and the number with it.** It
+  named `ssa`, `xonly` and `silentpayments`; `musig` imports `keypair`
+  and calls it, once to generate a counter-based nonce and once to sign
+  a share, which `grep -rn '_secret' src --include='*.py'` and the call
+  sites it points at show. `zkp.musig` is not among them: it builds the
+  local equivalent through the subpackage's own `ffi`, which its
+  `_keypair` docstring says.
+- **`silentpayments`'s width comment counted modules, and `dsa`'s
+  counted them differently.** One said the widths of a stated number of
+  other modules are private and the other that it departs from a stated
+  number of them. What each says instead is the rule the tree keeps: a
+  width stated only to size a buffer is private, and every buffer type
+  but `dsa`'s DER one is `ffi.typeof` of a width already written down
+  beside it. An `ast` walk over the module-level assignments under
+  `src/btclib_secp256k1` is what those are read from, and it is also
+  what refutes the module-wide reading the counts invited:
+  `zkp.rangeproof` exports `MAX_MESSAGE_LEN`, so `silentpayments` is
+  not the only module answering a caller a length.
+- **The `noqa: PLR0913` comments name the rule and drop the
+  arithmetic.** `dsa.sign`'s said six arguments where
+  `ruff check --select PLR0913`, run on the file with the suppression
+  stripped, answers `Too many arguments in function definition (7 > 5)`:
+  the count had gone stale while the sentence around it went on reading
+  correctly. `max-args` is nowhere in `pyproject.toml`, so five is
+  ruff's own default rather than this tree's statement. A threshold
+  raised to a signature's own argument count or above makes `RUF100`
+  report that suppression as unused, and one that moves and stays below
+  it is reported by nothing, so neither half of the comparison the prose
+  was making is checked by either rule. What each comment keeps is the
+  grouping that is its reason -- which arguments are the scheme's own
+  questions, which the bindings add, and which are keyword-only tuning
+  knobs -- since that is what rejects the options object.
+- **A number that refers rather than counts stays.** `__init__`'s two
+  ways a secret crosses the boundary set up a `The first` and a `The
+  second` with nothing to point at without it. `xonly`'s `any of the
+  three` points back at the serializations its module docstring names in
+  the same breath, which is the back-reference the repair of the prose
+  files left standing. And `recovery`'s causes weighed against `dsa`'s,
+  and `__init__`'s checks weighed against the lines it takes to keep
+  them, are the comparison the sentence is: it has no content without
+  them.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

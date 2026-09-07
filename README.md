@@ -1,6 +1,6 @@
 # Python bindings to libsecp256k1
 
-<!-- The badges are what the reader decides with, in three groups: what the
+<!-- The badges are what the reader decides with, in groups: what the
 software is and whether it can be used, whether it works, and what the
 OpenSSF makes of it.
 
@@ -96,14 +96,14 @@ own contract in its docstring.
 
 ## Versioning
 
-<!-- The link below is read by three checks -- check_submodule_pin.py,
-release.yml and vendored-vectors.yml -- each taking the first match of
-the same expression in this file rather than this heading by name
+<!-- The link below is read by check_submodule_pin.py, release.yml and
+vendored-vectors.yml -- each taking the first match of the same
+expression in this file rather than this heading by name
 (btclib-org/btclib-secp256k1#429; check_submodule_pin.py's module
 docstring has the full reasoning). That makes this the only place in
 README.md that may link to a secp256k1 release tag: a second such link
-placed anywhere earlier in the file would silently become the one all
-three read instead, with nothing going red. -->
+placed anywhere earlier in the file would silently become the one they
+all read instead, with nothing going red. -->
 
 btclib-secp256k1 version numbers track the wrapped libsecp256k1 version:
 release M.N.P wraps libsecp256k1 vM.N.P, and the vendored library is
@@ -311,7 +311,7 @@ and decides nothing else.
   there, and what omitting them means is the one thing that differs:
   fresh randomness where BIP340 and BIP324 ask for it, and the RFC6979
   nonce alone where ECDSA leaves it deterministic. Taking a public key in any
-  of its three serializations is not a leniency of that kind and is worth
+  of its serializations is not a leniency of that kind and is worth
   the distinction: BIP340 verification (`ssa.verify`) and taproot
   tweaking (`xonly.tweak_add`, `xonly.tweak_add_check`) take 32, 33 or 65
   octets because `02 || x`, `03 || x` and `04 || x || y` are one key —
@@ -433,8 +433,8 @@ was just serialized, which for the compressed form is that square root
 again. Sorting keys and then adding them together is the composition
 that pays it per key; scanning block after block for a silent payment
 pays it per transaction, which is why `silentpayments` has a private
-half for each of its three entry points, the summary of a transaction's
-inputs included.
+half beside its entry points, the summary of a transaction's inputs
+included.
 
 Some compositions are an entry point instead of two halves, where what
 the caller wanted was the composition. `xonly.from_prvkey` is the
@@ -516,7 +516,7 @@ and that is the pair the paragraph above states, the caller's to choose
 by the serialization they carry. A keypair offers its caller no such
 choice.
 
-Two things the rule needs said, or it reads as narrower than it is. The
+Some things the rule needs said, or it reads as narrower than it is. The
 first is what recovers a parse, and it is **`keys.parse` itself, not a
 cheaper serialization**. The argument through the uncompressed form does
 not reach an x-only key, which is a field square root to rebuild and has
@@ -1076,7 +1076,7 @@ key are two arguments, and the caller says which is which.
 and reads that eligibility off the keys the vector file itself publishes
 rather than off its scripts, for the same reason.
 
-Two things about it are worth knowing before it is used. The summary
+Some things about it are worth knowing before it is used. The summary
 `prevouts_summary` returns is opaque and not a serialization: what is
 inside is libsecp256k1's own, portable across neither platforms nor
 versions, and the only thing to do with it is hand it to `scan_outputs`
@@ -1160,7 +1160,7 @@ secp256k1-zkp module wrapped. Which those are is
 [the API documentation](https://btclib-secp256k1.readthedocs.io) rather
 than a list here, that set growing a module at a time.
 `silentpayments` runs the other way: secp256k1-zkp's own copy of that
-module is mainline's, blob for blob at the two commits *Versioning*
+module is mainline's, blob for blob at the commits *Versioning*
 names, so the flagged extension declares none of it and BIP352 is
 reached through `btclib_secp256k1.silentpayments` alone.
 

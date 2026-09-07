@@ -180,8 +180,8 @@ These are known and inherent, not vulnerabilities:
     that memory without overwriting it. There is no finalizer behind
     either on purpose: one would run at a time nothing specifies, which
     reads as a guarantee and is not one. `with` is the guarantee
-- a nonce is the private key, given the signature it made. The two nonce
-    entry points exist so that an implementation of RFC6979 or of BIP340's
+- a nonce is the private key, given the signature it made. The nonce entry
+    points exist so that an implementation of RFC6979 or of BIP340's
     derivation can be checked against libsecp256k1's own, and what they
     answer is not a value to publish, log or store beside a signature.
     Each scheme has its own equation: ECDSA signs `s = k⁻¹(h + r·d)`, so

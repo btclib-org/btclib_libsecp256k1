@@ -611,12 +611,16 @@ author approves, so `can_approve_pull_request_reviews` is read back
 beside the token's own scope and not left to be assumed.
 
 What asks for more asks per job, and the declarations are the record of
-it — anchored, so that a comment naming a permission stays out of the
-answer:
+it — keyed on where the key sits, first on its line after the
+indentation, so that a comment naming a permission stays out of the
+answer while a grant carrying a trailing comment stays in:
 
 ```shell
-git grep -n ': write$' -- .github/workflows
+git grep -nE '^ +[a-z-]+: write([[:blank:]]+#|$)' -- .github/workflows
 ```
+
+A grant written some other way — `permissions: write-all`, a flow
+mapping, or a quoted key or value — is outside that answer.
 
 `release.yml` takes `contents: write` on `github-release` and `id-token:
 write` on its publish jobs, which is what Trusted Publishing exchanges.

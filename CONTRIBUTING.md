@@ -860,8 +860,8 @@ run locally.
   that raised, which is Cosmic Ray not having measured rather than a test
   that is missing.
 
-- `vendored-vectors`, whose two jobs ask two unrelated questions and
-  reproduce separately. `check` re-reads every pin in `tests/README.md`
+- `vendored-vectors`, whose jobs ask unrelated questions and reproduce
+  separately. `check` re-reads every pin in `tests/README.md`
   against upstream, and `--dry-run` is what the `pull_request` trigger
   passes so that the run edits no tracking issue — which is what a run
   by hand wants too:
@@ -889,7 +889,9 @@ run locally.
 
   ```shell
   gpg --keyserver hkps://keys.openpgp.org --recv-keys \
-      $(grep -oE '\b[0-9A-F]{40}\b' .github/workflows/vendored-vectors.yml)
+      $(sed -n '/FINGERPRINTS:/,/run:/p' \
+          .github/workflows/vendored-vectors.yml \
+          | grep -oE '\b[0-9A-F]{40}\b')
   named=$(sed -n 's|.*secp256k1/releases/tag/\(v[0-9][0-9.]*\).*|\1|p' \
       README.md | head -1)
   git -C secp256k1 fetch --force origin "refs/tags/${named}:refs/tags/${named}"
@@ -899,15 +901,19 @@ run locally.
   ```
 
   the fingerprints are lifted out of the workflow rather than written
-  again here, a second list being one that drifts, and their case is
-  what selects them: the action pins in that same file are hex of the
-  same length in lower case. What the runner never has to care about and
-  a developer does is where the two writes land — `--recv-keys` puts
-  three third-party public keys in whichever keyring it is pointed at,
-  the default one unless `GNUPGHOME` says otherwise, and the
-  `fetch --force` moves the tag `README.md` names in the vendored clone
-  to what upstream serves, which is the question being asked and is also
-  what `submodule-pin` resolves against afterwards.
+  again here, a second list being one that drifts, and the `sed` range
+  is what keeps the lift to this job's own: `FINGERPRINTS` (plural) is
+  the `pin` job's env key alone, where `zkp-pin`'s own recipe further
+  down names a fingerprint under the singular `FINGERPRINT`, so stopping
+  at the block's own `run:` line excludes it rather than pulling it in
+  for a keyserver that cannot serve it. What the runner never has to
+  care about and a developer does is where the two writes land —
+  `--recv-keys` puts each of the pin job's own third-party public keys
+  in whichever keyring it is pointed at, the default one unless
+  `GNUPGHOME` says otherwise, and the `fetch --force` moves the tag
+  `README.md` names in the vendored clone to what upstream serves, which
+  is the question being asked and is also what `submodule-pin` resolves
+  against afterwards.
 
   `${named}` is braced against this shell rather than against the
   runner's. zsh reads the `:r` of an unbraced `$named:refs/tags/...` as
@@ -917,6 +923,63 @@ run locally.
   same asymmetry as `/usr/bin/grep` above, and in the same direction:
   what a local shell gets wrong here is the reproduction and not the
   workflow
+
+  `zkp-pin` asks the narrower question its own block comment states:
+  whether the pinned secp256k1-zkp commit is one Andrew Poelstra signed,
+  not whether it is a tagged release — secp256k1-zkp cuts none. The key
+  comes from his own published bundle rather than from
+  `keys.openpgp.org`, which serves this one stripped of the user IDs
+  GnuPG needs before it accepts a key (#690), and the fingerprint is
+  lifted from the same step's own env block, keyed off `KEY_URL:`,
+  which appears nowhere else in the file:
+
+  ```shell
+  fingerprint=$(grep -B1 'KEY_URL:' \
+      .github/workflows/vendored-vectors.yml \
+      | sed -n 's/^ *FINGERPRINT: //p')
+  key=$(mktemp)
+  curl --fail --silent --show-error --location --output "$key" \
+      https://www.wpsoftware.net/andrew/andrew.gpg
+  gpg --import "$key"
+  gpg --list-keys "$fingerprint"
+  sed -n 's|.*secp256k1-zkp/commit/\([0-9a-f]\{40\}\).*|\1|p' README.md
+  pinned=$(git ls-tree HEAD secp256k1-zkp | awk '{print $3}')
+  git ls-tree HEAD secp256k1-zkp
+  git -C secp256k1-zkp fetch --force origin "$pinned"
+  git -C secp256k1-zkp verify-commit --raw "$pinned" 2>&1
+  ```
+
+  `$key` is a temporary file rather than a name written into the
+  checkout, for the same reason the job writes its own copy to
+  `$RUNNER_TEMP` — a fetched key is not something this recipe leaves
+  behind for `git status` to find. `gpg --list-keys "$fingerprint"` is
+  the job's own import-step assertion, kept for the same reason it is
+  there: GnuPG accepts a key stripped of every user ID and exits 0
+  having imported nothing (#690), so a `curl` that silently failed to
+  fetch a usable key is caught here rather than misread, one step
+  later, as a bad pin. The `sed` line and the `git ls-tree` line beside
+  it are the comparison itself, the same way `pin`'s own two closing
+  lines above are: the first prints what `README.md` links to and the
+  second what this tree's gitlink pins, and the pin is correct where
+  the two commits agree.
+
+  What the last command prints is the whole answer, and it is read
+  directly rather than filtered: an unanchored search for `$fingerprint`
+  in that output also matches `ERRSIG`'s own trailing field, which
+  carries the *expected* signer's fingerprint even when the key never
+  arrived, so a missing key can print the very string the reader was
+  told to look for — measured against the real pin, with the key above
+  never imported. Read the status lines the way the job's own comment
+  reads them instead: a line starting `[GNUPG:] VALIDSIG` followed by
+  `$fingerprint` is the pin verifying. `NO_PUBKEY` naming a different
+  key id is, past the assertion above, a re-pin signed by somebody this
+  recipe holds no fingerprint for. `BADSIG` is a pin that does not
+  verify at all. `REVKEYSIG` — which can sit beside a `VALIDSIG` for the
+  same fingerprint — is the one status that means stop trusting the key
+  regardless, its own owner's act rather than a calendar date;
+  `EXPKEYSIG` beside a `VALIDSIG` instead is the opposite: the key's
+  stated expiry lapsing, which does not weaken a signature it already
+  made.
 
 - `wheel-reproducibility`, which builds this commit's wheel twice, from
   two directories it extracts `HEAD` into, and diffs the two archives

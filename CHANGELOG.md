@@ -5572,6 +5572,23 @@ release-notes length in the first place, and are still in
   half of all keys, and `silentpayments._create_outputs_` builds its
   scalar buffers inside a generator expression.
 
+### `zkp-pin` gets its own manual recipe, sourced the way the job is
+
+- **The `pin` recipe's key grep is scoped to the `pin` job's own
+  `FINGERPRINTS` block, and a `zkp-pin` recipe fetches Andrew
+  Poelstra's key from the bundle that job fetches it from** (closes
+  #706). The grep previously read the whole workflow file, which also
+  picks up `zkp-pin`'s own fingerprint and asks `keys.openpgp.org` for
+  it — the server that serves it stripped of the user IDs GnuPG needs
+  before accepting it (#690) — so the prose beside the recipe said three
+  keys while the command asked for four. `CONTRIBUTING.md` had no manual
+  equivalent of `zkp-pin` at all; it now has one, sourced the way the
+  job itself is, keeping the job's own import-step assertion and
+  reading `git verify-commit --raw`'s status lines directly rather than
+  through a grep on the fingerprint, which also matches `ERRSIG`'s own
+  trailing field and reads a key that never arrived as a pin that
+  verifies.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

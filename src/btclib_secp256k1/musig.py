@@ -94,12 +94,12 @@ __all__ = [
     "pubnonce_serialize",
 ]
 
-# the three serializations this module has fixed widths for: BIP327's own
-# for a public and an aggregate nonce (33 octets per point, two points
-# each), and libsecp256k1's compact 32-byte partial signature -- s alone,
-# the nonce and the key both being implied by the session. The aggregate
-# signature `Session.partial_sig_agg` answers is a plain BIP340 one, whose
-# width `ssa.py` already states
+# the widths this module has fixed sizes for: BIP327's own for a public
+# and an aggregate nonce (33 octets per point, two points each),
+# libsecp256k1's compact 32-byte partial signature -- s alone, the nonce
+# and the key both being implied by the session -- and the 64-byte plain
+# BIP340 signature `Session.partial_sig_agg` answers, the same width
+# `ssa.py` states for the signatures it makes
 _PUBNONCE_SIZE = 66
 _AGGNONCE_SIZE = 66
 _PARTIAL_SIG_SIZE = 32
@@ -639,7 +639,7 @@ def nonce_gen_counter(
 class SecretNonce:
     """A signer's secret nonce, held between `nonce_gen` and `partial_sign`.
 
-    `nonce_gen` and `nonce_gen_counter` are the two ways to obtain one --
+    `nonce_gen` and `nonce_gen_counter` are the ways to obtain one --
     this is never built from octets, there being no parser for a secret
     nonce by design: "Avoid copying (or serializing) the secnonce. This
     reduces the possibility that it is used more than once for signing",

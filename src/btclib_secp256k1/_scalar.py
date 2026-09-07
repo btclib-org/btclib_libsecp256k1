@@ -50,13 +50,13 @@ def octets(value: BytesLike, name: str, size: int | None = None) -> bytes:
         The value as bytes: itself, if that is what it already was.
 
     Raises:
-        TypeError: if the value is not one of those three types, or is a
-            memoryview whose items are wider than an octet.
+        TypeError: if the value is not a `BytesLike`, or is a memoryview
+            whose items are wider than an octet.
         ValueError: if a size is given and the value is not that long.
     """
     # `bytes` is what all but a handful of calls pass, and every question
-    # the block below asks is already answered for it: it is one of the
-    # three types, its items are octets, and the copy it would take is the
+    # the block below asks is already answered for it: it is a
+    # `BytesLike`, its items are octets, and the copy it would take is the
     # object itself. Asking the type once and skipping the rest measures
     # 0.034 microseconds against 0.080 -- an Apple M5, macOS 26.6, arm64,
     # CPython 3.13.14, minimum of 9 rounds of a million calls -- and every
@@ -108,8 +108,8 @@ def _owned_octets(num: CData, name: str) -> CData:
 
     What that gives up is stated where `octets` states the opposite: the
     copy taken there is what stops a caller overwriting their own buffer
-    while libsecp256k1 reads it. **Three obligations pass to the caller
-    with the copy**, and none of them exists for a `bytes`:
+    while libsecp256k1 reads it. **Obligations pass to the caller with
+    the copy**, and none of them exists for a `bytes`:
 
     - the octets stay put for the whole call, and the whole call is more
       than one read. `secp256k1_ecdsa_sign` loads the scalar

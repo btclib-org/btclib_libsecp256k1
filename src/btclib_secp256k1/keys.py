@@ -52,7 +52,7 @@ __all__ = [
 COMPRESSED = 258
 UNCOMPRESSED = 2
 
-# the two buffers `serialize` writes into, and the lengths it declares them
+# the buffers `serialize` writes into, and the lengths it declares them
 # with. The pairing is what these are for: each type is `ffi.typeof` of the
 # width beside it, so the buffer and the length cannot say different
 # numbers, and neither is `ffi.sizeof` of a cdata per call. This is the one
@@ -732,15 +732,15 @@ def pubkey_tweak_mul_sum(
 ) -> bytes | None:
     """Multiply each public key by its tweak and add the products.
 
-    The two names it is spelled with, in that order: a
-    `pubkey_tweak_mul` per pair and one `pubkey_sum` over the products.
-    That is the multi-scalar multiplication a caller writes as a
-    verification equation -- u*H + v*Q of ECDSA and BIP340, MuSig2's
-    aggregate of a key per signer, BIP352's tweak data -- and the whole
-    of what it adds is that no product is serialized: written with the
-    public halves, each `pubkey_tweak_mul` serializes 65 octets that the
-    sum then parses again, and the terms are the only place a caller has
-    to put them.
+    The names it is spelled with, in that order: a `pubkey_tweak_mul`
+    per pair and one `pubkey_sum` over the products. That is the
+    multi-scalar multiplication a caller writes as a verification
+    equation -- u*H + v*Q of ECDSA and BIP340, MuSig2's aggregate of a
+    key per signer, BIP352's tweak data -- and the whole of what it adds
+    is that no product is serialized: written with the public halves,
+    each `pubkey_tweak_mul` serializes 65 octets that the sum then
+    parses again, and the terms are the only place a caller has to put
+    them.
 
     The naive form of it, deliberately: a term at a time and one sum,
     with none of the shared precomputation of Strauss or Pippenger.
@@ -989,9 +989,9 @@ def _parsed(pubkey_bytes: BytesLike, name: str) -> CData | None:
     """Parse a public key, answering None where it is not one.
 
     `secp256k1_ec_pubkey_parse` is the proof that octets are a public key,
-    and there are two things to do with the same proof: `parse` keeps what
-    it built and raises when there is nothing to keep, `pubkey_verify`
-    keeps nothing and answers the verdict.
+    and what is done with the same proof differs: `parse` keeps what it
+    built and raises when there is nothing to keep, `pubkey_verify` keeps
+    nothing and answers the verdict.
 
     `pubkey_verify` is the only caller. `parse` spells the same three
     statements out rather than delegating, the frame between them being

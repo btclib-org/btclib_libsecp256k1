@@ -216,11 +216,11 @@ def _load(name: str) -> Any:
         lib.secp256k1_context_set_error_callback(context, error_callback, ffi.NULL)
         _randomize(context)
 
-        # the last of the five globals this builds, written after
-        # `ffi`, `lib` and both closures rather than beside them:
-        # `_bindings` reads `ctx` alone, taking no lock, to decide the
-        # other four are there, so it is this assignment's position
-        # that makes that read safe (#717)
+        # the last global this builds, written after `ffi`, `lib` and
+        # both closures rather than beside them: `_bindings` reads `ctx`
+        # alone, taking no lock, to decide the others are there, so it
+        # is this assignment's position that makes that read safe
+        # (#717)
         globals()["ctx"] = context
         return context
 

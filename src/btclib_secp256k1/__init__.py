@@ -132,10 +132,10 @@ else:
 CData = Any
 
 # what may be handed to an argument these bindings pass on as a bare
-# pointer. Three named types rather than the buffer protocol at large:
+# pointer. Named types rather than the buffer protocol at large:
 # `bytes(x)` of anything else is a guess -- of an `int` it is that many
 # zero octets, which would turn `octets(32, "message hash", 32)` into a
-# valid argument -- while these three state a value and a width and are
+# valid argument -- while these state a value and a width and are
 # copied, never passed through. `collections.abc.Buffer` is the same
 # idea and arrives with python 3.12, which is not yet the floor here
 BytesLike = bytes | bytearray | memoryview
@@ -147,10 +147,10 @@ BytesLike = bytes | bytearray | memoryview
 #
 # The runtime is wider than this: `_secret.into_buffer` takes whatever
 # the buffer protocol offers and is writable, an `mmap` and an
-# `array.array("B")` included. These two are what a typed caller passes
-# bare -- `collections.abc.Buffer` is the alias that would say the rest
-# and arrives with python 3.12, which is not yet the floor here -- and
-# anything else is `memoryview(x)`, which copies nothing
+# `array.array("B")` included. `MutableBytesLike` is what a typed caller
+# passes bare -- `collections.abc.Buffer` is the alias that would say the
+# rest and arrives with python 3.12, which is not yet the floor here --
+# and anything else is `memoryview(x)`, which copies nothing
 MutableBytesLike = bytearray | memoryview
 
 ffi = _btclib_secp256k1.ffi

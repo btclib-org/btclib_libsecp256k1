@@ -6381,6 +6381,17 @@ release-notes length in the first place, and are still in
   public key, and one left to the default, which `git grep -n
   "keys.parse("` over `silentpayments.py` still shows.
 
+### `module_flags_test.py` guards a flag's value, not only its name
+
+- **`_FLAG`'s `(?:ON|OFF)` discarded which value a flag carried, so
+  flipping a module's own `=OFF` back to `=ON` left every test in the
+  file green** (closes #807). Two tests now compare that value against
+  the same `configure()` call's `headers` list: a module turned `ON`
+  with no header of its own, or a header whose module is not `ON`,
+  fails where it did not before. `_ON_WITHOUT_A_HEADER` is where a
+  module compiled only as another's dependency, with no header to wrap,
+  would be recorded; both extensions read empty there.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

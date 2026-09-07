@@ -91,9 +91,14 @@ every module secp256k1-zkp defines for the flagged one, `silentpayments`
 `OFF` and the rest `ON` (btclib-org/btclib-secp256k1#792).
 `tests/module_flags_test.py` compares each list against its submodule's
 `CMakeLists.txt` and fails where a module is named in one and not the
-other; which value a named module carries is the configure line's to
-state, and no test here holds it. `SECP256K1_VALGRIND` is named for a
-different reason: it is pinned `OFF` because its default answers with
+other, and separately compares each list against the same call's
+`headers`: a header whose module is not `ON` fails there, and so does a
+module turned `ON` with no header of its own unless that file's
+`_ON_WITHOUT_A_HEADER` records it, which is where a module compiled only
+as another's dependency would go and which both extensions read empty
+today (btclib-org/btclib-secp256k1#807) -- the shape #792 above was,
+read from either side. `SECP256K1_VALGRIND` is named for a different
+reason: it is pinned `OFF` because its default answers with
 the build machine rather than with a value — `AUTO` is
 `find_package(Valgrind)`, so a runner that happens to have the header
 ships a library compiled with `-DVALGRIND`, which is a wheel this

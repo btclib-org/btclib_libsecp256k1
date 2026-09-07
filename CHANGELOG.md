@@ -5667,6 +5667,17 @@ release-notes length in the first place, and are still in
   `DocTestFinder` never reaches, but never a module whose source
   carries no doctest prompt at all.
 
+### `REPOSITORY.md` says which jobs hold two elevations, and why
+
+- **Two elevations on one job is stated as the exception to the
+  one-elevation shape, with the reason for each pair** (issue
+  btclib-org/.github#891). `release.yml`'s `attest`, `scorecard.yml`'s
+  `analysis` and each of `claude-review.yml`'s jobs hold two write
+  grants, which the shape sentence alone reads as excluding. The wording
+  is `btclib`'s, whose `REPOSITORY.md` states the same exception. The
+  paragraph enumerating grants keeps the jobs that elevate once, so that
+  no reason is stated in both.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

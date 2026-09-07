@@ -5487,6 +5487,14 @@ release-notes length in the first place, and are still in
   supersedes that sentence, which holds of `contents`, the scope the run
   recorded there measured.
 
+### `tests/copyright_test.py` qualifies its reference to `btclib`
+
+- **The module docstring cites `btclib-org/btclib#389`** (issue
+  btclib-org/.github#642). Section 9 of the organization standard has a
+  reference to another repository qualified, its one stated exemption
+  being a pull request's closing keyword, which the forge reads. The
+  same docstring's `btclib-org/.github#135` is already written that way.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

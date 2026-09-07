@@ -6216,6 +6216,19 @@ release-notes length in the first place, and are still in
   removed symbol because it was removed. Nothing automates this, which
   is issue #805.
 
+### `conventions_test.py`'s module docstring names the ways and counts nothing
+
+- **The last paragraph of the module docstring states no number of the
+  assertions below it, and names a table the row pattern no longer
+  matches among the ways a declaration rots** (issue
+  btclib-org/.github#906). That way is first, the ways standing in the
+  order the assertions themselves do, and it is what
+  `test_the_table_is_not_empty` fails on. A number there is a line every
+  branch that adds an assertion has to edit, and nothing turns red where
+  it is not edited; correcting it rather than removing it was the
+  alternative. The wording is `btclib-node`'s, landed there as
+  `8e0a0a4`, and the paragraph here is byte-identical to it.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

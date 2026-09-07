@@ -1018,7 +1018,7 @@ writable buffer of exactly 32 contiguous octets, which receives the
 secret in place of the `bytes` the call would otherwise return, so that
 the copy the caller is left holding is one they can overwrite. It is an
 addition and not a change; omit it and nothing differs. SECURITY.md is
-where what it does and does not buy is stated, and names the two
+where what it does and does not buy is stated, and names the
 `silentpayments` secrets it does not reach.
 
 Two of those have a second spelling for a caller doing arithmetic rather

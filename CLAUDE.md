@@ -153,14 +153,15 @@ answers `active true` for each submodule from the moment the worktree
 exists. The activation is what the drop needs rather than the empty
 directory (btclib-org/btclib-secp256k1#765): a checkout that never
 registered the submodule has its gitlink listed like any other cached
-entry, and `REPOSITORY.md`'s `pre-commit.ci` paragraph is where that
-state is met. A claim about the gates names the gate and the command
-that decides it: they do not move together, and one of them learning
-something falsifies a sentence written about all of them. The build
-compiles `secp256k1-zkp` where `BTCLIB_LIBSECP256K1_ZKP` is `true`
-(btclib-org/btclib-secp256k1#605), which is a different question from
-what the sdist gate sees: a build that leaves the flag unset is no
-reason to leave the submodule uninitialized.
+entry, which is the state a plain `git clone` leaves and the one
+`check-sdist` fails on rather than passing. A claim about the gates
+names the gate and the command that decides it: they do not move
+together, and one of them learning something falsifies a sentence
+written about all of them. The build compiles `secp256k1-zkp` where
+`BTCLIB_LIBSECP256K1_ZKP` is `true` (btclib-org/btclib-secp256k1#605),
+which is a different question from what the sdist gate sees: a build
+that leaves the flag unset is no reason to leave the submodule
+uninitialized.
 
 `-b <branch>` sits after the path and the commit-ish so that the
 placeholder ends the command, which is section 9 of the organization

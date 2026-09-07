@@ -5933,6 +5933,127 @@ release-notes length in the first place, and are still in
   import and the project installs, so a name the lock does not answer
   for is a mistake there rather than a tool of the hook's own.
 
+### `SECURITY.md`'s memory bullets name their enumerations
+
+- **The `into` bullet names the secrets that take none of it without
+  saying how many they are** (closes #785). The list is the fact, and a
+  number beside it states it a second time, so a member arriving or
+  leaving falsifies one half of a sentence whose other half is still
+  right. `README.md`'s **Some calls copy it, and are meant to.** is the
+  form this follows.
+- **The bullet on the buffers whose zeroing is the caller's to ask for,
+  and the paragraph on what a caller handing in a cffi array takes on,
+  read the same way.** Each gives its members in the sentence that had
+  counted them.
+- **`README.md`'s pointer at that bullet counts nothing either.** It
+  says that `SECURITY.md` names the `silentpayments` secrets `into` does
+  not reach, which is what a reader goes there for.
+
+### A hook's value is read whole or read as nothing
+
+- **`tests/hook_pins_test.py` cuts a flow sequence at the commas outside
+  its quotes, and reads the specifier set that survives as one thing:
+  the requirement pins whatever version one of its clauses names**
+  (closes #790). `name==1.2.3,!=1.2.4` is a pin at 1.2.3 and is
+  asserted against `uv.lock` like any other, where a cut at every comma
+  answers pieces that are requirements neither of them and that the
+  check for an unread value cannot tell from pieces that are.
+- **A specifier set naming no single version asks the lock nothing, and
+  that is the answer for `hatchling>=1.27,<2` and for `name==1.2.*`
+  alike.** The rejected alternative declines such a set outright and
+  makes the value red: it costs the pin in `name==1.2.3,!=1.2.4`, which
+  the file may declare and the lock can disagree with, and it reddens a
+  bounded range, which no reading of the lock is about.
+- **An item the walk cannot resolve into a requirement makes the whole
+  value nothing.** A pin carrying a yaml comment on its own line is
+  such an item, and `test_every_additional_dependencies_key_was_read`
+  fails on the nothing rather than asserting the pins beside it while
+  that one goes unread.
+
+### pre-commit.ci checks the vendored submodules out
+
+- **`.pre-commit-config.yaml`'s `ci:` block sets `submodules: true`, so
+  that service's checkout carries `secp256k1` and `secp256k1-zkp`**
+  (closes #766). A checkout registering neither is the state
+  `submodules-checked-out` exists to fail on, and the one where `git
+  ls-files --cached --recurse-submodules` hands `check-sdist` gitlinks
+  the sdist has no member for; issue #664 records that pair of hooks
+  failing on the runs it lists. `submodule-pin` keeps its place in the
+  `skip` list, the clone the key delivers being shallow with no
+  `fetch-depth` key to ask that service for its tags.
+  The entry closing `#664` earlier in this section stays where it is,
+  and what it says stops holding of the tree this lands in:
+  `REPOSITORY.md` and the `ci:` comment no longer name
+  `submodules-checked-out` and `check-sdist` as red on that service, its
+  checkout registers both submodules, and the question that entry left
+  to issue #766 -- whether the key also clears `check-sdist`'s
+  comparison against the built sdist -- is what this entry answers.
+- **That `ci:` block is where this repository states what pre-commit.ci
+  can and cannot run, and `REPOSITORY.md` points at it** (closes #772).
+  The block holds the `submodules` key and the `skip` list themselves,
+  so the reason an entry is in that list sits beside the list somebody
+  edits; `REPOSITORY.md` keeps what its own subject is, that the branch
+  rule names no check of that service.
+- **`CLAUDE.md` and `.github/scripts/check_submodules_checked_out.py`
+  name a plain `git clone` for the never-registered submodule state.**
+  That is the state where `git ls-files --cached --recurse-submodules`
+  lists the gitlink instead of dropping it, and pre-commit.ci is no
+  longer an instance of it.
+  The entry closing `#765` earlier in this section stays where it is,
+  and one clause of it stops holding: it points at `REPOSITORY.md` for
+  the `pre-commit.ci` instance of that state, which that file no longer
+  carries and that service is no longer in. The condition that entry
+  adds -- the drop needing the submodule configured active rather than
+  merely empty -- is untouched.
+- **The `sdist-exclude-tracked` comment, `check_submodule_pin.py`'s
+  `why_no_tag` and that function's test stop naming that service as a
+  clone their hooks answer wrongly about.** `why_no_tag` names instead
+  the checkouts that reach its absent state and its shallow one: a
+  worktree before `git submodule update --init` runs in it, and a
+  checkout made with a depth, which is what `lint.yml`'s
+  `fetch-depth: 0` is for.
+
+### The token census reads a declaration's position, not the end of a line
+
+- **`REPOSITORY.md`'s *Token permissions* hands the reader `git grep -nE
+  '^ +[a-z-]+: write([[:blank:]]+#|$)' -- .github/workflows`** (issue
+  btclib-org/.github#897): the `: write$` form it replaces drops a
+  declaration carrying a trailing comment along with the comment lines it
+  was there to exclude, and it matches a comment line that itself ends in
+  `: write`. What keeps a comment out now is the key's own
+  position, a comment line opening with a `#` where `[a-z-]` has to
+  match, and the sentence above the command says that rather than naming
+  the `$`. No workflow here writes a grant with a trailing comment, so
+  both forms answer the same lines here, and that agreement is a property
+  of the files rather than of either pattern.
+- **Two entries above name the command as it was spelled**: *What the
+  workflow table and the `paths` filter name* calls the `git grep` beside
+  that paragraph anchored, and *`REPOSITORY.md` says what the rulesets
+  and the grants are, not how many* names `git grep -n ': write$'`
+  outright. What each says of the paragraph holds of the command that
+  replaces it -- it names every job asking for more than the read-only
+  default, and the block enumerates the grants rather than the jobs --
+  and the spelling is the half this entry supersedes.
+- **The comment branch takes `[[:blank:]]` rather than a space**: a tab
+  between a grant and its comment is a shape `actionlint` accepts and
+  `yamllint` reports as a syntax error, so what keeps it out of these
+  files is the lint gate, and the census answers with the parser rather
+  than with the gate.
+- **`actionlint` reads every shape named beside the command as a
+  grant**: `permissions: write-all`, a flow mapping and a quoted key or
+  value all pass it, and `prettier` rewrites none of them into what the
+  pattern reads, as it does a double space or a trailing space.
+  `zizmor`'s excessive-permissions audit reports a job's own
+  `write-all`, and passes a workflow-level one in a file of a single job
+  at the persona the hook runs, which is the default:
+  `--persona=pedantic` reports it. So that shape can sit in a workflow
+  here with the census reporting nothing.
+- **Folding a shape into the pattern would leave the next one out**:
+  `contents: >-` with `write` on the line below is a grant `actionlint`
+  accepts and `prettier` hands back unchanged, and a line-oriented
+  pattern reads a spelling where a permission is a value in a parsed
+  document.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

@@ -187,10 +187,7 @@ def test_a_clone_without_the_tag_says_which_of_the_three_it_is(
     """No tag has three causes, and one message for all three said none.
 
     A developer has one of the three and knows which; a checkout somebody
-    else makes does not, and there which one it is *is* the finding. It
-    was pre-commit.ci that made that concrete: told to take the submodule
-    it takes it, and the hook failed anyway with a message that could not
-    say whether the clone was missing or merely shallow.
+    else makes does not, and there which one it is *is* the finding.
 
     Args:
         monkeypatch: the fixture the substitutions are made through.

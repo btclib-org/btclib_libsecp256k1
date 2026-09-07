@@ -6134,6 +6134,20 @@ release-notes length in the first place, and are still in
   entry its own claim: that `git grep` answers `CHANGELOG.md` alone
   because the spellings from before the rename live here.
 
+### `conventions_test.py`'s empty-table docstring says what still fails
+
+- **`test_the_table_is_not_empty`'s docstring no longer says every
+  assertion below it goes quiet on a table the row pattern stopped
+  matching** (issue btclib-org/.github#904): the assertions parametrized
+  on the rows are skipped for an empty parameter set, and the two-halves
+  assertion, which is not parametrized, fails on that same table naming
+  every convention the table declared as accounted for by neither half.
+  A retitled heading reaches neither, `_section` asserting while the
+  module is imported. What this assertion adds is naming the table
+  rather than the conventions, and the docstring now says so. Other
+  repositories carry a copy of the module with the same sentence, so
+  btclib-org/.github#904 stays open.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

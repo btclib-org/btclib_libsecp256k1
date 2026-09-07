@@ -102,11 +102,15 @@ _ROWS = tuple((m["convention"], m["module"]) for m in _ROW.finditer(_SECTION))
 
 
 def test_the_table_is_not_empty() -> None:
-    """A declaration that parsed to nothing is the failure that hides.
+    """No other assertion here reports an unmatched table as one.
 
-    Every assertion below quantifies over the rows, so a table this
-    module's regex stopped matching -- a column added, the backticks
-    dropped, the heading retitled -- would satisfy all of them silently.
+    The assertions parametrized on the rows are skipped on an empty
+    parameter set, so a table this module's regex stopped matching -- a
+    column added, the backticks dropped -- leaves the two-halves
+    assertion below, which is not parametrized, to fail naming every
+    convention the table declared as accounted for by neither half. A
+    retitled heading reaches neither: _section asserts while the module
+    is imported, so collection errors.
     """
     assert _ROWS, f"{_README.name}'s {_HEADING} section parsed to no rows"
 

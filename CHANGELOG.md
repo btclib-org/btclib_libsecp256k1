@@ -5933,6 +5933,22 @@ release-notes length in the first place, and are still in
   import and the project installs, so a name the lock does not answer
   for is a mistake there rather than a tool of the hook's own.
 
+### `SECURITY.md`'s memory bullets name their enumerations
+
+- **The `into` bullet names the secrets that take none of it without
+  saying how many they are** (closes #785). The list is the fact, and a
+  number beside it states it a second time, so a member arriving or
+  leaving falsifies one half of a sentence whose other half is still
+  right. `README.md`'s **Some calls copy it, and are meant to.** is the
+  form this follows.
+- **The bullet on the buffers whose zeroing is the caller's to ask for,
+  and the paragraph on what a caller handing in a cffi array takes on,
+  read the same way.** Each gives its members in the sentence that had
+  counted them.
+- **`README.md`'s pointer at that bullet counts nothing either.** It
+  says that `SECURITY.md` names the `silentpayments` secrets `into` does
+  not reach, which is what a reader goes there for.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

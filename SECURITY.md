@@ -144,11 +144,11 @@ These are known and inherent, not vulnerabilities:
     `ecdh.shared_secret`, `ellswift.xdh`, `dsa.nonce_rfc6979`,
     `ssa.nonce_bip340`, `zkp.musig.extract_adaptor`,
     `zkp.generator.pedersen_blind_sum` and
-    `zkp.generator.pedersen_blind_generator_blind_sum`. **Three secrets do
+    `zkp.generator.pedersen_blind_generator_blind_sum`. **Some secrets do
     not**, each being one member of a returned tuple, where an argument
     could not say which: the tweak of `silentpayments.label`, the
     per-output tweak `silentpayments.scan_outputs` hands back, and the
-    blinding factor `zkp.rangeproof.rewind` recovers. All three are
+    blinding factor `zkp.rangeproof.rewind` recovers. All of them are
     `bytes` and none can be zeroed, which is the limitation above and not
     this narrowing of it.
     What the caller then does with the buffer is theirs: this does not
@@ -166,7 +166,7 @@ These are known and inherent, not vulnerabilities:
         prvkey[:] = bytes(32)     # the caller's wipe, and only theirs
     ```
 
-- the two buffers whose zeroing is the caller's to ask for are
+- the buffers whose zeroing is the caller's to ask for are
     `ssa.Signer`'s keypair and `musig.SecretNonce`'s secret nonce.
     Everything above is wiped inside the call that made it — read out and
     zeroed in the one operation, or wiped in a `finally` where it is a
@@ -216,16 +216,16 @@ These are known and inherent, not vulnerabilities:
     a buffer never overwritten is the same un-zeroizable copy under
     another name.
 
-    **What the caller takes on is three things, and `_scalar` names them
-    where it refuses the shapes it cannot take.** The octets must stay
-    put for the whole call, which is more than one read — libsecp256k1
-    loads the scalar and then derives the nonce from the same pointer, and
-    grinding and the check read it again — so a write in between yields a
-    nonce and a signature under two different keys, reported as the fault
-    it is indistinguishable from. The memory must outlive the call, which
-    no python argument has had to promise: a cffi *view*, a slice or a
-    cast, does not keep its owner alive, and a dangling one reads freed
-    memory as a private key. And the length is the declaration's word:
+    **What the caller takes on is what `_scalar` names where it refuses
+    the shapes it cannot take.** The octets must stay put for the whole
+    call, which is more than one read — libsecp256k1 loads the scalar and
+    then derives the nonce from the same pointer, and grinding and the
+    check read it again — so a write in between yields a nonce and a
+    signature under two different keys, reported as the fault it is
+    indistinguishable from. The memory must outlive the call, which no
+    python argument has had to promise: a cffi *view*, a slice or a cast,
+    does not keep its owner alive, and a dangling one reads freed memory
+    as a private key. And the length is the declaration's word:
     `ffi.cast("unsigned char[32]", ...)` over 8 octets is accepted, cffi
     having no way to report what was really allocated.
 

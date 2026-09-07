@@ -5711,6 +5711,22 @@ release-notes length in the first place, and are still in
   and the read that does not conceal it, so what this closes is the local
   gap, not the organization-wide half.
 
+### `exclude_patterns` converges on the empty list section 2 asks for
+
+- **`docs/source/conf.py`'s `exclude_patterns` is now `list[str] = []`,
+  matching `btclib-benchmarks`** (issue btclib-org/.github#418). The
+  stock `sphinx-quickstart` list named `_build`, `Thumbs.db` and
+  `.DS_Store`, entries the standard's section 2 calls dead here:
+  `Thumbs.db` and `.DS_Store` are inert against this tree's `.rst`/`.md`
+  `source_suffix`, and `docs.yml` and `.readthedocs.yaml` both build
+  into `docs/build/html` or `$READTHEDOCS_OUTPUT/html`, outside
+  `docs/source`, so nothing there is left for `_build` to exclude
+  either. No comment is added beside the line: the reason now lives in
+  section 2, and a second copy here is the restatement section 9 asks
+  against. The standard's other documentation trees still carry the
+  stock list, and this issue's *Done when* is their convergence too, so
+  it stays open.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

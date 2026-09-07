@@ -208,12 +208,17 @@ exclude = [
     # pin (btclib-org/btclib-secp256k1#611), not a name reasoned about
     # from upstream's own Makefile.am: none of these paths exists until
     # those commands are run, so a stale entry matches nothing and fails
-    # nothing. An entry matching a file a submodule tracks fails nothing
-    # either (btclib-org/btclib-secp256k1#655): it ships an sdist
-    # without that file, and check-sdist does not see the loss, its
-    # hatchling plugin reading this very list ([tool.check-sdist] below)
-    # and subtracting what the list matches from the tracked files it
-    # reports missing
+    # nothing. An entry matching a file a submodule tracks would ship an
+    # sdist without that file with check-sdist itself blind to the loss,
+    # its hatchling plugin reading this very list ([tool.check-sdist]
+    # below) and subtracting what it matches from the tracked files it
+    # reports missing regardless of that table's own mode
+    # (btclib-org/btclib-secp256k1#655) -- .pre-commit-config.yaml's
+    # sdist-exclude-tracked hook is what actually fails on that entry,
+    # matching this list against the tracked files living inside a
+    # submodule before check-sdist ever runs. Not against every tracked
+    # file: /COPYRIGHT above is one on purpose, and that hook reads
+    # `.gitmodules` to leave it alone
     "secp256k1/autom4te.cache",
     "secp256k1/aclocal.m4",
     "secp256k1/configure",
@@ -302,7 +307,14 @@ ignore = ["W003", "W009"]
 # and randomized, and tests/concurrency_test.py shares it across threads,
 # so an order that happens to work is an order this suite could not
 # distinguish from one that has to
-test = ["pytest", "pytest-cov", "pytest-randomly"]
+# pathspec is no test tool: tests/sdist_exclude_test.py imports
+# .github/scripts/check_sdist_exclude.py at module scope, and that
+# script matches the sdist exclude list with pathspec, the library
+# check-sdist's own hatchling plugin matches it with. Absent from this
+# group the file is a collection error rather than a skipped test, and
+# a collection error fails every cell of the matrix
+# (btclib-org/btclib-secp256k1#655)
+test = ["pytest", "pytest-cov", "pytest-randomly", "pathspec"]
 # the mypy hook of .pre-commit-config.yaml declares what the checked
 # files import, because it runs in its own isolated environment; running
 # mypy from this environment has to find the same things, or it reports
@@ -736,6 +748,9 @@ max-complexity = 10
 # and the submodules-checked-out check, a hook for the same reason and
 # with the same exemption (btclib-org/btclib-secp256k1#612)
 ".github/scripts/check_submodules_checked_out.py" = ["print"]
+# and the sdist-exclude-tracked check, a hook for the same reason and
+# with the same exemption (btclib-org/btclib-secp256k1#655)
+".github/scripts/check_sdist_exclude.py" = ["print"]
 # the wheel-content check, whose complaints are `::error::` workflow
 # annotations on stderr and whose all-clear line on stdout is what a
 # green run of check-dist shows in its own log: same exemption, same

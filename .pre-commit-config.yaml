@@ -587,6 +587,12 @@ repos:
           # hyphenated as uv.lock spells it, hook_pins_test.py keying
           # the two on one name
           - typing-extensions==4.16.0
+          # .github/scripts/check_sdist_exclude.py imports it. Both mypy
+          # and hatchling above already reach it, each with an
+          # open-ended floor, so what this line changes is the version:
+          # declared, it is uv.lock's, and hook_pins_test.py fails when
+          # the two part
+          - pathspec==1.1.1
   # the workflows are as much a part of this repository as the package,
   # and until now nothing checked them: an expression referring to a
   # context that does not exist, or a step reading an input a job never
@@ -727,6 +733,51 @@ repos:
         name: every submodule .gitmodules names is checked out
         language: python
         entry: python .github/scripts/check_submodules_checked_out.py
+        always_run: true
+        pass_filenames: false
+
+  # check-sdist's hatchling plugin subtracts [tool.hatch.build.targets.sdist]'s
+  # own exclude list from the tracked files it would otherwise report
+  # missing, unconditionally and regardless of [tool.check-sdist]'s mode
+  # -- so an entry that matches a file a submodule tracks drops that file
+  # from the sdist with every gate, this one included, staying green
+  # (btclib-org/btclib-secp256k1#655). This hook is what catches that
+  # entry instead: the exclude list matched, with the identical
+  # pathspec.GitIgnoreSpec matching the plugin itself uses, against the
+  # tracked files living inside a submodule -- not every file
+  # `git ls-files --cached --recurse-submodules` answers, /COPYRIGHT
+  # among them being a tracked file this list excludes from the sdist on
+  # purpose and an unscoped match catching it -- and failing on a
+  # nonempty intersection there. What that scope leaves uncaught is
+  # btclib-org/btclib-secp256k1#770.
+  # That git command answers no path at all inside a submodule that is
+  # not checked out, so this hook is vacuously green in a clone without
+  # them and its all-clear line then says nothing. submodules-checked-out
+  # immediately above fails loudly in that state, and pre-commit runs
+  # every hook rather than stopping at the first failure, so its verdict
+  # is in the same run as this hook's all-clear -- which is what makes
+  # the all-clear readable at all. The `ci:` block above says which
+  # hooks that leaves red on pre-commit.ci.
+  # always_run for the same reason submodules-checked-out above is: a
+  # submodule bump can make a standing entry newly match a file the pin
+  # did not track before, with nothing in the diff pre-commit would
+  # otherwise filter on pointing at the exclude list at all.
+  # pathspec carries a version for the reason every other pinned
+  # additional_dependency in this file does: unpinned, it is whatever
+  # was resolved when this hook's environment was built, and nothing
+  # ever moves it afterwards. What it binds is this hook's environment,
+  # and check-sdist below names no pathspec at all, requiring
+  # `pathspec>=0.10` directly on an open-ended floor. So the matching
+  # this hook does and the matching check-sdist's plugin does are the
+  # same library at whatever version each environment resolved, and the
+  # version written here settles this hook's
+  - repo: local
+    hooks:
+      - id: sdist-exclude-tracked
+        name: no sdist exclude entry matches a submodule-tracked file
+        language: python
+        entry: python .github/scripts/check_sdist_exclude.py
+        additional_dependencies: ["pathspec==1.1.1"]
         always_run: true
         pass_filenames: false
 

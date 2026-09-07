@@ -23,24 +23,46 @@ ci:
   # request with nowhere to land
   autoupdate_commit_msg: "Update the pinned pre-commit hook revisions"
   autoupdate_schedule: weekly
-  # the one hook pre-commit.ci cannot run, for something that service
-  # does not give it rather than for anything the hook does.
-  # submodule-pin resolves the release README.md names in the vendored
-  # clone's refs, and there are no refs to resolve it against there.
-  # `submodules: true` is the documented `ci:` key for that -- "whether to
-  # recursively check out submodules" -- and it was tried, on #132, rather
-  # than argued about: with it the clone arrives, and the hook still
-  # fails, now saying which of the three states it is in. "the vendored
-  # clone is shallow and carries no v0.8.0 tag". There is no `fetch-depth`
-  # key to ask that service for, so the key bought a clone nothing can use
-  # and is not kept. REPOSITORY.md records the residual gap.
+  # submodule-pin is the one hook kept from running on pre-commit.ci at
+  # all, for something that service does not give it rather than for
+  # anything the hook does. It resolves the release README.md names in
+  # the vendored clone's refs, and there are no refs to resolve them
+  # against there. `submodules: true` is the documented `ci:` key for
+  # that -- "whether to recursively check out submodules" -- and it was
+  # tried, on #132, rather than argued about: with it the clone arrives,
+  # and the hook still fails, now saying which of the three states it is
+  # in, "the vendored clone is shallow and carries no v0.8.0 tag". There
+  # is no `fetch-depth` key to ask that service for, so the key bought a
+  # clone nothing can use and is not kept. REPOSITORY.md records the
+  # residual gap.
   #
-  # lint.yml runs this same file with what the hook needs --
-  # `submodules: true` and `fetch-depth: 0` -- so what is skipped here is
-  # pre-commit.ci rather than the hook: it still gates a commit on this
-  # machine and the pull request check lint.yml runs, which is the
-  # required check. An entry may join it for a reason of that kind and no
-  # other
+  # submodules-checked-out and check-sdist fail there too, neither
+  # skipped, for a related gap: secp256k1 and secp256k1-zkp are absent
+  # from that service's checkout, which never runs `git submodule init`
+  # to register them either -- the reason check-sdist's own trust of
+  # `git ls-files --recurse-submodules` fails loudly there rather than
+  # passing silently the way #612 named, which needs the submodule
+  # active and merely empty rather than never registered (issue #664).
+  # #132's own message above, naming a shallow clone rather than a
+  # missing one, already shows the key delivering a secp256k1 with its
+  # own .git, which is what submodules-checked-out asks; nobody has set
+  # the key against today's hook list and read the run, which is issue
+  # #766's own question. check-sdist asks more than a directory's
+  # presence -- it compares the built sdist's members against git's
+  # tracked files -- so that answer would not settle it either way.
+  # Neither joins the skip list: skipping stops a hook from running,
+  # and leaving them red costs nothing on the required `Lint and
+  # type-check` path while keeping the question watchable.
+  #
+  # lint.yml runs this same file with what the hooks above need --
+  # `submodules: true` and `fetch-depth: 0` -- so what is skipped here
+  # is pre-commit.ci's run of submodule-pin rather than the hook
+  # itself: it still gates a commit on this machine and the pull
+  # request check lint.yml runs, which is the required check. An entry
+  # may join the list for a reason of that kind and no other --
+  # something the service cannot be given -- and submodules-checked-out
+  # and check-sdist are red for a reason that may yet be answerable,
+  # which the skip list is not where to record.
   skip: [submodule-pin]
 
 repos:

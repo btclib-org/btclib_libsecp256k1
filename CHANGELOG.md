@@ -5678,6 +5678,21 @@ release-notes length in the first place, and are still in
   paragraph enumerating grants keeps the jobs that elevate once, so that
   no reason is stated in both.
 
+### pre-commit.ci's red also names `submodules-checked-out` and `check-sdist`
+
+- **`.pre-commit-config.yaml`'s `ci:` comment and `REPOSITORY.md` now
+  name `submodules-checked-out` and `check-sdist` beside `submodule-pin`
+  as red there, rather than crediting the state to `submodule-pin`
+  alone** (closes #664). Neither is skipped: that service's checkout
+  never registers `secp256k1` or `secp256k1-zkp` as submodules at all,
+  which is why `check-sdist` fails loudly there instead of the silent
+  pass issue #612 named -- that pass needs the submodule active and
+  merely empty, not never registered. `submodule-pin`'s own #132
+  record already shows `submodules: true` delivering a checked-out
+  directory, which is what `submodules-checked-out` asks; whether it
+  also clears `check-sdist`'s stricter comparison against the built
+  sdist is issue #766's open question, not this branch's to answer.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

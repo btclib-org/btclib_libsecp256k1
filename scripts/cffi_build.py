@@ -656,10 +656,17 @@ class VendoredCMakeExtension(FFIExtension):
             # file's lines move with the next submodule bump and nothing
             # here would notice, where these names survive it
             "-DSECP256K1_VALGRIND=OFF",
-            # every module this extension wraps, named by the subclass's
-            # own __init__ and passed to configure(): upstream defaults
-            # are not part of its API (recovery, in particular, is
-            # disabled by default in both submodules)
+            # every module the submodule declares an option for, named
+            # by the subclass's own __init__ and passed to configure():
+            # upstream defaults are not part of its API in either
+            # direction, so recovery -- off by default in both
+            # submodules -- needs its ON exactly as silentpayments, on
+            # by default in secp256k1-zkp and left out of that
+            # extension's own header list, needs its OFF. A module
+            # absent from the list is one whose answer is upstream's;
+            # tests/module_flags_test.py compares the list with the
+            # submodule's own CMakeLists.txt and fails on a gap in
+            # either direction
             *self.module_flags,
             "-DSECP256K1_BUILD_BENCHMARK=OFF",
             "-DSECP256K1_BUILD_TESTS=OFF",
@@ -821,18 +828,18 @@ class Secp256k1ZkpCFFIExtension(VendoredCMakeExtension):
     starts, rather than letting the dynamic path build something nobody
     asked for (btclib-org/btclib-secp256k1#603, #605).
 
-    Every module secp256k1-zkp defines is turned on, not the modules
-    beyond mainline's own alone: #603 measured trimming the shared ones
-    (ecdh, recovery, ellswift, musig) at 85 KB of a 1.5 MB library, and
-    zkp's own musig -- the adaptor-capable one, a superset of mainline's
-    -- is needed regardless. silentpayments is the sync's, the pinned
-    commit merging BlockstreamResearch/secp256k1-zkp#368, and upstream's
-    own default is what turns it on rather than a flag below; the header
-    list leaves it out where `Secp256k1CFFIExtension`'s does not, so it
-    is compiled and linked with none of its entry points declared to
-    cffi. The fork's copy of that module is mainline's blob for blob at
-    the commit the other extension builds, and that one declares and
-    wraps it.
+    Every module secp256k1-zkp defines but silentpayments is turned on,
+    not the modules beyond mainline's own alone: #603 measured trimming
+    the shared ones (ecdh, recovery, ellswift, musig) at 85 KB of a
+    1.5 MB library, and zkp's own musig -- the adaptor-capable one, a
+    superset of mainline's -- is needed regardless. silentpayments is
+    the one flag below that reads OFF, and is named rather than left out
+    because upstream's own default for it is ON (#792): the fork's copy
+    of that module is mainline's blob for blob at the commit the other
+    extension builds, and that one declares and wraps it, so a second
+    copy here is code no cdef of this repository declares. The pinned
+    commit merges BlockstreamResearch/secp256k1-zkp#368, which is where
+    the module comes from.
     """
 
     def __init__(self) -> None:
@@ -888,6 +895,7 @@ class Secp256k1ZkpCFFIExtension(VendoredCMakeExtension):
                 "-DSECP256K1_ENABLE_MODULE_SCHNORRSIG=ON",
                 "-DSECP256K1_ENABLE_MODULE_MUSIG=ON",
                 "-DSECP256K1_ENABLE_MODULE_ELLSWIFT=ON",
+                "-DSECP256K1_ENABLE_MODULE_SILENTPAYMENTS=OFF",
                 "-DSECP256K1_ENABLE_MODULE_GENERATOR=ON",
                 "-DSECP256K1_ENABLE_MODULE_RANGEPROOF=ON",
                 "-DSECP256K1_ENABLE_MODULE_SURJECTIONPROOF=ON",

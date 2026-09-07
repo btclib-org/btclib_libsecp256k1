@@ -117,6 +117,18 @@ These are known and inherent, not vulnerabilities:
     zeroed before it is dropped. That is one copy taken back,
     not safety: the `bytes` handed to the caller holds the same secret
     and cannot be overwritten
+
+    The amounts `zkp.generator.pedersen_blind_generator_blind_sum`
+    copies into a `uint64_t` array of its own are not zeroed, and that
+    is deliberate: zeroing it would not take back the last copy. A value
+    reaches that call only as a Python `int` — `values` is a
+    `Sequence[int]`, and anything else is refused — so the object the
+    limitation this bullet opens with is about exists before the call
+    and nothing can overwrite it. A blinding factor beside it can be
+    handed in as a cffi array the caller wipes instead, which is what
+    makes taking that copy back worth doing, and
+    `zkp.generator.pedersen_commit` takes its own `value` as a plain C
+    argument, with no buffer to wipe at all
 - **`into` moves that last copy somewhere the caller can overwrite,**
     and is the whole of what it does. The entry points that take a
     keyword-only `into` — a writable buffer of exactly the secret's
@@ -227,8 +239,13 @@ These are known and inherent, not vulnerabilities:
     sender side of `silentpayments`, `zkp.generator.pedersen_blind_sum`
     and that same call wipe what they copied on the way out — so passing
     the caller's memory would negate, overwrite or zero the secret they
-    handed in. Each of those answers a *new* secret, which is what
-    `into` above is for
+    handed in. Those of them that answer a *new* secret take the `into`
+    of the bullet above, which is where that secret comes back into a
+    buffer instead of a `bytes`, and that bullet's own list is which
+    they are. The sender side of `silentpayments` takes none: what
+    `silentpayments.create_outputs` answers is the x-only public keys of
+    the outputs, no entry point of that module has an `into` at all, and
+    the copy it takes is owed for the wiping reason alone
 
     ```python
     prvkey = ffi.new("unsigned char[32]", secret_octets)

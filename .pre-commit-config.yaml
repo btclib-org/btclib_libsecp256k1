@@ -709,12 +709,18 @@ repos:
       - id: uv-lock
 
   # check-sdist below trusts `git ls-files --recurse-submodules`, and
-  # that flag silently drops a submodule that is not checked out instead
-  # of failing on it -- so an uninitialized secp256k1 or secp256k1-zkp
-  # answers "SDist matches git" with the whole vendored tree missing from
-  # both sides at once (btclib-org/btclib-secp256k1#612). This hook asks
-  # the one question that catches it before check-sdist ever runs;
-  # always_run for the same reason submodule-pin above is
+  # that flag drops the gitlink of a submodule this repository has
+  # configured active whose directory is empty -- so a secp256k1 or
+  # secp256k1-zkp in that state answers "SDist matches git" with the
+  # whole vendored tree missing from both sides at once
+  # (btclib-org/btclib-secp256k1#612). That is the state a `git worktree
+  # add` leaves behind, `.git/config` and the `submodule.*.active`
+  # entries in it being shared with the checkout the worktree was made
+  # from; where the submodule was never registered check-sdist fails on
+  # the gitlink instead, which the `ci:` block above has
+  # (btclib-org/btclib-secp256k1#664). This hook asks the question that
+  # catches the silent half before check-sdist ever runs; always_run for
+  # the same reason submodule-pin above is
   - repo: local
     hooks:
       - id: submodules-checked-out

@@ -5747,6 +5747,29 @@ release-notes length in the first place, and are still in
   as well as under `take`: `take` is what the library's own refusal of
   a factor never reaches.
 
+### The silent `check-sdist` pass needs an active submodule
+
+- **`CLAUDE.md`, `.pre-commit-config.yaml`'s `submodules-checked-out`
+  comment and `.github/scripts/check_submodules_checked_out.py` give the
+  condition under which `git ls-files --cached --recurse-submodules`
+  drops a submodule's gitlink** (closes #765). The submodule has to be
+  configured active in the repository git is asked about, and an empty
+  directory is not enough: in a clone where `git submodule init` has
+  never run, the gitlinks are listed like any other cached entry, and
+  running that one command -- nothing fetched, the directories still
+  empty -- is what stops them being listed. So what
+  `submodules-checked-out` is kept for is the active and empty state,
+  and a `git worktree add` is what gives it: the worktree shares the
+  checkout's `.git/config`, where `submodule.<name>.active` is already
+  set. Where the submodule was never registered `check-sdist` fails on
+  the gitlink instead; the `pre-commit.ci` instance of that is
+  `REPOSITORY.md`'s, and nothing here repeats it. The entries closing
+  `#612` and `#644` earlier in this section state the drop with no
+  condition on it, and both stay where they are: what this entry adds
+  is the condition, each of them holding where the submodule is
+  configured active and its directory empty and not where it was never
+  registered.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

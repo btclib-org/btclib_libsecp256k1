@@ -5,17 +5,28 @@
 """Every submodule .gitmodules names is checked out, or check-sdist is blind.
 
 check-sdist (henryiii/check-sdist) compares the sdist hatchling builds
-against `git ls-files --cached --recurse-submodules`. That flag has
-nowhere to recurse into when a submodule is not checked out, so its own
-answer silently drops the submodule rather than erroring on it -- and
-the sdist hatchling builds is equally empty there, so the two agree and
-"SDist matches git" is printed with a whole vendored tree missing from
-both sides at once (btclib-org/btclib-secp256k1#612). Nothing here is
+against `git ls-files --cached --recurse-submodules`. That flag drops
+the gitlink of a submodule this repository has configured active whose
+directory is empty, rather than erroring on it -- and the sdist
+hatchling builds is equally empty there, so the two agree and "SDist
+matches git" is printed with a whole vendored tree missing from both
+sides at once (btclib-org/btclib-secp256k1#612). The activation is what
+the drop needs rather than the empty directory
+(btclib-org/btclib-secp256k1#765): where `git submodule init` has never
+run, git lists the gitlink like any other cached entry and check-sdist
+fails on it; REPOSITORY.md's `pre-commit.ci` paragraph is where that
+state is met.
+
+The state this hook is kept for is the active and empty one, and a `git
+worktree add` is what gives it: a linked worktree shares the
+`.git/config` that `git submodule init` wrote those entries into, so
+its submodule directories are active from the moment they exist and
+stay empty until `git submodule update --init` runs. Nothing here is
 check-sdist's own bug in the ordinary sense: it is told to trust git's
 answer, and git gave a self-consistent one for the tree it was asked
 about. But the guarantee the hook exists to give -- that the sdist a
-user installs carries what this repository ships -- does not hold the
-moment a submodule is not checked out.
+user installs carries what this repository ships -- does not hold in
+that state.
 
 This hook is what says so, ahead of check-sdist in
 .pre-commit-config.yaml: `.gitmodules` names every submodule this
@@ -101,11 +112,12 @@ def main() -> int:
     if missing:
         for path in missing:
             print(
-                f"{path} is not checked out: check-sdist's comparison against"
-                " git silently drops an uninitialized submodule instead of"
-                " failing on it (btclib-org/btclib-secp256k1#612), so the"
-                f" sdist it builds would ship without {path}'s content and the"
-                " hook would still say the sdist matches git."
+                f"{path} is not checked out: where it is configured active"
+                " and empty, as a worktree leaves it, check-sdist's"
+                " comparison against git drops its gitlink"
+                " (btclib-org/btclib-secp256k1#612), so the sdist it builds"
+                f" would ship without {path}'s content and check-sdist would"
+                " still say the sdist matches git."
                 f" git submodule update --init {path}",
                 file=sys.stderr,
             )

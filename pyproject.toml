@@ -902,8 +902,13 @@ fail_under = 100
 # the wheel it just built passes, so it turns the measurement off with
 # the --no-cov below: section 8 of the organization standard names that
 # flag as one a job may pass beyond what pyproject.toml holds, and
-# coverage is measured once, on the gate's own cell
-test-requires = ["pytest", "pytest-cov"]
+# coverage is measured once, on the gate's own cell.
+# pathspec for the reason the `test` group above gives, which is that
+# group's to state and not this one's to restate. What is this list's
+# own is that it is a second environment: cibuildwheel installs what is
+# named here and nothing of that group, so a dependency the suite needs
+# has to be declared twice to be there twice
+test-requires = ["pytest", "pytest-cov", "pathspec"]
 test-command = "pytest --no-cov {project}/tests/"
 build-frontend = "build"
 archs = "auto64"

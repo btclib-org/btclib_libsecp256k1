@@ -6054,6 +6054,23 @@ release-notes length in the first place, and are still in
   pattern reads a spelling where a permission is a value in a parsed
   document.
 
+### Every environment that runs this suite installs what it needs
+
+- **`[tool.cibuildwheel]`'s `test-requires` and the sdist install job's
+  `pip install` name `pathspec`, which only the `test` dependency group
+  named before** (closes #799). The suite runs in three environments and
+  each declares its own dependencies: the group `uv run --group test`
+  builds, the list cibuildwheel installs beside the wheel it just built,
+  and the interpreter the sdist job installs into. A declaration in one
+  reaches neither of the others, so the local gate stayed green while
+  the wheel and sdist cells of the matrix fell, on every platform, and
+  the required `test: every job passed` with them. The entry closing #655
+  earlier in this section names the consequence exactly, that an import
+  `tests/` cannot satisfy is a collection error rather than a skipped
+  test, and stays as written; what it does not say is that the group it
+  puts `pathspec` in is one environment of three, which is what let the
+  consequence it names happen in the other two.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

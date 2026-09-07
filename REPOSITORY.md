@@ -626,21 +626,29 @@ git grep -n ': write$' -- .github/workflows
 ```
 
 `release.yml` takes `contents: write` on `github-release` and `id-token:
-write` on its publish jobs, which is what Trusted Publishing exchanges,
-with `attestations: write` beside it on `attest`. `claude-review.yml`
-takes `pull-requests: write` and `id-token: write` on each of its jobs.
-`codeql.yml` and `scorecard.yml` take
-`security-events: write` on the job that files a SARIF as code scanning
-alerts, and `scorecard.yml` takes `id-token: write` besides, for the
-transparency-log entry its published score rests on.
-`vendored-vectors.yml` takes `issues: write` on the job that opens the
-drift issue, and that file's header says why it takes a step the other
-sentinels deliberately do not.
+write` on its publish jobs, which is what Trusted Publishing exchanges.
+`codeql.yml` takes `security-events: write` on the job that files a
+SARIF as code scanning alerts. `vendored-vectors.yml` takes `issues:
+write` on the job that opens the drift issue, and that file's header
+says why it takes a step the other sentinels deliberately do not.
 
 One elevation per job is the shape to keep — the job that writes
 releases holds no OIDC token, and the job that signs writes no release.
 The workflow-level `permissions: contents: read` in every file is belt and
 braces; keep it, it is what makes the intent readable where the job is.
+
+Two elevations on one job is the exception to that shape, and the reason
+for the pair sits beside it. `release.yml`'s `attest` holds `id-token:
+write` with `attestations: write`: OIDC for the short-lived Sigstore
+signing certificate, and the write that persists the attestation against
+the repository. `scorecard.yml`'s `analysis` holds `id-token: write` with
+`security-events: write`: the transparency-log entry `publish_results`
+asks for, and the SARIF filed as code scanning alerts.
+`claude-review.yml` holds `pull-requests: write` with `id-token: write`
+on each of its jobs, where only the first is a write of theirs: the
+action mints a GitHub OIDC token during its own startup whatever the
+Anthropic credential is, and without it the run dies before reaching
+authentication at all.
 
 What the call above cannot say is whether either value is this
 repository's own or the organization's, no endpoint reporting an

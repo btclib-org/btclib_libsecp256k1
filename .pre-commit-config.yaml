@@ -460,7 +460,7 @@ repos:
   # The rule selection (and what each family stands in for) is documented
   # there
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.6
     hooks:
       - id: ruff-check
         name: ruff (lint, in place fixes)
@@ -702,7 +702,7 @@ repos:
   # a dependency added to pyproject.toml from reaching a branch without
   # the lock entry that pins it
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.7
+    rev: 0.12.10
     hooks:
       - id: uv-lock
 

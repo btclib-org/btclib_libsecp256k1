@@ -6148,6 +6148,41 @@ release-notes length in the first place, and are still in
   repositories carry a copy of the module with the same sentence, so
   btclib-org/.github#904 stays open.
 
+### `README.md` and `SECURITY.md` name their enumerations
+
+- **The sentences repaired here give their members and no longer say how
+  many they are** (closes #791). The badge comment's groups, the
+  *Versioning* comment's readers of the release link, the serializations
+  a public key may be taken in, the paragraph on what the rule about
+  holding a parse needs said, the paragraph on what is worth knowing
+  before `scan_outputs` is used, the commits *Versioning* names for
+  secp256k1-zkp's copy of the silent payments module, and
+  `SECURITY.md`'s bullet on the nonce entry points: each names its
+  members, and none says how many they are. The list is the fact; the
+  number beside it is that fact written a second time, and it is a line
+  every change to the list has to correct.
+- **`silentpayments`'s count had aged already.** It said a private half
+  for each of a stated number of entry points, and named fewer than
+  `grep -c '^def _[a-z_]*_(' src/btclib_secp256k1/silentpayments.py`
+  answers for. What stands there now is that the private halves sit
+  beside the entry points, the summary of a transaction's inputs
+  included -- which is what the paragraph was about, and does not depend
+  on a bijection nothing checks.
+- **The grinding-loop measurement keeps its numbers, deliberately.** The
+  count of loops timed there is part of the session being reported,
+  like the rounds and the keys beside it, and a record of a measurement
+  gains no member later.
+- **So does a back-reference that carries a number.** Where a section
+  names its subject in full in its first sentence and afterwards calls
+  it "the three", the number is how the sentence refers rather than a
+  second statement of the list, and one of a chain of them cannot be
+  removed without breaking what the rest point at.
+- **And so does a number that is itself the comparison.** The recovery
+  section weighs what a mismatch there can be caused by against what
+  `dsa`'s can, and then separates the cause that is a caller's argument
+  from the causes that are not; the numbers are what that sentence
+  compares, and it has no content without them.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

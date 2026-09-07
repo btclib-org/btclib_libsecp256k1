@@ -6183,6 +6183,39 @@ release-notes length in the first place, and are still in
   from the causes that are not; the numbers are what that sentence
   compares, and it has no content without them.
 
+### `ssa.py` names a schnorrsig entry point the library exports
+
+- **`nonce_bip340`'s docstring names `secp256k1_schnorrsig_sign32`**
+  (closes #796), which is the entry point `sign` reaches through
+  `_sign32`, so a reader can find both the declaration in
+  `include/secp256k1_schnorrsig.h` and the call. It named the
+  `secp256k1_schnorrsig_sign` alias, which upstream removed and neither
+  vendored library exports: `git grep -w -F` over the pinned header
+  answers nothing for it and matches `..._sign32` as the control, and
+  `hasattr(lib, ...)` is `False` for it where it is `True` for the entry
+  points this module calls. The derivation the sentence describes is
+  unchanged, and the docstring is rendered, so what a reader follows had
+  to resolve.
+- **`_NONCE_ALGO`'s comment names no symbol at all.** The tag reaches
+  the nonce function from `secp256k1_schnorrsig_sign_internal`, which is
+  `static` and in no public header, and every schnorrsig signing path
+  goes through it, so no exported name does what that sentence
+  describes; saying what libsecp256k1 does when it signs says it without
+  a symbol to go stale. `sphinx.ext.viewcode` publishes this module's
+  source, so the comment is read where the docstring is and the
+  asymmetry is not about rendering: it is about what each sentence is
+  about. The docstring's subject is `sign`, which has one entry point
+  behind it to name; the comment's is the tag, which no exported symbol
+  hands over.
+- **Every libsecp256k1 name this repository writes outside
+  `CHANGELOG.md` and `RELEASE_NOTES.md` is either declared in a vendored
+  tree or a CMake option of one**, matching `secp256k1_*` and
+  `SECP256K1_*` against each submodule's own sources. Those two files
+  are outside it for the reasons `tests/citations_test.py` gives for
+  exempting them, one of which is the open section's own: they name a
+  removed symbol because it was removed. Nothing automates this, which
+  is issue #805.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

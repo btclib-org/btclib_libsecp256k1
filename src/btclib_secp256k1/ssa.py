@@ -41,8 +41,9 @@ EXTRAPARAMS_MAGIC = b"\xda\x6f\xb3\x8c"
 _SIGNATURE_SIZE = 64
 _SIGNATURE_BUFFER_TYPE = ffi.typeof(f"char[{_SIGNATURE_SIZE}]")
 
-# the tag secp256k1_schnorrsig_sign gives its nonce function, and what
-# makes the derivation BIP340's rather than another protocol's
+# the algo libsecp256k1 hands its nonce function on every schnorrsig
+# signing path, and what makes the derivation BIP340's rather than
+# another protocol's
 _NONCE_ALGO = b"BIP0340/nonce"
 
 
@@ -78,10 +79,10 @@ def nonce_bip340(
     """Return the BIP340 nonce `sign` derives for a message and a key.
 
     libsecp256k1 exports its nonce function as a callable pointer, and
-    this calls through it with what `secp256k1_schnorrsig_sign` passes:
-    the message, the key the signature is made with, the x-only public
-    key, the `BIP0340/nonce` tag and the auxiliary randomness. So what
-    comes back is the `k` of the signature `sign` makes of the same
+    this calls through it with what `secp256k1_schnorrsig_sign32`
+    passes: the message, the key the signature is made with, the x-only
+    public key, the `BIP0340/nonce` tag and the auxiliary randomness. So
+    what comes back is the `k` of the signature `sign` makes of the same
     arguments -- the first 32 octets of that signature are the x of `k`
     times the generator, which is what `tests/nonces_test.py` holds it to.
 

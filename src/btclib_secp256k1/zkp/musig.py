@@ -40,10 +40,11 @@ and `lib`, rather than through `btclib_secp256k1.keys` or
 `_scalar.py`'s `octets`, `scalar` and `in_range`: they take and return
 plain bytes and ints, or a bare `unsigned char[32]`-shaped cdata view
 that cffi treats structurally rather than nominally, measured to cross
-the same boundary without complaint -- and `_secret.wipe`, which
-overwrites through `ffi.buffer(buffer)` and asks that buffer for its
-own length rather than typing it, so it too does not care which `ffi`
-built what it is wiping. `_secret.keypair` is not shared for the same
+the same boundary without complaint -- and `_secret.wipe` and
+`_secret.take`, both of which overwrite through `ffi.buffer(buffer)`
+and ask that buffer for its own length rather than typing it, so
+neither cares which `ffi` built what it is reading or wiping.
+`_secret.keypair` is not shared for the same
 reason `keys.parse` is not: it returns a `secp256k1_keypair *` built
 through mainline's own `lib.secp256k1_keypair_create`, and this module's
 `_keypair` is the local equivalent, over zkp's own `ctx` and `lib`.
@@ -81,11 +82,11 @@ import secrets
 import threading
 from collections.abc import Sequence
 from types import TracebackType
-from typing import Any
+from typing import Any, overload
 
-from btclib_secp256k1 import BytesLike, CData
+from btclib_secp256k1 import BytesLike, CData, MutableBytesLike
 from btclib_secp256k1._scalar import in_range, octets, scalar
-from btclib_secp256k1._secret import wipe
+from btclib_secp256k1._secret import take, wipe
 
 from . import context
 
@@ -1237,7 +1238,29 @@ def adapt(
     return bytes(ffi.unpack(sig64, _SIGNATURE_SIZE))
 
 
-def extract_adaptor(sig64: BytesLike, pre_sig64: BytesLike, nonce_parity: int) -> bytes:
+@overload
+def extract_adaptor(
+    sig64: BytesLike, pre_sig64: BytesLike, nonce_parity: int
+) -> bytes: ...
+@overload
+def extract_adaptor(
+    sig64: BytesLike, pre_sig64: BytesLike, nonce_parity: int, *, into: MutableBytesLike
+) -> None: ...
+@overload
+def extract_adaptor(
+    sig64: BytesLike,
+    pre_sig64: BytesLike,
+    nonce_parity: int,
+    *,
+    into: MutableBytesLike | None,
+) -> bytes | None: ...
+def extract_adaptor(
+    sig64: BytesLike,
+    pre_sig64: BytesLike,
+    nonce_parity: int,
+    *,
+    into: MutableBytesLike | None = None,
+) -> bytes | None:
     """Extract the secret adaptor from a signature and its pre-signature.
 
     The inverse of `adapt`, and the reason an adaptor signature protocol
@@ -1254,15 +1277,20 @@ def extract_adaptor(sig64: BytesLike, pre_sig64: BytesLike, nonce_parity: int) -
             `Session.partial_sig_agg`.
         nonce_parity: the output of `Session.nonce_parity`, called on the
             session that produced `pre_sig64`.
+        into: a writable 32-byte buffer to receive the adaptor, instead
+            of the `bytes` this otherwise returns. See `_secret.take`
+            and SECURITY.md for what that does and does not buy.
 
     Returns:
-        The 32-byte secret adaptor.
+        The 32-byte secret adaptor -- or None where `into` was given and
+        holds it.
 
     Raises:
-        TypeError: if `nonce_parity` is not an int.
+        TypeError: if `nonce_parity` is not an int, or if `into` is not
+            a writable buffer of contiguous one-dimensional octets.
         ValueError: if `sig64` or `pre_sig64` is not 64 bytes, if
-            `nonce_parity` is not 0 or 1, or if `sig64` or `pre_sig64`
-            grossly overflow.
+            `nonce_parity` is not 0 or 1, if `sig64` or `pre_sig64`
+            grossly overflow, or if `into` is not 32 bytes.
     """
     ffi, lib, ctx = context._bindings()
     sig_bytes = octets(sig64, "signature", _SIGNATURE_SIZE)
@@ -1273,4 +1301,4 @@ def extract_adaptor(sig64: BytesLike, pre_sig64: BytesLike, nonce_parity: int) -
         ctx, sec_adaptor, sig_bytes, pre_sig_bytes, nonce_parity
     ):
         raise ValueError("invalid signature or pre-signature")
-    return bytes(ffi.unpack(sec_adaptor, _ADAPTOR_SIZE))
+    return take(sec_adaptor, into=into)

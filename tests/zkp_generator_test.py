@@ -374,13 +374,27 @@ def test_pedersen_blind_sum_rejects_an_out_of_range_npositive() -> None:
 def test_pedersen_blind_sum_rejects_a_non_int_npositive() -> None:
     """An `npositive` that is not an int at all is a `TypeError`."""
     with pytest.raises(TypeError, match="the npositive must be an int, not str"):
-        g.pedersen_blind_sum([1, 2], "1")  # type: ignore[arg-type]
+        g.pedersen_blind_sum([1, 2], "1")  # type: ignore[call-overload]
 
 
 def test_pedersen_blind_sum_names_the_bad_element() -> None:
     """A malformed blinding factor is named by its position in the sequence."""
     with pytest.raises(ValueError, match="blinding factor at index 1"):
         g.pedersen_blind_sum([1, b"\x01" * 10], 1)
+
+
+def test_pedersen_blind_sum_into_a_caller_s_buffer() -> None:
+    """With `into` the sum lands there, not in a returned `bytes` (#640).
+
+    `npositive=3` sums all three positive, to 6 -- not `npositive=2`,
+    whose 1 + 2 - 3 is 0: that would leave both sides of the second
+    assertion equal to the all-zero `into` started as regardless of
+    whether `into` was ever written, so a `pedersen_blind_sum` that
+    silently ignored `into` would still pass it.
+    """
+    into = bytearray(32)
+    assert g.pedersen_blind_sum([1, 2, 3], 3, into=into) is None
+    assert bytes(into) == g.pedersen_blind_sum([1, 2, 3], 3)
 
 
 def test_pedersen_verify_tally_agrees() -> None:
@@ -413,6 +427,18 @@ def test_pedersen_blind_generator_blind_sum() -> None:
     assert len(last) == 32
 
 
+def test_pedersen_blind_generator_blind_sum_into_a_caller_s_buffer() -> None:
+    """With `into` the corrected factor lands there, not in a `bytes` (#640)."""
+    into = bytearray(32)
+    assert (
+        g.pedersen_blind_generator_blind_sum([10, 20], [1, 2], [3, 4], 1, into=into)
+        is None
+    )
+    assert bytes(into) == g.pedersen_blind_generator_blind_sum(
+        [10, 20], [1, 2], [3, 4], 1
+    )
+
+
 def test_pedersen_blind_generator_blind_sum_rejects_the_empty_case() -> None:
     """`n_inputs == len(values)` is refused even at `0, 0`.
 
@@ -438,7 +464,7 @@ def test_pedersen_blind_generator_blind_sum_rejects_an_out_of_range_n_inputs() -
 def test_pedersen_blind_generator_blind_sum_rejects_a_non_int_n_inputs() -> None:
     """An `n_inputs` that is not an int at all is a `TypeError`."""
     with pytest.raises(TypeError, match="n_inputs must be an int, not str"):
-        g.pedersen_blind_generator_blind_sum([10], [1], [3], "0")  # type: ignore[arg-type]
+        g.pedersen_blind_generator_blind_sum([10], [1], [3], "0")  # type: ignore[call-overload]
 
 
 def test_pedersen_blind_generator_blind_sum_rejects_a_value_out_of_range() -> None:

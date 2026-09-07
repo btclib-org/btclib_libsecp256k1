@@ -5,7 +5,53 @@ release is in [CHANGELOG.md](./CHANGELOG.md); what follows is what a user
 has to act on and what a user gains, and it is what the GitHub release of
 a tag is generated from.
 
-## v0.8.0.5 (work in progress, not released yet)
+## v0.8.0.6 (work in progress, not released yet)
+
+## v0.8.0.5
+
+Non-breaking: outside `zkp` no public name was added, removed or
+renamed, and no signature changed. The vendored libsecp256k1 is the same
+v0.8.0 this line has wrapped since 0.8.0, which is why the fourth number
+is what moved.
+
+`btclib_secp256k1.zkp` is what this release is. It wraps
+[secp256k1-zkp](https://github.com/BlockstreamResearch/secp256k1-zkp),
+vendored beside mainline libsecp256k1 as a second submodule and pinned
+at a commit rather than a tag, that fork cutting no releases — which is
+also why the namespace is marked beta: that is a fact about the fork
+this subpackage draws from rather than about the wrapping. Beneath it
+sits a wrapper module per secp256k1-zkp module wrapped: `zkp.musig`,
+MuSig2 as the fork extends it, BIP327 plus adaptor signatures;
+`zkp.ecdsa_s2c`, ECDSA sign-to-contract and the anti-exfil protocol
+built on it; `zkp.generator`, generators and Pedersen commitments;
+`zkp.rangeproof`, proving a commitment's value lies in a range; and
+`zkp.context`, that library's own context and what it reports through
+it.
+
+**No published wheel carries the extension `zkp` calls into**, and the
+subpackage is built so that this is a legible fact rather than a bare
+import error. `import btclib_secp256k1.zkp` succeeds in every wheel on
+PyPI, and so does importing any of the wrapper modules above; the first
+read of `zkp.ffi` or `zkp.lib` is what reaches for the extension, and
+where the build has none it raises an `ImportError` naming the way to
+get one — build from the sdist with `BTCLIB_LIBSECP256K1_ZKP=true`.
+Reaching secp256k1-zkp is therefore a decision taken at build time, and
+`import btclib_secp256k1` pays nothing for a second core it may never
+load.
+
+The namespace is also what keeps the two MuSig2 implementations apart.
+Mainline's `musig` and `zkp.musig` both do BIP327 and build session
+objects that cannot be interchanged, so which library answered is
+written on the import line and a caller cannot take one for the other.
+
+Every module declares `__all__` now, mainline's included. Nothing was
+removed to make that true: it states the surface that was already
+public, and bounds what `from btclib_secp256k1.<module> import *`
+brings in.
+
+`COPYRIGHT` no longer ships in the wheel or the sdist. The holder a
+consumer needs is in `LICENSE`, which both still carry; the file that
+left is the one the source tree keeps for its own headers.
 
 ## v0.8.0.4
 

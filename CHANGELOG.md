@@ -5693,6 +5693,24 @@ release-notes length in the first place, and are still in
   also clears `check-sdist`'s stricter comparison against the built
   sdist is issue #766's open question, not this branch's to answer.
 
+### A wrapped commit subject is checked before the pull request opens
+
+- **`CONTRIBUTING.md`'s gate section carries the loop that catches a
+  commit subject written across two physical lines** (closes #718).
+  `git log --format=%s` joins such a subject back into one line, so a
+  local read shows the whole sentence while GitHub's squash keeps only
+  the first physical line and drops the rest into the landing commit's
+  body -- `ad6b4dfd` on `main` is the instance this closes over, its
+  sentence stopping at `state a permissions`, where the squash appends
+  the pull request number, and its body opening on the remainder,
+  `reason that holds on its own`. A `commit-msg` hook was declined: it
+  would need installing into the `.git/hooks` `CONTRIBUTING.md` already
+  documents as shared across every worktree of this repository, the same
+  reason the lint gate itself is not installed as one.
+  `btclib-org/.github`'s `README.md` already states the general failure
+  and the read that does not conceal it, so what this closes is the local
+  gap, not the organization-wide half.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

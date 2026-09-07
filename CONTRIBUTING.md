@@ -409,6 +409,28 @@ answers with the primary checkout's `.git/hooks` in every worktree, so
 one session installing it installs it for every other. Run the gate by
 hand before committing.
 
+**A wrapped commit subject is checked the same way, by hand.** The
+squash keeps a subject's first physical line only, so a subject spread
+across two physical lines with no blank line between them lands
+truncated on `main`, its citation left behind in the body —
+[the standard][s11] names the failure and gives the read that does not
+conceal it. A `commit-msg` hook would need installing into the same
+shared `.git/hooks` this section already declines for the lint gate, so
+there is none: this loop is the check, run over the branch before it is
+opened, at the same moment *Pull requests* above already reads the
+branch's own commit text for its closing keyword:
+
+```shell
+for sha in $(git log --format=%H origin/main..); do
+  a=$(git show -s --format=%s "$sha")
+  b=$(git show -s --format=%B "$sha" | head -1)
+  [ "$a" = "$b" ] || echo "wrapped subject: $sha"
+done
+```
+
+A clean branch prints nothing; a line named is a subject to rewrap
+before opening the pull request.
+
 Two hooks are regenerated rather than fixed when they fail. The test data
 is private keys, so `detect-secrets` would report all of it; the known
 findings are recorded as reviewed rather than excluded, in two baselines

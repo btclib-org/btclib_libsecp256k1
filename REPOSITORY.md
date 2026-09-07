@@ -108,41 +108,14 @@ without the rule changing, which is worth knowing before renaming
 anything — a context is matched by name, not by the workflow that reported
 it, so moving a job is free and renaming one is not.
 
-`pre-commit.ci` is not in the rule either, and it is not a check this
-repository can make agree with `lint.yml`. It runs the hooks of
-`.pre-commit-config.yaml` from a checkout of its own, and
-`submodule-pin` is not the only one that reads that checkout as
-lacking something `lint.yml`'s own gives. `submodule-pin` resolves the
-release `README.md` names in the vendored clone's refs, and there are
-no refs to resolve them against there. `submodules: true` under `ci:`
-is the documented key for the clone, and it was tried on #132 rather
-than reasoned about — with it the submodule arrives and the hook still
-fails, `the vendored clone is shallow and carries no v0.8.0 tag`.
-There is no `fetch-depth` key to ask that service for, so
-`submodule-pin` is what the `ci:` `skip` list names.
-`submodules-checked-out` and `check-sdist` fail there too, neither
-skipped: secp256k1 and secp256k1-zkp are absent from that service's
-checkout, which never runs `git submodule init` to register them
-either, so `check-sdist`'s own trust of `git ls-files
---recurse-submodules` fails loudly there rather than passing silently
-the way #612 named — that silent pass needs the submodule active and
-merely empty, not never registered (issue #664). #132's own message
-above, naming a shallow clone rather than a missing one, is already
-the evidence that the key delivers a `secp256k1` with its own `.git`,
-which is what `submodules-checked-out` asks; nobody has set the key
-against today's hook list and read the run, which is issue #766's own
-question and not this paragraph's to answer. `check-sdist` asks more
-than a directory's presence — it compares the built sdist's members
-against git's tracked files — so that answer would not settle it
-either way. Neither hook joins the skip list: skipping stops a hook
-from running, and pre-commit.ci is not a required check, so leaving
-them red costs nothing on the landing path while keeping the question
-watchable. What the skip list costs is pre-commit.ci's run of
-`submodule-pin` alone: the runner the rule names, `Lint and
-type-check`, checks the submodule out with `fetch-depth: 0` precisely
-so it has what the hooks above need, and so does a developer's own
-commit. Re-read that skip list before adding to it: an entry may join
-for a reason of that kind and no other.
+`pre-commit.ci` is not in the rule either, and nothing here makes it
+one. It runs the hooks of `.pre-commit-config.yaml` from a checkout of
+its own, where the required `Lint and type-check` runs the same file
+from one this repository controls, `lint.yml` checking out what the
+hooks that read the vendored clone need. What that file's `ci:` block
+asks of the service, which hooks it can therefore run and which entry
+the `skip` list holds are written in that block's own comment, beside
+the keys they are about, where somebody editing the list reads them.
 
 Neither `os-ubuntu.yml`, `os-macos.yml`, `os-windows.yml`, `deps-latest.yml`,
 `links.yml`, `mutation.yml`, `pypi-install.yml`, `vendored-vectors.yml` nor

@@ -260,10 +260,10 @@ def why_no_tag(tag: str) -> str:
 
     One message for all three is enough for a developer, who has one of
     them; it is not enough for a checkout somebody else makes, where
-    which state it is *is* the finding. pre-commit.ci is that checkout:
-    told to take the submodule it takes it, and the hook failed all the
-    same, with a message that could not say whether the clone was
-    missing or merely shallow.
+    which state it is *is* the finding. A fresh `git worktree add` is in
+    the first state until `git submodule update --init` runs in it, and
+    a checkout made with a depth is in the second, which is why lint.yml
+    asks for `fetch-depth: 0`.
 
     Args:
         tag: the release tag that could not be resolved.

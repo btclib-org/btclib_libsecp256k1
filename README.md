@@ -664,15 +664,21 @@ is a pointer, whose length is not the pointer's own to know, an array of
 wider items, which is this machine's byte order rather than a scalar, and
 any length but 32.
 
-**Four calls copy it, and are meant to.** `keys.prvkey_negate`,
-`keys.prvkey_tweak_add`, `keys.prvkey_tweak_mul` and the sender side of
-`silentpayments` each own the buffer libsecp256k1 works in: the first
-three because it writes the answer through that pointer, and the last
-because this package wipes it afterwards. Handing those the caller's
-memory would negate or zero the key they passed, so a copy is owed and
-`_secret.scalar_buffer` takes it. Each of them *answers* a new secret,
-which is the other facility's question rather than this one's — `into`
-is how that comes back into a buffer instead of a `bytes`.
+**Some calls copy it, and are meant to.** `keys.prvkey_negate`,
+`keys.prvkey_tweak_add` and `keys.prvkey_tweak_mul` copy because
+libsecp256k1 writes the answer through that pointer.
+`zkp.generator.pedersen_blind_generator_blind_sum` copies for that
+reason too: secp256k1-zkp writes the correction through the last element
+of its `blinding_factor` array, which the header declares In/Out. The
+sender side of `silentpayments`, `zkp.generator.pedersen_blind_sum` and
+that same call copy because this package wipes what it copied on the way
+out. Handing any of them the caller's memory would negate, overwrite or
+zero the secret they passed, so a copy is owed. `_secret.scalar_buffer`
+takes it where mainline's own `ffi` allocates; the two in
+`zkp.generator` take theirs through the subpackage's `ffi`, which is
+what every array there is built through. Each of them *answers* a new
+secret, which is the other facility's question rather than this one's —
+`into` is how that comes back into a buffer instead of a `bytes`.
 
 Where that binds is not the signing, which never asked: the private
 halves hand libsecp256k1 the pointer, so a key in a buffer reached

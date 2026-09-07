@@ -42,7 +42,7 @@ from typing import Any, overload
 
 from btclib_secp256k1 import BytesLike, CData, MutableBytesLike
 from btclib_secp256k1._scalar import in_range, octets, scalar
-from btclib_secp256k1._secret import take
+from btclib_secp256k1._secret import take, wipe
 
 from . import context
 
@@ -354,20 +354,32 @@ def pedersen_blind_sum(
     """
     ffi, lib, ctx = context._bindings()
     npositive = in_range(npositive, "npositive", len(blinds))
-    blind_buffers = [
-        ffi.new(
-            f"unsigned char[{_BLIND_SIZE}]",
-            scalar(blind, f"blinding factor at index {i}"),
+    # each buffer holds a copy of one of the caller's own blinding
+    # factors, and this package owns it: the `finally` takes that copy
+    # back whether the call answers or raises. The list is filled inside
+    # the `try` rather than before it, because the next element can be
+    # refused and the ones already copied are secrets by then --
+    # `silentpayments._create_outputs_` builds its own key lists that way
+    # for the same reason
+    blind_buffers: list[CData] = []
+    try:
+        blind_buffers.extend(
+            ffi.new(
+                f"unsigned char[{_BLIND_SIZE}]",
+                scalar(blind, f"blinding factor at index {i}"),
+            )
+            for i, blind in enumerate(blinds)
         )
-        for i, blind in enumerate(blinds)
-    ]
-    blind_out = ffi.new(f"char[{_BLIND_SIZE}]")
-    blinds_array = _ptr_array(ffi, "unsigned char *[]", blind_buffers)
-    if not lib.secp256k1_pedersen_blind_sum(
-        ctx, blind_out, blinds_array, len(blind_buffers), npositive
-    ):
-        raise RuntimeError("blinding factor sum failed")
-    return take(blind_out, into=into)
+        blind_out = ffi.new(f"char[{_BLIND_SIZE}]")
+        blinds_array = _ptr_array(ffi, "unsigned char *[]", blind_buffers)
+        if not lib.secp256k1_pedersen_blind_sum(
+            ctx, blind_out, blinds_array, len(blind_buffers), npositive
+        ):
+            raise RuntimeError("blinding factor sum failed")
+        return take(blind_out, into=into)
+    finally:
+        for buffer in blind_buffers:
+            wipe(buffer)
 
 
 def pedersen_verify_tally(
@@ -517,38 +529,54 @@ def pedersen_blind_generator_blind_sum(
         if isinstance(value, bool) or not 0 <= value < 2**64:
             raise ValueError(f"value at index {i} must be an int in [0, 2**64)")
     value_array = ffi.new(f"uint64_t[{n_total}]", list(values))
-    generator_blind_buffers = [
-        ffi.new(
-            f"unsigned char[{_BLIND_SIZE}]",
-            scalar(blind, f"generator blind at index {i}"),
+    # every element of both lists holds a copy of one of the caller's own
+    # blinding factors, and this package owns it: the `finally` takes
+    # every one of those copies back, whether the call answers or raises.
+    # Both lists are filled inside the `try` rather than before it,
+    # because the next element can be refused and the ones already copied
+    # are secrets by then -- `silentpayments._create_outputs_` builds its
+    # own key lists that way for the same reason
+    generator_blind_buffers: list[CData] = []
+    blinding_factor_buffers: list[CData] = []
+    try:
+        generator_blind_buffers.extend(
+            ffi.new(
+                f"unsigned char[{_BLIND_SIZE}]",
+                scalar(blind, f"generator blind at index {i}"),
+            )
+            for i, blind in enumerate(generator_blinds)
         )
-        for i, blind in enumerate(generator_blinds)
-    ]
-    # char, matching pedersen_blind_sum's own blind_out: only the last
-    # element is read back, through _secret.take
-    blinding_factor_buffers = [
-        ffi.new(
-            f"char[{_BLIND_SIZE}]",
-            scalar(blind, f"blinding factor at index {i}"),
+        # char, matching pedersen_blind_sum's own blind_out: only the last
+        # element is read back, through _secret.take
+        blinding_factor_buffers.extend(
+            ffi.new(
+                f"char[{_BLIND_SIZE}]",
+                scalar(blind, f"blinding factor at index {i}"),
+            )
+            for i, blind in enumerate(blinding_factors)
         )
-        for i, blind in enumerate(blinding_factors)
-    ]
-    # never NULL: n_total is at least 1 here, `0 <= n_inputs < n_total`
-    # having already refused the only n_total for which the library's
-    # own arrays may be NULL
-    generator_blind_array = _ptr_array(
-        ffi, "unsigned char *[]", generator_blind_buffers
-    )
-    blinding_factor_array = _ptr_array(
-        ffi, "unsigned char *[]", blinding_factor_buffers
-    )
-    if not lib.secp256k1_pedersen_blind_generator_blind_sum(
-        ctx,
-        value_array,
-        generator_blind_array,
-        blinding_factor_array,
-        n_total,
-        n_inputs,
-    ):
-        raise RuntimeError("blinding factor correction failed")
-    return take(blinding_factor_buffers[-1], into=into)
+        # never NULL: n_total is at least 1 here, `0 <= n_inputs < n_total`
+        # having already refused the only n_total for which the library's
+        # own arrays may be NULL
+        generator_blind_array = _ptr_array(
+            ffi, "unsigned char *[]", generator_blind_buffers
+        )
+        blinding_factor_array = _ptr_array(
+            ffi, "unsigned char *[]", blinding_factor_buffers
+        )
+        if not lib.secp256k1_pedersen_blind_generator_blind_sum(
+            ctx,
+            value_array,
+            generator_blind_array,
+            blinding_factor_array,
+            n_total,
+            n_inputs,
+        ):
+            raise RuntimeError("blinding factor correction failed")
+        return take(blinding_factor_buffers[-1], into=into)
+    finally:
+        # the last blinding-factor buffer is in this loop too: `take`
+        # leaves it zeroed on the way out of a call that reached it, and
+        # a second wipe of zeros is what covers the call that did not
+        for buffer in (*generator_blind_buffers, *blinding_factor_buffers):
+            wipe(buffer)

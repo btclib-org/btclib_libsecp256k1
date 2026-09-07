@@ -80,6 +80,14 @@ class _FakeLib:
     def __init__(self) -> None:
         self.secp256k1_generator_h = _fake_ffi.new("secp256k1_generator *")
         _put(self.secp256k1_generator_h, bytes([0x0B]) + bytes(range(1, 33)))
+        # what the two blind-sum entry points below were handed, read at
+        # the moment of the call: a test asserting that the wrapper's own
+        # buffers are zeroed afterwards needs to know they held the
+        # caller's secrets in the first place, and after the wipe nothing
+        # can tell a buffer that carried one from a buffer that never did
+        self.blinds_read: list[bytes] = []
+        self.generator_blinds_read: list[bytes] = []
+        self.blinding_factors_read: list[bytes] = []
 
     # the four context-management calls btclib_secp256k1.zkp.context's own
     # __getattr__ makes to build `ctx`: not shared with mainline's real
@@ -158,6 +166,7 @@ class _FakeLib:
     def secp256k1_pedersen_blind_sum(
         self, _ctx: Any, blind_out: Any, blinds: Any, n: int, npositive: int
     ) -> int:
+        self.blinds_read = [bytes(_fake_ffi.buffer(blinds[i], 32)) for i in range(n)]
         total = 0
         for i in range(n):
             value = int.from_bytes(_fake_ffi.buffer(blinds[i], 32), "big")
@@ -188,16 +197,93 @@ class _FakeLib:
         # /main_impl.h at the pin -- strict, the `0, 0` case included,
         # not the special case the header's own NULL-array prose could
         # be misread as
+        self.generator_blinds_read = [
+            bytes(_fake_ffi.buffer(generator_blind[i], 32)) for i in range(n_total)
+        ]
+        self.blinding_factors_read = [
+            bytes(_fake_ffi.buffer(blinding_factor[i], 32)) for i in range(n_total)
+        ]
         if _fake_ffi.buffer(generator_blind[0], 1)[:] == bytes([FAIL]):
             return 0
         _fake_ffi.buffer(blinding_factor[n_total - 1], 32)[:] = bytes(range(32))
         return 1
 
 
-def _install(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Route `zkp._import_extension` to the fake ffi/lib pair above."""
-    stand_in = types.SimpleNamespace(ffi=_fake_ffi, lib=_FakeLib())
+class _RecordingFFI:
+    """`_fake_ffi`, holding on to every buffer `ffi.new` hands out.
+
+    The buffers a wrapper allocates are locals of the call, so cffi
+    frees them as it returns and a pointer read afterwards is a
+    pointer into freed memory. The list here is a reference of the
+    test's own, which keeps that memory alive past the call and is
+    what makes "the buffer is zeroed afterwards" a question that can
+    be asked at all. Every other attribute is `_fake_ffi`'s.
+    """
+
+    def __init__(self, ffi: Any) -> None:
+        self._ffi = ffi
+        self.allocated: list[tuple[str, Any]] = []
+
+    def new(self, cdecl: str, *args: Any) -> Any:
+        """Allocate as `_fake_ffi` would, and keep what was allocated.
+
+        Args:
+            cdecl: the C declaration to allocate, as the wrapper wrote it.
+            args: the initializer, where the wrapper passed one.
+
+        Returns:
+            The buffer `_fake_ffi.new` answered.
+        """
+        buffer = self._ffi.new(cdecl, *args)
+        self.allocated.append((cdecl, buffer))
+        return buffer
+
+    def __getattr__(self, name: str) -> Any:
+        """Answer for everything else out of `_fake_ffi` itself.
+
+        Args:
+            name: the attribute the wrapper is reaching for.
+
+        Returns:
+            `_fake_ffi`'s own attribute of that name.
+        """
+        return getattr(self._ffi, name)
+
+    def scalars(self) -> list[bytes]:
+        """Read back what every buffer allocated under `[32]` holds now.
+
+        The predicate is the declaration's own last four characters,
+        which `unsigned char[32]` and `char[32]` -- each blinding
+        factor, and the answer -- end in, and which the pointer arrays
+        and the `uint64_t[n_total]` of the values do not, for the
+        lengths the tests below drive.
+
+        Returns:
+            The contents of each, in allocation order.
+        """
+        return [
+            bytes(self._ffi.buffer(buffer))
+            for cdecl, buffer in self.allocated
+            if cdecl.endswith("[32]")
+        ]
+
+
+def _install(
+    monkeypatch: pytest.MonkeyPatch, ffi: Any = _fake_ffi
+) -> types.SimpleNamespace:
+    """Route `zkp._import_extension` to the fake ffi/lib pair above.
+
+    Args:
+        monkeypatch: the fixture the routing is undone by.
+        ffi: what stands in for the extension's own `ffi`; a
+            `_RecordingFFI` where the test reads buffers back.
+
+    Returns:
+        The stand-in installed, whose `lib` is the one the call reaches.
+    """
+    stand_in = types.SimpleNamespace(ffi=ffi, lib=_FakeLib())
     monkeypatch.setattr(zkp, "_import_extension", lambda: stand_in)
+    return stand_in
 
 
 def _forget_cached_extension() -> None:
@@ -508,3 +594,103 @@ def test_pedersen_blind_generator_blind_sum_rejects_what_the_library_refuses() -
     """A generator blind starting with the fake's own failure marker."""
     with pytest.raises(RuntimeError, match="blinding factor correction failed"):
         g.pedersen_blind_generator_blind_sum([10], [bytes([FAIL]) + bytes(31)], [3], 0)
+
+
+def test_pedersen_blind_sum_wipes_the_blinds_it_copied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The copies taken of the caller's blinding factors are zeroed (#762).
+
+    The first assertion is what makes the last one mean anything: it is
+    the fake reporting the two secrets as they reached the library, so
+    the buffers the recorder is holding are the ones that carried them.
+    A wiped buffer is indistinguishable from one that never held a
+    secret, which is why the reading has to be taken during the call.
+    The expected sum is computed here from those same two secrets
+    rather than read back out of the wrapper.
+    """
+    recorder = _RecordingFFI(_fake_ffi)
+    stand_in = _install(monkeypatch, recorder)
+    positive = bytes(range(1, 33))
+    negative = bytes(range(32, 64))
+
+    total = g.pedersen_blind_sum([positive, negative], 1)
+
+    assert stand_in.lib.blinds_read == [positive, negative]
+    difference = int.from_bytes(positive, "big") - int.from_bytes(negative, "big")
+    assert total == (difference % 2**256).to_bytes(32, "big")
+    assert set(recorder.scalars()) == {bytes(32)}
+
+
+def test_pedersen_blind_sum_wipes_the_blinds_a_refusal_leaves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A factor refused mid-sequence leaves no earlier copy behind (#762).
+
+    The first element is copied before the second is refused, so the
+    wipe has to be in force while the list is being built rather than
+    only around the library call. `set(...) == {bytes(32)}` is false of
+    an empty set, which is what says a buffer was allocated at all.
+    """
+    recorder = _RecordingFFI(_fake_ffi)
+    _install(monkeypatch, recorder)
+    secret = bytes(range(1, 33))
+
+    with pytest.raises(ValueError, match="blinding factor at index 1"):
+        g.pedersen_blind_sum([secret, b"\x01" * 10], 1)
+
+    assert set(recorder.scalars()) == {bytes(32)}
+
+
+def test_pedersen_blind_generator_blind_sum_wipes_the_blinds_it_copied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both sequences are copied, and both sets of copies are zeroed (#762).
+
+    `_secret.take` reads the answer out of the last blinding factor and
+    zeroes that one; the generator blinds and the other blinding
+    factors are read by nothing, and are the copies the `finally` is
+    for.
+
+    That last buffer is wiped twice -- once by `take` and once by the
+    `finally` -- so the answer is asserted here as well: the correction
+    the library writes through it, which `secp256k1_generator.h`
+    declares In/Out and the fake stands in for with `bytes(range(32))`,
+    has to survive the second wipe.
+    """
+    recorder = _RecordingFFI(_fake_ffi)
+    stand_in = _install(monkeypatch, recorder)
+    generator_blinds = [bytes(range(1, 33)), bytes(range(32, 64))]
+    blinding_factors = [bytes(range(64, 96)), bytes(range(96, 128))]
+
+    corrected = g.pedersen_blind_generator_blind_sum(
+        [10, 20], generator_blinds, blinding_factors, 1
+    )
+
+    assert corrected == bytes(range(32))
+    assert stand_in.lib.generator_blinds_read == generator_blinds
+    assert stand_in.lib.blinding_factors_read == blinding_factors
+    assert set(recorder.scalars()) == {bytes(32)}
+
+
+def test_pedersen_blind_generator_blind_sum_wipes_what_a_failure_leaves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The library's own refusal leaves no copy behind either (#762).
+
+    The blinding factor here is a real secret and the generator blind
+    is the fake's own failure marker, so the call raises with both
+    already copied and with `_secret.take` never reached: the last
+    blinding factor is then the copy nothing else zeroes.
+    """
+    recorder = _RecordingFFI(_fake_ffi)
+    stand_in = _install(monkeypatch, recorder)
+    secret = bytes(range(1, 33))
+
+    with pytest.raises(RuntimeError, match="blinding factor correction failed"):
+        g.pedersen_blind_generator_blind_sum(
+            [10], [bytes([FAIL]) + bytes(31)], [secret], 0
+        )
+
+    assert stand_in.lib.blinding_factors_read == [secret]
+    assert set(recorder.scalars()) == {bytes(32)}

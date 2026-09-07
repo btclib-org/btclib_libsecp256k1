@@ -5727,6 +5727,26 @@ release-notes length in the first place, and are still in
   stock list, and this issue's *Done when* is their convergence too, so
   it stays open.
 
+### `zkp.generator` wipes the blinding factors it copies
+
+- **`pedersen_blind_sum` and `pedersen_blind_generator_blind_sum` wipe
+  every buffer they copy a caller's blinding factor into, in a
+  `finally`** (closes #762). Those buffers are memory cffi allocated
+  and this package owns, so the copy each holds is the one copy of the
+  caller's secret that can be taken back. Nothing overwrites those
+  copies on the way: `secp256k1_generator.h` declares `blinds` and
+  `generator_blind` `const unsigned char * const *`. The one buffer
+  secp256k1-zkp writes through is the last element of
+  `blinding_factor`, which that header declares In/Out and the library
+  modifies to drive the total sum to zero -- which is why `_secret.take`
+  finds an answer in it. Each list is filled inside the `try` rather
+  than before it, because `_scalar.scalar` can refuse an element part
+  way through and the ones already copied are secrets by then --
+  `silentpayments._create_outputs_` builds its own private-key lists
+  that way for the same reason. That last buffer is in the wiping loop
+  as well as under `take`: `take` is what the library's own refusal of
+  a factor never reaches.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

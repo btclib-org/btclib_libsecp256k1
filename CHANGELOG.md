@@ -5643,6 +5643,30 @@ release-notes length in the first place, and are still in
   the sweep above cannot reach the branch stand on their own; what a
   buffer-held key used to do is `git log`'s.
 
+### A module's doctests going missing is noticed, not only the package's
+
+- **`test_the_examples_of_a_module_run` now requires `attempted > 0` for
+  a module whose own source carries a doctest prompt, and a new
+  `test_no_module_carrying_examples_is_missing_from_the_enumeration`
+  requires every such module to appear in `_modules()` at all** (closes
+  #665). `test_the_package_carries_examples_at_all`'s sum over every
+  module stays positive were `btclib_secp256k1.zkp`'s examples to
+  disappear from the enumeration again, the state `main` was in before
+  #621 fixed it, and neither test named a module on its own -- nor
+  would the first guard alone: a name `_modules()` drops gets no
+  parametrized test case for it to run against, which is what the
+  second guard closes, deriving the expected population from the
+  source tree directly rather than from `_modules()` itself, and
+  requiring that population to be non-empty before comparing it --
+  `Path.rglob` on a directory that does not exist raises nothing, so a
+  `src/` gone missing or moved would otherwise leave the comparison
+  empty and the guard passing on nothing read, the same shape its two
+  neighbours already guard their own populations against.
+  `_carries_a_doctest_prompt` is a text-level check, not `doctest`'s
+  own parser: it can flag a comment or a nested function's docstring
+  `DocTestFinder` never reaches, but never a module whose source
+  carries no doctest prompt at all.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

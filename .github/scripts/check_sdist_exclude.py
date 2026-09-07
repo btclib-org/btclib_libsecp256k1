@@ -2,7 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # LICENSE file or https://opensource.org/license/mit for the full text.
 
-"""No sdist `exclude` entry matches a file a submodule tracks.
+"""No sdist `exclude` entry matches a tracked file, bar the deliberate ones.
 
 check-sdist (henryiii/check-sdist) compares the sdist hatchling builds
 against `git ls-files --cached --recurse-submodules`, and its hatchling
@@ -10,49 +10,37 @@ plugin then subtracts from that comparison whatever
 `[tool.hatch.build.targets.sdist]`'s own `exclude` list matches
 (`check_sdist/backends/hatchling.py`'s `git_only_excludes`, called
 unconditionally inside `compare()` at v1.6.0, regardless of
-`[tool.check-sdist]`'s `mode`). That subtraction is deliberate for some
-of the list's entries -- `/COPYRIGHT` is a tracked file this repository
-excludes from the sdist on purpose, for the reason its own comment
-gives, and check-sdist staying quiet about it is correct -- and it is
-also what makes the loss #655 describes invisible: most of the list's
-entries name a local `./autogen.sh && ./configure` run's own droppings,
-files that exist on no clone until those commands are run, so a stale
-entry matches nothing there and check-sdist stays quiet correctly too.
-An entry that instead matches a file a *submodule* tracks -- a directory
-written where a file was meant, a name that also matches something
-committed -- drops that file from the sdist the same silent way, and
-nothing here is meant to (btclib-org/btclib-secp256k1#655).
+`[tool.check-sdist]`'s `mode`). An entry matching a tracked file
+therefore drops that file from the sdist with check-sdist quiet about
+it, whatever the file is and wherever it lives
+(btclib-org/btclib-secp256k1#655).
 
-This hook is what catches that case without also catching `/COPYRIGHT`'s
-deliberate one: it matches the exclude list, with the same
-`pathspec.GitIgnoreSpec` matching that plugin uses, against only the
-tracked files living inside a submodule -- `.gitmodules`' own paths,
-read the way `check_submodules_checked_out.py` already reads them,
-rather than every file `git ls-files --cached --recurse-submodules`
-answers -- and fails on a nonempty intersection there. Scoped that way
-because the loss this hook exists for is specific to the submodule
-entries: `/COPYRIGHT`, `/build`, `/dist`, `/wheelhouse` and the rest of
-the list above `secp256k1/src/btclib_default_callbacks.c` are this
-repository's own stable, deliberately-curated exclusions and are not
-rewritten at every pin bump the way the submodule blocks below them
-are -- which is also where the risk #655 names actually lives. An
-unscoped match catches `/COPYRIGHT` as well, correctly, this list being
-written to match it: that is why the scope is the submodule paths, and
-what the scope leaves uncaught -- a wrong entry naming one of this
-repository's own tracked files -- is btclib-org/btclib-secp256k1#770.
+Some of that subtraction is meant, and `_DELIBERATE` below is where the
+file it drops on purpose is named. That tuple is what lets this check
+match the exclude list against every tracked file rather than against a
+subset picked to leave `/COPYRIGHT` out: a match outside it fails, and
+so does a member of it the list matches nothing for, so it cannot drift
+from the list it names exemptions from
+(btclib-org/btclib-secp256k1#770).
 
-It fires only where an entry matches a file that is *currently tracked*
-inside a submodule, so an entry naming a local build's own debris, which
-is untracked, leaves it quiet: the failure this hook exists to catch is
-a pin bump that widens or misnames an entry into a submodule's tracked
-territory, not the ordinary case the list was written for. That
-asymmetry is also why `[tool.check-sdist]`'s `mode = "all"` -- one of
-the two other answers #655 named and did not choose between -- is not
+Every tracked file is the scope because this repository's own sources
+are as reachable by a hand-written entry as a submodule's are:
+`/_btclib_secp256k1.*` is anchored, and `pyproject.toml`'s comment
+beside it names the tracked `stubs/_btclib_secp256k1.pyi` that the
+unanchored spelling takes out of the sdist -- a file the strict mypy
+gate needs. This check fails on that spelling.
+
+It fires only where an entry matches a file that is *currently tracked*,
+so an entry naming a local build's own debris, which is untracked,
+leaves it quiet: most of the list names what `./autogen.sh &&
+./configure` writes inside a submodule, and no clone carries any of it.
+That asymmetry is also why `[tool.check-sdist]`'s `mode = "all"` -- one
+of the two other answers #655 named and did not choose between -- is not
 this one: `mode` decides what `compare()` treats as "git" (`git ls-files`
 under `"git"`, every file on disk under `"all"`), but `git_only_excludes`
 runs after that choice and unconditionally either way, so it subtracts
 the same tracked file under both -- measured against
-`check_sdist/__main__.py`'s own `compare()`, `mode` never reaches that
+`check_sdist/__main__.py`'s own `compare()`, `mode` never reaching that
 call at all. The third, an upstream request that the plugin report what
 it subtracts, remains open against henryiii/check-sdist and would retire
 this hook if it landed; nothing here depends on it landing.
@@ -88,10 +76,11 @@ _EXCLUDE_OPEN_RE = re.compile(r"^exclude\s*=\s*\[(?P<rest>.*)$")
 # would hand on unprocessed is refused rather than read wrongly
 _ENTRY_RE = re.compile(r'^"(?P<pattern>[^"\\]*)",$')
 
-# .gitmodules is git's own config format: one "path = ..." line per
-# submodule, indented under its "[submodule ...]" header -- the same
-# pattern check_submodules_checked_out.py already reads it with
-_SUBMODULE_PATH_RE = re.compile(r"^\s*path\s*=\s*(\S+)\s*$", re.MULTILINE)
+# the tracked files the exclude list drops from the sdist on purpose,
+# spelled as `git ls-files` prints them rather than as the entry that
+# drops them is written. Each has its reason beside that entry in
+# pyproject.toml; main() below is what keeps the two in step
+_DELIBERATE = ("COPYRIGHT",)
 
 
 def sdist_exclude_patterns(pyproject_toml: str) -> list[str] | None:
@@ -158,19 +147,6 @@ def sdist_exclude_patterns(pyproject_toml: str) -> list[str] | None:
     return None if in_array else patterns
 
 
-def submodule_paths(gitmodules: str) -> list[str]:
-    """Return every submodule path `.gitmodules` names.
-
-    Args:
-        gitmodules: the text of `.gitmodules`.
-
-    Returns:
-        The paths, in the order `.gitmodules` lists them. Empty where
-        the text names none.
-    """
-    return _SUBMODULE_PATH_RE.findall(gitmodules)
-
-
 def tracked_files(root: Path) -> list[str] | None:
     """Return every file `git` tracks at `root`, submodules recursed into.
 
@@ -191,28 +167,6 @@ def tracked_files(root: Path) -> list[str] | None:
     if result.returncode != 0:
         return None
     return result.stdout.splitlines()
-
-
-def submodule_tracked_files(files: list[str], submodules: list[str]) -> list[str]:
-    """Return which of `files` live inside one of `submodules`.
-
-    This is the narrowing that keeps `/COPYRIGHT` -- a tracked file this
-    repository's own exclude list drops from the sdist on purpose --
-    out of what `excluded_tracked_files` below is asked about: it is a
-    root-level file, so no `submodules` prefix matches it.
-
-    Args:
-        files: the tracked files to filter.
-        submodules: the submodule paths to keep, as `.gitmodules` names
-            them -- `submodule_paths`' own return value.
-
-    Returns:
-        The files whose path starts with one of `submodules` followed by
-        a `/`, so that a submodule named `secp256k1` does not also match
-        a same-prefixed sibling path no `.gitmodules` entry names.
-    """
-    prefixes = tuple(f"{path}/" for path in submodules)
-    return [f for f in files if f.startswith(prefixes)]
 
 
 def excluded_tracked_files(exclude: list[str], files: list[str]) -> list[str]:
@@ -237,15 +191,14 @@ def excluded_tracked_files(exclude: list[str], files: list[str]) -> list[str]:
 
 
 def main() -> int:
-    """Fail where an exclude entry matches a file a submodule tracks.
+    """Fail where the exclude list matches a tracked file `_DELIBERATE` omits.
 
     Returns:
-        0 where no entry matches a submodule-tracked file (including
-        where the exclude list, the submodule list, or their
-        intersection is empty, each of which matches nothing by
-        construction), 1 where any entry does, where the exclude array
-        is outside the shape `sdist_exclude_patterns` reads, or where
-        `git ls-files` itself failed.
+        0 where the entries match exactly `_DELIBERATE` among the
+        tracked files, 1 where one matches anything else, where a
+        member of `_DELIBERATE` is matched by nothing, where the
+        exclude array is outside the shape `sdist_exclude_patterns`
+        reads, or where `git ls-files` itself failed.
     """
     pyproject_toml = (_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     exclude = sdist_exclude_patterns(pyproject_toml)
@@ -262,34 +215,39 @@ def main() -> int:
         )
         return 1
 
-    gitmodules = _ROOT / ".gitmodules"
-    submodules = (
-        submodule_paths(gitmodules.read_text(encoding="utf-8"))
-        if gitmodules.exists()
-        else []
-    )
-
     files = tracked_files(_ROOT)
     if files is None:
         print("git ls-files --cached --recurse-submodules failed", file=sys.stderr)
         return 1
 
-    submodule_files = submodule_tracked_files(files, submodules)
-    caught = excluded_tracked_files(exclude, submodule_files)
-    if caught:
-        for path in caught:
-            print(
-                f"{path} is tracked by a submodule and matches "
-                "[tool.hatch.build.targets.sdist]'s exclude list: check-sdist"
-                " does not see it leave the sdist, its hatchling plugin reading"
-                " that very list and subtracting what it matches from the"
-                " tracked files it would otherwise report missing"
-                " (btclib-org/btclib-secp256k1#655)",
-                file=sys.stderr,
-            )
+    matched = excluded_tracked_files(exclude, files)
+    unintended = [path for path in matched if path not in _DELIBERATE]
+    for path in unintended:
+        print(
+            f"{path} is tracked and matches"
+            " [tool.hatch.build.targets.sdist]'s exclude list: check-sdist"
+            " does not see it leave the sdist, its hatchling plugin reading"
+            " that very list and subtracting what it matches from the"
+            " tracked files it would otherwise report missing"
+            " (btclib-org/btclib-secp256k1#655). A file that entry drops on"
+            " purpose belongs in this check's own _DELIBERATE"
+            " (btclib-org/btclib-secp256k1#770)",
+            file=sys.stderr,
+        )
+    unmatched = [path for path in _DELIBERATE if path not in matched]
+    for path in unmatched:
+        print(
+            f"{path} is named in this check's _DELIBERATE and"
+            " [tool.hatch.build.targets.sdist]'s exclude list matches no"
+            " such tracked file: an exemption for a drop that is not"
+            " happening would let a later entry take that file out of the"
+            " sdist unreported (btclib-org/btclib-secp256k1#770)",
+            file=sys.stderr,
+        )
+    if unintended or unmatched:
         return 1
 
-    print("no sdist exclude entry matches a submodule-tracked file")
+    print("only the deliberate sdist exclude entries match a tracked file")
     return 0
 
 

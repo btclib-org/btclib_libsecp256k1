@@ -8,11 +8,16 @@ The check is a pre-commit hook, so what it says about the real tree is
 answered on every commit, by the hook itself: there is deliberately no
 test that the real tree passes it. What cannot be answered that way is
 how it behaves against an exclude list that does what
-btclib-org/btclib-secp256k1#655 describes -- an entry matching a file a
-submodule tracks -- because a tree in that state is a tree the gate
-refuses. Those cases are built by hand, alongside `/COPYRIGHT`'s own
-deliberate case, which the real tree carries today and which the check
-has to stay quiet about.
+btclib-org/btclib-secp256k1#655 describes -- an entry matching a tracked
+file -- because a tree in that state is a tree the gate refuses. Those
+cases are built by hand, alongside `/COPYRIGHT`'s own deliberate one,
+which the real tree carries and which the check has to stay quiet about.
+
+`_DELIBERATE` is what tells the two apart, so `_tree` below sets it per
+case rather than leaving the real tuple in place: a fixture tree whose
+tracked files do not include `COPYRIGHT` would otherwise fail on the
+exemption matching nothing, which is a real failure of the real tree and
+not of the case under test.
 
 One test does read the real `pyproject.toml`: the canary asserting that
 `sdist_exclude_patterns` returns exactly what `tomllib` reads out of
@@ -58,15 +63,6 @@ exclude = ["docs/", "build/"]
 
 [tool.mypy]
 exclude = ["scripts/"]
-"""
-
-_GITMODULES = """\
-[submodule "secp256k1"]
-\tpath = secp256k1
-\turl = https://github.com/bitcoin-core/secp256k1.git
-[submodule "secp256k1-zkp"]
-\tpath = secp256k1-zkp
-\turl = https://github.com/BlockstreamResearch/secp256k1-zkp.git
 """
 
 
@@ -217,44 +213,6 @@ def test_the_walk_reads_of_the_real_file_what_tomllib_reads() -> None:
     assert check.sdist_exclude_patterns(text) == parsed["exclude"]
 
 
-def test_the_submodule_paths_are_read_off_gitmodules() -> None:
-    """Every "path = ..." line, in the order .gitmodules lists them."""
-    assert check.submodule_paths(_GITMODULES) == ["secp256k1", "secp256k1-zkp"]
-    assert check.submodule_paths("") == []
-
-
-def test_submodule_tracked_files_keeps_only_files_under_a_submodule() -> None:
-    """`/COPYRIGHT` -- a root file -- is not under any submodule prefix.
-
-    This is the narrowing that keeps the deliberate `/COPYRIGHT`
-    exclusion out of what `excluded_tracked_files` is asked about,
-    proved directly rather than only through `main`'s own end-to-end
-    case below.
-    """
-    files = [
-        "COPYRIGHT",
-        "secp256k1/src/secp256k1.c",
-        "secp256k1-zkp/src/secp256k1.c",
-        "secp256k1-extra/not-a-real-submodule",
-    ]
-    assert check.submodule_tracked_files(files, ["secp256k1", "secp256k1-zkp"]) == [
-        "secp256k1/src/secp256k1.c",
-        "secp256k1-zkp/src/secp256k1.c",
-    ]
-
-
-def test_submodule_tracked_files_matches_the_path_exactly_not_a_prefix() -> None:
-    """A submodule named "secp256k1" does not also claim "secp256k1-zkp"'s.
-
-    Both names share a prefix as plain strings; the "/" this appends to
-    each `.gitmodules` path before comparing is what keeps a
-    `secp256k1/...` file out of what a `secp256k1-zkp` entry alone would
-    otherwise claim, and the other way round.
-    """
-    files = ["secp256k1-zkp/src/secp256k1.c"]
-    assert check.submodule_tracked_files(files, ["secp256k1"]) == []
-
-
 def test_tracked_files_runs_git_ls_files_recursing_submodules(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -333,7 +291,7 @@ def _tree(
     tmp_path: Path,
     *,
     pyproject: str = _PYPROJECT,
-    gitmodules: str | None = _GITMODULES,
+    deliberate: tuple[str, ...] = (),
     tracked: list[str] | None,
 ) -> None:
     """Stand a tree up in the answers the check reads.
@@ -342,45 +300,73 @@ def _tree(
         monkeypatch: the fixture the substitutions are made through.
         tmp_path: stands in for the wrapper repository's root.
         pyproject: pyproject.toml's text.
-        gitmodules: .gitmodules's text, or None to leave the file absent
-            -- the case `main` has to answer with no submodule at all.
+        deliberate: the exemptions, standing in for the real tuple --
+            empty unless the case is about one, since a member matched
+            by nothing is itself a failure.
         tracked: what `tracked_files` answers -- None stands in for a
             failed `git ls-files`.
     """
     (tmp_path / "pyproject.toml").write_text(pyproject, encoding="utf-8")
-    if gitmodules is not None:
-        (tmp_path / ".gitmodules").write_text(gitmodules, encoding="utf-8")
     monkeypatch.setattr(check, "_ROOT", tmp_path)
+    monkeypatch.setattr(check, "_DELIBERATE", deliberate)
     monkeypatch.setattr(check, "tracked_files", lambda _root: tracked)
 
 
-def test_main_passes_when_no_entry_matches_a_submodule_tracked_file(
+def test_main_passes_when_no_entry_matches_a_tracked_file(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The case the real tree is in, and one of the two that exits zero."""
+    """The ordinary case: every entry names something no clone carries."""
     _tree(monkeypatch, tmp_path, tracked=["secp256k1/src/secp256k1.c"])
 
     assert check.main() == 0
     out = capsys.readouterr().out
-    assert "no sdist exclude entry matches a submodule-tracked file" in out
+    assert "only the deliberate sdist exclude entries match a tracked file" in out
 
 
-def test_main_stays_quiet_about_copyrights_own_deliberate_exclusion(
+def test_main_stays_quiet_about_a_deliberate_exclusion(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """`/COPYRIGHT` is tracked and matches the list's first entry on purpose.
 
-    This is the control that the check is scoped correctly: an unscoped
-    match catches `COPYRIGHT` here, and it is the one exclusion that is
-    deliberate rather than a mistake #655 describes.
+    This is what the exemption buys, and the real tree is in exactly
+    this state: without it the check reports the one drop this
+    repository asks for.
     """
     _tree(
         monkeypatch,
         tmp_path,
+        deliberate=("COPYRIGHT",),
         tracked=["COPYRIGHT", "secp256k1/src/secp256k1.c"],
     )
 
     assert check.main() == 0
+
+
+def test_main_fails_when_an_exemption_matches_no_tracked_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An exemption for a drop that is not happening is a failure too.
+
+    It is what stops the exemptions being a second list to keep in step
+    by hand: an entry removed from `exclude` and left named here would
+    otherwise sit there permitting a later entry to take that file out
+    of the sdist unreported.
+    """
+    _tree(
+        monkeypatch,
+        tmp_path,
+        pyproject=(
+            "[tool.hatch.build.targets.sdist]\nexclude = [\n"
+            '    "secp256k1/configure",\n]\n'
+        ),
+        deliberate=("COPYRIGHT",),
+        tracked=["COPYRIGHT", "secp256k1/src/secp256k1.c"],
+    )
+
+    assert check.main() == 1
+    error = capsys.readouterr().err
+    assert "COPYRIGHT" in error
+    assert "#770" in error
 
 
 def test_main_passes_with_an_empty_exclude_list(
@@ -390,35 +376,15 @@ def test_main_passes_with_an_empty_exclude_list(
 
     Unlike `check_submodules_checked_out.py`'s "nothing to check", an
     empty exclude list answers this hook's actual question -- does any
-    entry match a submodule-tracked file -- correctly and completely:
-    there is no entry, so there is no match, and no possible false green
-    hides behind that answer the way an empty `.gitmodules` would.
+    entry match a tracked file -- correctly and completely: there is no
+    entry, so there is no match, and no possible false green hides
+    behind that answer.
     """
     _tree(
         monkeypatch,
         tmp_path,
         pyproject="[tool.hatch.build.targets.sdist]\nexclude = [\n]\n",
         tracked=["secp256k1/src/secp256k1.c"],
-    )
-
-    assert check.main() == 0
-
-
-def test_main_passes_with_no_gitmodules_at_all(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """No submodule to be tracked by is an empty prefix list, not a crash.
-
-    Nothing this hook is for can fire in a repository with no
-    submodules; `submodule_tracked_files` answers empty and `main`
-    passes rather than asking `.gitmodules` for a path that is not
-    there.
-    """
-    _tree(
-        monkeypatch,
-        tmp_path,
-        gitmodules=None,
-        tracked=["secp256k1/autotools-aux/m4/bitcoin_secp.m4"],
     )
 
     assert check.main() == 0
@@ -441,6 +407,34 @@ def test_main_fails_when_an_entry_matches_a_submodule_tracked_file(
     assert check.main() == 1
     error = capsys.readouterr().err
     assert "secp256k1/autotools-aux/m4/bitcoin_secp.m4" in error
+    assert "#655" in error
+
+
+def test_main_fails_when_an_entry_matches_a_tracked_file_outside_a_submodule(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The unanchored spelling of the entry that drops the built extension.
+
+    `pyproject.toml`'s own comment on `/_btclib_secp256k1.*` names this:
+    without the leading `/` the pattern also matches the tracked
+    `stubs/_btclib_secp256k1.pyi`, which the strict mypy gate needs, and
+    check-sdist subtracts that match rather than reporting it. The file
+    sits outside every submodule, which is the class a scope reading
+    only those cannot answer about (btclib-org/btclib-secp256k1#770).
+    """
+    _tree(
+        monkeypatch,
+        tmp_path,
+        pyproject=(
+            "[tool.hatch.build.targets.sdist]\nexclude = [\n"
+            '    "_btclib_secp256k1.*",\n]\n'
+        ),
+        tracked=["stubs/_btclib_secp256k1.pyi", "secp256k1/src/secp256k1.c"],
+    )
+
+    assert check.main() == 1
+    error = capsys.readouterr().err
+    assert "stubs/_btclib_secp256k1.pyi" in error
     assert "#655" in error
 
 
@@ -483,9 +477,9 @@ def test_the_entry_point_guard_runs_the_check_as___main__() -> None:
     `runpy.run_path` executes the file again in this interpreter with
     `__name__` bound to `"__main__"`, the way
     `tests/submodules_checked_out_test.py`'s own guard test does. Unlike
-    that check, this one reads the real checkout's own pyproject.toml,
-    `.gitmodules` and tracked files, so the assertion is only that the
-    guard agrees with `main()` on whatever that state is -- this is not
+    that check, this one reads the real checkout's own pyproject.toml
+    and tracked files, so the assertion is only that the guard agrees
+    with `main()` on whatever that state is -- this is not
     a test that the real tree passes the check, only that the guard
     reports what `main()` reports.
     """

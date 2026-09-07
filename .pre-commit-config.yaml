@@ -739,25 +739,24 @@ repos:
   # check-sdist's hatchling plugin subtracts [tool.hatch.build.targets.sdist]'s
   # own exclude list from the tracked files it would otherwise report
   # missing, unconditionally and regardless of [tool.check-sdist]'s mode
-  # -- so an entry that matches a file a submodule tracks drops that file
-  # from the sdist with every gate, this one included, staying green
+  # -- so an entry that matches a tracked file drops that file from the
+  # sdist with every gate, this one included, staying green
   # (btclib-org/btclib-secp256k1#655). This hook is what catches that
   # entry instead: the exclude list matched, with the identical
-  # pathspec.GitIgnoreSpec matching the plugin itself uses, against the
-  # tracked files living inside a submodule -- not every file
-  # `git ls-files --cached --recurse-submodules` answers, /COPYRIGHT
-  # among them being a tracked file this list excludes from the sdist on
-  # purpose and an unscoped match catching it -- and failing on a
-  # nonempty intersection there. What that scope leaves uncaught is
-  # btclib-org/btclib-secp256k1#770.
+  # pathspec.GitIgnoreSpec matching the plugin itself uses, against every
+  # file `git ls-files --cached --recurse-submodules` answers, and
+  # failing on a match the check's own _DELIBERATE does not name.
+  # /COPYRIGHT is a tracked file this list drops on purpose, and that
+  # tuple is where such a file is declared; a member of it the list
+  # matches nothing for fails too, which is what keeps the two from
+  # parting by hand (btclib-org/btclib-secp256k1#770).
   # That git command answers no path at all inside a submodule that is
-  # not checked out, so this hook is vacuously green in a clone without
-  # them and its all-clear line then says nothing. submodules-checked-out
-  # immediately above fails loudly in that state, and pre-commit runs
-  # every hook rather than stopping at the first failure, so its verdict
-  # is in the same run as this hook's all-clear -- which is what makes
-  # the all-clear readable at all. The `ci:` block above says which
-  # hooks that leaves red on pre-commit.ci.
+  # not checked out, so what this hook says about a submodule's files in
+  # a clone without them is nothing. submodules-checked-out immediately
+  # above fails loudly in that state, and pre-commit runs every hook
+  # rather than stopping at the first failure, so its verdict is in the
+  # same run as this hook's. The `ci:` block above says which hooks that
+  # leaves red on pre-commit.ci.
   # always_run for the same reason submodules-checked-out above is: a
   # submodule bump can make a standing entry newly match a file the pin
   # did not track before, with nothing in the diff pre-commit would
@@ -774,7 +773,7 @@ repos:
   - repo: local
     hooks:
       - id: sdist-exclude-tracked
-        name: no sdist exclude entry matches a submodule-tracked file
+        name: only the deliberate sdist exclude entries match a tracked file
         language: python
         entry: python .github/scripts/check_sdist_exclude.py
         additional_dependencies: ["pathspec==1.1.1"]

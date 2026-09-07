@@ -71,26 +71,26 @@ _XONLY_SIZE = 32
 # literal cdecl, so hoisting one saves 0.003 -- 0.0656 against 0.0685,
 # real at 4.3% and an order below the 0.054 above.
 #
-# Every buffer in this package whose bytes *are* unpacked is declared the
-# way below -- an int constant, and `ffi.typeof` of it -- so that the
-# width is stated once and `ffi.sizeof` of a cdata is not asked per
-# call, `dsa`'s DER capacity excepted for the reason its own comment
-# gives: 0.0690 against 0.0520 microseconds on the primitive alone. That
-# is a session of its own, which CHANGELOG.md names, and every figure in
+# Every buffer in this package whose bytes *are* unpacked is declared the way
+# below -- an int constant, and `ffi.typeof` of it -- so that the width is
+# stated once and `ffi.sizeof` of a cdata is not asked per call, `dsa`'s DER
+# capacity excepted for the mutation-testing reason its own comment gives.
+# That is a session of its own, which CHANGELOG.md names, and every figure in
 # the comments of `dsa`, `recovery`, `hashes`, `ellswift` and `ssa` comes
-# from it rather than from the one above. At a call site it is 2.65% to
-# 5.53% of the serializations in the first three of those -- 0.006 to
-# 0.016 microseconds, which is neither one number nor the primitive's:
-# within a session each noise row moves under 0.001, and across four
-# sessions the same site moved by more than that, `dsa.serialize_compact`
-# between 0.006 and 0.013. What is solid is a hundredth of a microsecond
-# at a serialization, not a figure per site. In `ssa` and `ellswift` it is
-# that same hundredth of calls of 15 to 31 microseconds, where timing a
-# call against itself already moves as much or more: nothing those
-# measurements resolve. `ellswift.create`, `ellswift._encode_`,
-# `ssa._sign32` and `ssa._sign_custom` are spelled this way regardless,
-# because a reader cannot see the cost of a host -- two spellings of one
-# shape would leave the difference unexplainable at both of them
+# from it rather than from the one above: the primitive itself is 0.0520
+# against main's 0.0690 microseconds, and at a call site it is 2.65% to 5.53%
+# of the serializations in the first three of those -- 0.006 to 0.016
+# microseconds, which is neither one number nor the primitive's: within a
+# session each noise row moves under 0.001, and across four sessions the same
+# site moved by more than that, `dsa.serialize_compact` between 0.006 and
+# 0.013. What is solid is a hundredth of a microsecond at a serialization,
+# not a figure per site. In `ssa` and `ellswift` it is that same hundredth of
+# calls of 15 to 31 microseconds, where timing a call against itself already
+# moves as much or more: nothing those measurements resolve.
+# `ellswift.create`, `ellswift._encode_`, `ssa._sign32` and
+# `ssa._sign_custom` are spelled this way regardless, because a reader cannot
+# see the cost of a host -- two spellings of one shape would leave the
+# difference unexplainable at both of them
 _XONLY_BUFFER_TYPE = ffi.typeof(f"char[{_XONLY_SIZE}]")
 
 

@@ -556,8 +556,7 @@ def test_the_negating_half_of_a_nonce_takes_a_buffer_too() -> None:
     `ssa.nonce_bip340` negates the private key where its point has odd y,
     which is the only path in this table to `keys.prvkey_negate` other
     than the row for it -- and `PRVKEY` is 7, whose y is even, so the
-    sweep above never takes that branch. With a buffer-held key it was a
-    coin flip on the key: 5 and 7 answered, 6 raised.
+    sweep above never takes that branch.
 
     Both parities are asserted to occur rather than assumed, as
     `tests/verified_signing_test.py` does of the same question.

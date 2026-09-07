@@ -961,8 +961,9 @@ def parse(pubkey_bytes: BytesLike, name: str = "public key") -> CData:
         pubkey_bytes: the public key, 33 or 65 bytes.
         name: what the key is, as the exception should call it, for a
             caller passing more than one kind of public key --
-            `silentpayments` passes four, and which one was refused is
-            the whole of what its caller needs.
+            `silentpayments` passes a scan public key, a spend public
+            key, and one left to the default, and which one was
+            refused is the whole of what its caller needs.
 
     Returns:
         The libsecp256k1 public key object.

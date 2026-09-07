@@ -57,13 +57,19 @@ def keypair_memory(signer: ssa.Signer) -> bytes:
 
 
 def test_a_signer_signs_what_the_function_signs() -> None:
-    """Both signatures, over both message lengths, for the same aux.
+    """The signer's own method, checked against the module function it wraps.
 
     The aux is fixed, so a BIP340 signature is a value rather than a
-    distribution and the two sides are comparable at all. A message of
-    any other length is `sign_custom`'s, and a 32-byte one is signed the
-    same way by both, which is what makes the four assertions two pairs
-    rather than four values.
+    distribution, and comparing the signer's output to `ssa.sign` and to
+    `ssa.sign_custom` byte for byte is what makes that comparison
+    meaningful, rather than two correct implementations producing
+    different but equally valid signatures that would never match.
+    `sign_custom` is exercised both at the length `sign` also accepts and
+    at a longer one only it takes. A signature from each entry point is
+    then taken again without that aux and checked to verify against the
+    x-only key the signer was built from, under a comment of its own:
+    what the fixed aux buys is the comparison above, and a signature made
+    without it still has to verify.
     """
     long_msg = b"a message longer than a hash, and of no particular length"
 

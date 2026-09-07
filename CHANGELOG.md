@@ -6392,6 +6392,47 @@ release-notes length in the first place, and are still in
   module compiled only as another's dependency, with no header to wrap,
   would be recorded; both extensions read empty there.
 
+### `tests/symbols_test.py` ties a libsecp256k1 name to a declaration
+
+- **Every `secp256k1_*` and `SECP256K1_*` name this repository's
+  comments, docstrings and markdown mention is checked against the
+  submodules' own `.h`, `.c`, `CMakeLists.txt` and `.cmake` files**
+  (closes #805). The oracle is restricted to those kinds of file rather
+  than built from every file the vendored trees carry: an unrestricted
+  read answers "present" for `secp256k1_schnorrsig_sign`, the alias
+  `ssa.py` named twice after upstream removed it (#796), because
+  upstream's own `CHANGELOG.md` still records removing it -- the defect
+  this file exists to catch would pass its own check. A `.py` file
+  contributes its comments and its docstrings, not its other text:
+  `scripts/cffi_build.py`'s CLI flags and header filenames, and
+  `tests/module_flags_test.py`'s own regular expressions, are real
+  `secp256k1_*` and `SECP256K1_*` substrings that name nothing -- they
+  are values this package computes with, not a claim in prose.
+- **A name ending in `*` is read as a prefix, not as the one entry
+  point or CMake option it looks like once the `*` is stripped.**
+  `secp256k1_musig_*`, `secp256k1_generator_*`, `secp256k1_pedersen_*`,
+  `SECP256K1_ENABLE_MODULE_*` and `SECP256K1_CHECKMEM_*` are what this
+  repository's prose currently writes that way, and each is held to
+  still naming a real prefix rather than exempted outright, so a
+  prefix nothing matches any more fails instead of sitting there.
+- **The CMake-only options -- `SECP256K1_VALGRIND`, `SECP256K1_ASM`,
+  `SECP256K1_ECMULT_WINDOW_SIZE`, `SECP256K1_ECMULT_GEN_KB`,
+  `SECP256K1_BUILD_CTIME_TESTS` and
+  `SECP256K1_USE_EXTERNAL_DEFAULT_CALLBACKS` -- are read as
+  declarations rather than exempted by name.**
+  `tests/module_flags_test.py` already reads
+  `option(SECP256K1_ENABLE_MODULE_*)` out of the same `CMakeLists.txt`
+  files rather than hand-listing the modules; widening this oracle the
+  same way is what lets a rename upstream gives one of them be caught
+  instead of waved through.
+- **A citation is not always backticked, and prose wraps.**
+  `ssa.py`'s `EXTRAPARAMS_MAGIC` comment names
+  `SECP256K1_SCHNORRSIG_EXTRAPARAMS_MAGIC` with no backticks, so the
+  reader matches raw text; and a name the reflow splits across two
+  lines is rejoined the same way `tests/citations_test.py`'s own
+  `_cited` does for a wrapped test name, at the underscore the wrap
+  always falls on.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

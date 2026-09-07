@@ -117,6 +117,18 @@ These are known and inherent, not vulnerabilities:
     zeroed before it is dropped. That is one copy taken back,
     not safety: the `bytes` handed to the caller holds the same secret
     and cannot be overwritten
+
+    The amounts `zkp.generator.pedersen_blind_generator_blind_sum`
+    copies into a `uint64_t` array of its own are not zeroed, and that
+    is deliberate: zeroing it would not take back the last copy. A value
+    reaches that call only as a Python `int` — `values` is a
+    `Sequence[int]`, and anything else is refused — so the object the
+    limitation this bullet opens with is about exists before the call
+    and nothing can overwrite it. A blinding factor beside it can be
+    handed in as a cffi array the caller wipes instead, which is what
+    makes taking that copy back worth doing, and
+    `zkp.generator.pedersen_commit` takes its own `value` as a plain C
+    argument, with no buffer to wipe at all
 - **`into` moves that last copy somewhere the caller can overwrite,**
     and is the whole of what it does. The entry points that take a
     keyword-only `into` — a writable buffer of exactly the secret's
@@ -132,11 +144,11 @@ These are known and inherent, not vulnerabilities:
     `ecdh.shared_secret`, `ellswift.xdh`, `dsa.nonce_rfc6979`,
     `ssa.nonce_bip340`, `zkp.musig.extract_adaptor`,
     `zkp.generator.pedersen_blind_sum` and
-    `zkp.generator.pedersen_blind_generator_blind_sum`. **Three secrets do
+    `zkp.generator.pedersen_blind_generator_blind_sum`. **Some secrets do
     not**, each being one member of a returned tuple, where an argument
     could not say which: the tweak of `silentpayments.label`, the
     per-output tweak `silentpayments.scan_outputs` hands back, and the
-    blinding factor `zkp.rangeproof.rewind` recovers. All three are
+    blinding factor `zkp.rangeproof.rewind` recovers. All of them are
     `bytes` and none can be zeroed, which is the limitation above and not
     this narrowing of it.
     What the caller then does with the buffer is theirs: this does not
@@ -154,7 +166,7 @@ These are known and inherent, not vulnerabilities:
         prvkey[:] = bytes(32)     # the caller's wipe, and only theirs
     ```
 
-- the two buffers whose zeroing is the caller's to ask for are
+- the buffers whose zeroing is the caller's to ask for are
     `ssa.Signer`'s keypair and `musig.SecretNonce`'s secret nonce.
     Everything above is wiped inside the call that made it — read out and
     zeroed in the one operation, or wiped in a `finally` where it is a
@@ -204,16 +216,16 @@ These are known and inherent, not vulnerabilities:
     a buffer never overwritten is the same un-zeroizable copy under
     another name.
 
-    **What the caller takes on is three things, and `_scalar` names them
-    where it refuses the shapes it cannot take.** The octets must stay
-    put for the whole call, which is more than one read — libsecp256k1
-    loads the scalar and then derives the nonce from the same pointer, and
-    grinding and the check read it again — so a write in between yields a
-    nonce and a signature under two different keys, reported as the fault
-    it is indistinguishable from. The memory must outlive the call, which
-    no python argument has had to promise: a cffi *view*, a slice or a
-    cast, does not keep its owner alive, and a dangling one reads freed
-    memory as a private key. And the length is the declaration's word:
+    **What the caller takes on is what `_scalar` names where it refuses
+    the shapes it cannot take.** The octets must stay put for the whole
+    call, which is more than one read — libsecp256k1 loads the scalar and
+    then derives the nonce from the same pointer, and grinding and the
+    check read it again — so a write in between yields a nonce and a
+    signature under two different keys, reported as the fault it is
+    indistinguishable from. The memory must outlive the call, which no
+    python argument has had to promise: a cffi *view*, a slice or a cast,
+    does not keep its owner alive, and a dangling one reads freed memory
+    as a private key. And the length is the declaration's word:
     `ffi.cast("unsigned char[32]", ...)` over 8 octets is accepted, cffi
     having no way to report what was really allocated.
 
@@ -227,8 +239,13 @@ These are known and inherent, not vulnerabilities:
     sender side of `silentpayments`, `zkp.generator.pedersen_blind_sum`
     and that same call wipe what they copied on the way out — so passing
     the caller's memory would negate, overwrite or zero the secret they
-    handed in. Each of those answers a *new* secret, which is what
-    `into` above is for
+    handed in. Those of them that answer a *new* secret take the `into`
+    of the bullet above, which is where that secret comes back into a
+    buffer instead of a `bytes`, and that bullet's own list is which
+    they are. The sender side of `silentpayments` takes none: what
+    `silentpayments.create_outputs` answers is the x-only public keys of
+    the outputs, no entry point of that module has an `into` at all, and
+    the copy it takes is owed for the wiping reason alone
 
     ```python
     prvkey = ffi.new("unsigned char[32]", secret_octets)

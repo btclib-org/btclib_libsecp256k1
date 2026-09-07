@@ -5792,6 +5792,268 @@ release-notes length in the first place, and are still in
   search reading the citation's own line, which is the shape that leaves
   such a reference unmeasured.
 
+### A local hook catches a submodule exclude entry check-sdist cannot
+
+- **`.pre-commit-config.yaml` gains `sdist-exclude-tracked`, matching
+  `[tool.hatch.build.targets.sdist]`'s exclude list against the tracked
+  files living inside a submodule and failing on a nonempty
+  intersection** (closes #655). check-sdist's own hatchling plugin
+  subtracts that same list from what it reports missing, unconditionally
+  and regardless of `[tool.check-sdist]`'s `mode`, so an entry that
+  widens or misnames into a submodule's tracked territory at a pin bump
+  drops a file from the sdist with every gate, this one included,
+  staying green. Measured against `check_sdist/__main__.py`'s own
+  `compare()` at v1.6.0: `mode = "all"`, one of the two other answers
+  the issue named and did not choose between, does not gate that
+  subtraction either, so it does not fix this. The new hook is scoped to
+  submodule-tracked files rather than every tracked one because
+  `/COPYRIGHT` is excluded from the sdist on purpose and is tracked too,
+  so an unscoped match catches it; what that scope leaves uncaught is
+  the wrong entry naming one of this repository's own tracked files
+  (issue #770). The array is read by a line-based walk, `tomllib` being
+  3.11 and the floor 3.10, and the walk refuses a shape outside this
+  table's own convention rather than answering with the different
+  pattern set it would otherwise assemble. `pathspec`, which the check
+  matches with, joins the `test` dependency group: `tests/` imports the
+  script at module scope, and an import it cannot satisfy there is a
+  collection error rather than a skipped test.
+
+### `conventions_test.py`'s docstring says what this module reads
+
+- **The docstring's second paragraph no longer restates section 7's own
+  point about how the organization's suites name convention tests, and
+  says instead what this module reads and where it departs** (issue
+  btclib-org/.github#690). The paragraph it replaces named the same
+  shapes section 7 already lists -- a module per bullet, or several
+  folded into the one file about a single module -- and repeating that
+  choice here is the second statement section 9 refuses; what belongs to
+  this module instead is that it transcribes section 7's conventions
+  into `_CONVENTIONS` rather than reading them off the standard, because
+  the standard is another repository's file, so a copy is the only form
+  the list takes here. That inverts `btclib-org/.github`'s own copy,
+  where the standard and the declaration share a commit, so a copy there
+  would be the one that goes stale instead. Other repositories carry a
+  copy with the same gap, so btclib-org/.github#690 stays open.
+
+### `zkp.generator`'s two blind sequences take a caller-held buffer alike
+
+- **`pedersen_blind_generator_blind_sum` copies its `blinding_factors`
+  into `unsigned char[32]` buffers, the item type the `generator_blinds`
+  beside them are copied into** (closes #775). A `char[32]` there
+  refused a caller holding a blinding factor in memory of their own,
+  with cffi's own `initializer for ctype 'char[32]' must be a bytes or
+  list or tuple, not cdata 'unsigned char[32]'` -- a type name the
+  caller never wrote -- where `pedersen_blind_sum` and the generator
+  blinds of this same call accepted one: `ffi.new` takes a cdata as an
+  initializer only where the item type matches, and
+  `_scalar._owned_octets` re-views a caller's own octets as
+  `unsigned char[32]` whatever they declared them. README.md's *Which
+  item type the array was declared as does not matter* paragraph is the
+  contract that refusal contradicted, and it stands as written rather
+  than being narrowed to exclude the call. The declaration decides
+  nothing else here: `_secret.take` reads the answer through
+  `ffi.buffer`, which asks the buffer for its length rather than for its
+  item type, and `_ptr_array` takes either item type into an
+  `unsigned char *[]`. `tests/zkp_generator_test.py` drives both
+  sequences with a buffer allocated through mainline's own `ffi`, which
+  is the one a caller holds, and asserts the octets the stand-in reports
+  being handed and the caller's own buffers still holding them
+  afterwards.
+
+### `silentpayments`'s sender side answers nothing for an `into` to receive
+
+- **The clause closing SECURITY.md's and README.md's enumeration of the
+  calls that copy a caller's scalar octets names `into` for the members
+  that answer a new secret, and says the sender side of
+  `silentpayments` is not one of them** (closes #776). It read "Each of
+  those answers a *new* secret, which is what `into` above is for", and
+  `silentpayments.create_outputs` answers the x-only public keys of the
+  outputs: an `ast` walk of that module's top-level defs finds `into` on
+  none of them, against a positive control that the word does occur in
+  the file, in prose. The copy that side takes is owed for the wiping
+  reason alone, the second of the two `_secret.scalar_buffer`'s own
+  docstring gives. SECURITY.md's `into` enumeration, earlier in the same
+  file, already lists the entry points that take one and names no member
+  of `silentpayments`; the clause there points at that list rather than
+  restating it.
+
+### `zkp.generator` says why the amounts are not wiped where the blinds are
+
+- **`pedersen_blind_generator_blind_sum`'s `uint64_t` array of the
+  caller's amounts is not wiped, and the comment above it and
+  SECURITY.md's *known and inherent* wipe bullet both say why** (closes
+  #780). Zeroing it would not take back the last copy: an amount reaches
+  that call only as a python `int`, `values` being a `Sequence[int]` and
+  anything else refused, so the object nothing can overwrite exists
+  before the call. A blinding factor beside it can be handed in as a
+  cffi array the caller wipes, which is what makes taking that copy
+  back worth its `finally`, and `pedersen_commit` takes its own `value`
+  as a plain C argument with no buffer to wipe at all. The entry closing
+  #762 earlier in this section states the wipe of the blinding factors
+  and stands as written: what this adds is the answer for the one buffer
+  that `finally` does not reach.
+
+### The sdist exclude check answers about every tracked file
+
+- **`.github/scripts/check_sdist_exclude.py` matches
+  `[tool.hatch.build.targets.sdist]`'s exclude list against every file
+  `git ls-files --cached --recurse-submodules` answers, and fails on a
+  match its own `_DELIBERATE` tuple does not name** (closes #770). An
+  entry naming one of this repository's own tracked files drops that
+  file from the sdist with check-sdist blind to it exactly as an entry
+  naming a submodule's does, and those files are the ones written and
+  edited here. `pyproject.toml`'s own comment on `/_btclib_secp256k1.*`
+  names the case: unanchored, that pattern also matches the tracked
+  `stubs/_btclib_secp256k1.pyi` the strict mypy gate needs, and the
+  check fails on that spelling.
+- **`_DELIBERATE` names `COPYRIGHT`, and a member of it the exclude list
+  matches no tracked file for fails the check too.** That is what the
+  wider scope costs and how the cost is paid: an exemption is declared
+  rather than inferred from where a file sits, and it cannot part from
+  the entry it exempts without the hook saying so. The entry above under
+  *A local hook catches a submodule exclude entry check-sdist cannot*
+  describes the narrower scope, which this replaces; the hook it added is
+  this one.
+
+### Every hook pin `uv.lock` resolves is read against it
+
+- **`tests/hook_pins_test.py` reads the `additional_dependencies` of
+  every hook in `.pre-commit-config.yaml`, in both shapes a value is
+  written in, and asserts each `name==version` against `uv.lock`
+  wherever the lock resolves that package** (closes #779). The procedure
+  the module turns into a red test -- a pin moved by hand, with the lint
+  and test groups of the lock -- is not about mypy, and the
+  `sdist-exclude-tracked` hook's own `pathspec` pin, written in the
+  inline form on the key's line, is one the lock resolves. A pin the
+  lock does not resolve is left alone: `shellcheck-py` and `typos` are
+  tools installed for one hook each and declared by no dependency group,
+  so the pin is the only declaration there is.
+- **The mypy hook's pins keep the stronger reading, each having to be a
+  package the lock resolves at all.** They are what the checked files
+  import and the project installs, so a name the lock does not answer
+  for is a mistake there rather than a tool of the hook's own.
+
+### `SECURITY.md`'s memory bullets name their enumerations
+
+- **The `into` bullet names the secrets that take none of it without
+  saying how many they are** (closes #785). The list is the fact, and a
+  number beside it states it a second time, so a member arriving or
+  leaving falsifies one half of a sentence whose other half is still
+  right. `README.md`'s **Some calls copy it, and are meant to.** is the
+  form this follows.
+- **The bullet on the buffers whose zeroing is the caller's to ask for,
+  and the paragraph on what a caller handing in a cffi array takes on,
+  read the same way.** Each gives its members in the sentence that had
+  counted them.
+- **`README.md`'s pointer at that bullet counts nothing either.** It
+  says that `SECURITY.md` names the `silentpayments` secrets `into` does
+  not reach, which is what a reader goes there for.
+
+### A hook's value is read whole or read as nothing
+
+- **`tests/hook_pins_test.py` cuts a flow sequence at the commas outside
+  its quotes, and reads the specifier set that survives as one thing:
+  the requirement pins whatever version one of its clauses names**
+  (closes #790). `name==1.2.3,!=1.2.4` is a pin at 1.2.3 and is
+  asserted against `uv.lock` like any other, where a cut at every comma
+  answers pieces that are requirements neither of them and that the
+  check for an unread value cannot tell from pieces that are.
+- **A specifier set naming no single version asks the lock nothing, and
+  that is the answer for `hatchling>=1.27,<2` and for `name==1.2.*`
+  alike.** The rejected alternative declines such a set outright and
+  makes the value red: it costs the pin in `name==1.2.3,!=1.2.4`, which
+  the file may declare and the lock can disagree with, and it reddens a
+  bounded range, which no reading of the lock is about.
+- **An item the walk cannot resolve into a requirement makes the whole
+  value nothing.** A pin carrying a yaml comment on its own line is
+  such an item, and `test_every_additional_dependencies_key_was_read`
+  fails on the nothing rather than asserting the pins beside it while
+  that one goes unread.
+
+### pre-commit.ci checks the vendored submodules out
+
+- **`.pre-commit-config.yaml`'s `ci:` block sets `submodules: true`, so
+  that service's checkout carries `secp256k1` and `secp256k1-zkp`**
+  (closes #766). A checkout registering neither is the state
+  `submodules-checked-out` exists to fail on, and the one where `git
+  ls-files --cached --recurse-submodules` hands `check-sdist` gitlinks
+  the sdist has no member for; issue #664 records that pair of hooks
+  failing on the runs it lists. `submodule-pin` keeps its place in the
+  `skip` list, the clone the key delivers being shallow with no
+  `fetch-depth` key to ask that service for its tags.
+  The entry closing `#664` earlier in this section stays where it is,
+  and what it says stops holding of the tree this lands in:
+  `REPOSITORY.md` and the `ci:` comment no longer name
+  `submodules-checked-out` and `check-sdist` as red on that service, its
+  checkout registers both submodules, and the question that entry left
+  to issue #766 -- whether the key also clears `check-sdist`'s
+  comparison against the built sdist -- is what this entry answers.
+- **That `ci:` block is where this repository states what pre-commit.ci
+  can and cannot run, and `REPOSITORY.md` points at it** (closes #772).
+  The block holds the `submodules` key and the `skip` list themselves,
+  so the reason an entry is in that list sits beside the list somebody
+  edits; `REPOSITORY.md` keeps what its own subject is, that the branch
+  rule names no check of that service.
+- **`CLAUDE.md` and `.github/scripts/check_submodules_checked_out.py`
+  name a plain `git clone` for the never-registered submodule state.**
+  That is the state where `git ls-files --cached --recurse-submodules`
+  lists the gitlink instead of dropping it, and pre-commit.ci is no
+  longer an instance of it.
+  The entry closing `#765` earlier in this section stays where it is,
+  and one clause of it stops holding: it points at `REPOSITORY.md` for
+  the `pre-commit.ci` instance of that state, which that file no longer
+  carries and that service is no longer in. The condition that entry
+  adds -- the drop needing the submodule configured active rather than
+  merely empty -- is untouched.
+- **The `sdist-exclude-tracked` comment, `check_submodule_pin.py`'s
+  `why_no_tag` and that function's test stop naming that service as a
+  clone their hooks answer wrongly about.** `why_no_tag` names instead
+  the checkouts that reach its absent state and its shallow one: a
+  worktree before `git submodule update --init` runs in it, and a
+  checkout made with a depth, which is what `lint.yml`'s
+  `fetch-depth: 0` is for.
+
+### The token census reads a declaration's position, not the end of a line
+
+- **`REPOSITORY.md`'s *Token permissions* hands the reader `git grep -nE
+  '^ +[a-z-]+: write([[:blank:]]+#|$)' -- .github/workflows`** (issue
+  btclib-org/.github#897): the `: write$` form it replaces drops a
+  declaration carrying a trailing comment along with the comment lines it
+  was there to exclude, and it matches a comment line that itself ends in
+  `: write`. What keeps a comment out now is the key's own
+  position, a comment line opening with a `#` where `[a-z-]` has to
+  match, and the sentence above the command says that rather than naming
+  the `$`. No workflow here writes a grant with a trailing comment, so
+  both forms answer the same lines here, and that agreement is a property
+  of the files rather than of either pattern.
+- **Two entries above name the command as it was spelled**: *What the
+  workflow table and the `paths` filter name* calls the `git grep` beside
+  that paragraph anchored, and *`REPOSITORY.md` says what the rulesets
+  and the grants are, not how many* names `git grep -n ': write$'`
+  outright. What each says of the paragraph holds of the command that
+  replaces it -- it names every job asking for more than the read-only
+  default, and the block enumerates the grants rather than the jobs --
+  and the spelling is the half this entry supersedes.
+- **The comment branch takes `[[:blank:]]` rather than a space**: a tab
+  between a grant and its comment is a shape `actionlint` accepts and
+  `yamllint` reports as a syntax error, so what keeps it out of these
+  files is the lint gate, and the census answers with the parser rather
+  than with the gate.
+- **`actionlint` reads every shape named beside the command as a
+  grant**: `permissions: write-all`, a flow mapping and a quoted key or
+  value all pass it, and `prettier` rewrites none of them into what the
+  pattern reads, as it does a double space or a trailing space.
+  `zizmor`'s excessive-permissions audit reports a job's own
+  `write-all`, and passes a workflow-level one in a file of a single job
+  at the persona the hook runs, which is the default:
+  `--persona=pedantic` reports it. So that shape can sit in a workflow
+  here with the census reporting nothing.
+- **Folding a shape into the pattern would leave the next one out**:
+  `contents: >-` with `write` on the line below is a grant `actionlint`
+  accepts and `prettier` hands back unchanged, and a line-oriented
+  pattern reads a spelling where a permission is a value in a parsed
+  document.
+
 ## v0.8.0.4
 
 ### `musig` wraps MuSig2, closing the one exception `lib` was for

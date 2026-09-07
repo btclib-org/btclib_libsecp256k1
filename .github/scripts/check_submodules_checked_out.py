@@ -14,8 +14,7 @@ sides at once (btclib-org/btclib-secp256k1#612). The activation is what
 the drop needs rather than the empty directory
 (btclib-org/btclib-secp256k1#765): where `git submodule init` has never
 run, git lists the gitlink like any other cached entry and check-sdist
-fails on it; REPOSITORY.md's `pre-commit.ci` paragraph is where that
-state is met.
+fails on it, which is the state a plain `git clone` leaves.
 
 The state this hook is kept for is the active and empty one, and a `git
 worktree add` is what gives it: a linked worktree shares the

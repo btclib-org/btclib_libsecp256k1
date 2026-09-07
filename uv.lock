@@ -398,6 +398,7 @@ dev = [
     { name = "mypy" },
     { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "myst-parser", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pathspec" },
     { name = "pre-commit" },
     { name = "pyroma" },
     { name = "pytest" },
@@ -429,6 +430,7 @@ mutation = [
     { name = "cosmic-ray" },
 ]
 test = [
+    { name = "pathspec" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-randomly" },
@@ -464,6 +466,7 @@ dev = [
     { name = "hatchling" },
     { name = "mypy" },
     { name = "myst-parser" },
+    { name = "pathspec" },
     { name = "pre-commit" },
     { name = "pyroma" },
     { name = "pytest" },
@@ -488,6 +491,7 @@ lint = [
 ]
 mutation = [{ name = "cosmic-ray" }]
 test = [
+    { name = "pathspec" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-randomly" },

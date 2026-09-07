@@ -11,14 +11,18 @@ of them. That clause is right, and its price is that an *absent*
 convention test is indistinguishable from a convention this repository
 does not have. Nothing anywhere recorded which of the two it was.
 
-A filename cannot answer it either. The suites of the organization name
-the same idea three ways -- a `test_` prefix here, a module per bullet in
-the second, and in the third several of these checks folded into the one
-file that is about its single module, which is the honest shape for a
-package that is one module. So the audit reads a declaration rather than
-a directory, and this module is what keeps the declaration from being
-prose: section 7's own rule, that a convention worth stating is worth a
-test, applied to section 7 itself.
+A filename cannot answer it either, and how an organization suite names
+its convention tests is section 7's own question rather than this
+module's -- restating its answer here would be the second statement
+section 9 refuses. What this module owns is what it reads and where it
+departs: section 7's list of conventions is transcribed into
+`_CONVENTIONS` below rather than read off the standard, because the
+standard is another repository's file, so a copy is the only form the
+list takes here; a suite kept in the same repository as the standard
+reads it instead, and a copy there would be the one that goes stale. So
+the audit reads a declaration rather than a directory, and this module is
+what keeps the declaration from being prose: section 7's own rule, that a
+convention worth stating is worth a test, applied to section 7 itself.
 
 Some are tested here and some are not, which the declaration says out
 loud rather than leaving to be inferred from an absence.

@@ -676,9 +676,13 @@ out. Handing any of them the caller's memory would negate, overwrite or
 zero the secret they passed, so a copy is owed. `_secret.scalar_buffer`
 takes it where mainline's own `ffi` allocates; the two in
 `zkp.generator` take theirs through the subpackage's `ffi`, which is
-what every array there is built through. Each of them *answers* a new
-secret, which is the other facility's question rather than this one's —
-`into` is how that comes back into a buffer instead of a `bytes`.
+what every array there is built through. Those of them that *answer* a
+new secret take a keyword-only `into`, which is the other facility's
+question rather than this one's — it is how that secret comes back into
+a buffer instead of a `bytes`. The sender side of `silentpayments` takes
+none: what `silentpayments.create_outputs` answers is the x-only public
+keys of the outputs, no entry point of that module has an `into` at all,
+and the copy it takes is owed for the wiping reason alone.
 
 Where that binds is not the signing, which never asked: the private
 halves hand libsecp256k1 the pointer, so a key in a buffer reached
@@ -1014,7 +1018,7 @@ writable buffer of exactly 32 contiguous octets, which receives the
 secret in place of the `bytes` the call would otherwise return, so that
 the copy the caller is left holding is one they can overwrite. It is an
 addition and not a change; omit it and nothing differs. SECURITY.md is
-where what it does and does not buy is stated, and names the two
+where what it does and does not buy is stated, and names the
 `silentpayments` secrets it does not reach.
 
 Two of those have a second spelling for a caller doing arithmetic rather

@@ -402,20 +402,24 @@ jobs:
     # not match the tree is worth discovering before the matrices start
     needs: version-check
     uses: ./.github/workflows/test.yml
-    # a called workflow's jobs are capped at what the caller grants here,
-    # not at what the called workflow's own top-level default declares:
-    # this workflow's contents: read alone left `changes`, which asks for
-    # pull-requests: read to list a pull request's files, "only allowed
-    # pull-requests: none" -- refused before a single job starts, version
-    # -check included, rather than started and skipped for the one job
-    # that asked for more. `changes` never runs on a pull request here --
-    # it answers code=true unconditionally and reads no file list -- but
-    # the check is against what the job declares, not against what it
-    # goes on to do. contents: read is repeated rather than left to
-    # test.yml's own default for the same reason: a caller's grant
-    # replaces the callee's default outright, so contents omitted from
-    # this list would be none for every job over there, not only for the
-    # one this comment names
+    # a called workflow's jobs are capped at what the caller grants here.
+    # A scope a job over there declares and this list leaves off is not
+    # quietly dropped: the run is refused before a single job starts,
+    # version-check included. This workflow's contents: read alone left
+    # `changes`, which asks for pull-requests: read to list a pull
+    # request's files, "only allowed pull-requests: none". `changes` never
+    # runs on a pull request here -- it answers code=true unconditionally
+    # and reads no file list -- but the check is against what the job
+    # declares, not against what it goes on to do.
+    #
+    # The cap bounds what the called workflow declares rather than
+    # standing in for it: a job over there with no block of its own is
+    # granted test.yml's own top-level contents: read and not the caller's
+    # pull-requests: read. contents: read is repeated here to keep that
+    # top-level declaration inside the cap. What a run does where the
+    # called workflow's top-level declaration falls outside the cap is not
+    # measured; the refusal above is what a job's own declaration draws,
+    # and the two need not behave alike (btclib-org/.github#912)
     permissions:
       contents: read
       pull-requests: read

@@ -83,6 +83,18 @@ release-notes length in the first place, and are still in
   the scope it is about* above, whose entry says the comment states what
   omitting `contents` from the caller's list would do.
 
+### `docs/source/conf.py` carries no `templates_path`
+
+- **`docs/source/conf.py` assigns no `templates_path`** (issue
+  btclib-org/.github#901): nothing is tracked under
+  `docs/source/_templates`, and no template of this tree's own is tracked
+  anywhere under `docs/`, so the key named a directory this repository
+  does not have. Section 2 of the organization standard says the key
+  names the directory under `docs/source/` where the tree keeps its own
+  templates and that a tree keeping none does not carry it, and it names
+  writing the key empty, the way `exclude_patterns` beside it is written,
+  as the rejected alternative.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

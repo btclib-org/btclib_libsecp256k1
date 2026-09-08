@@ -91,8 +91,6 @@ myst_heading_anchors = 2
 # resolves every link the included root files carry, so a myst target
 # still missing is a link with nowhere to go and -W is what says so
 
-templates_path = ["_templates"]
-
 exclude_patterns: list[str] = []
 
 # -- Options for HTML output -------------------------------------------------

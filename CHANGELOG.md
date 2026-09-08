@@ -62,6 +62,27 @@ release-notes length in the first place, and are still in
   `btclib`'s, landed there as `bd9e3e87`, the issue asking one decision
   of every copy of this module rather than one per tree.
 
+### `release.yml`'s caller-permissions comment says what the cap does
+
+- **The comment above the `test` job's `permissions:` block says the
+  caller's grant bounds what `test.yml` declares rather than standing in
+  for it** (issue btclib-org/.github#912): a job of the called workflow
+  with no block of its own is granted that workflow's own top-level
+  `contents: read` and not the caller's `pull-requests: read`. The clause
+  it replaces read as a substitution, and section 11 of the organization
+  standard carries the run refuting that reading. `btclib` carries the
+  same clause, and the issue asks one wording of both trees, so the two
+  comments differ until its half lands there.
+- **`contents: read` is repeated in the caller's list to keep
+  `test.yml`'s top-level declaration inside the cap, and the comment
+  draws no consequence from omitting it**: what a run does where a called
+  workflow's top-level declaration falls outside the cap is not measured,
+  and the refusal a called job's own declaration draws — this
+  repository's `v0.8.0.3`, which the comment quotes — is not evidence for
+  it. That supersedes *`release.yml`'s caller-permissions comment names
+  the scope it is about* above, whose entry says the comment states what
+  omitting `contents` from the caller's list would do.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

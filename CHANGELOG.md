@@ -95,6 +95,31 @@ release-notes length in the first place, and are still in
   writing the key empty, the way `exclude_patterns` beside it is written,
   as the rejected alternative.
 
+### The declaration says what it is and leaves its assertions to the module
+
+- **`tests/README.md`'s *Convention tests* sentence names no assertion of
+  `conventions_test.py`** (issue btclib-org/.github#910): the list it
+  carried left out `test_the_table_is_not_empty`, the assertion that
+  reports an unparsed table as one — a column added to the table, or the
+  backticks dropped from its second, is enough to stop every row
+  matching. Nothing asserts against that sentence:
+  `conventions_test.py` reads the heading, the row pattern and the *Not
+  tested here* line, `vendored_data_test.py` reads the file for a stated
+  total, and `check_vendored_vectors.py` reads the `###` headings and
+  their fenced blocks. So a list of that module's assertions there is a
+  second statement of what it checks with no gate holding the two
+  together, and completing the list would leave the next assertion free
+  to go out of step the same way. What replaces it says what the
+  declaration is — the table and the *Not tested here* line under it,
+  accounting between them for every one of section 7's conventions — and
+  sends a reader wanting what those assertions catch to that module's
+  docstring, section 9 of the organization standard asking that the
+  second statement point at the first. The halves are named because
+  nothing else in the section says what the line under the table is: the
+  paragraphs below it give the reason each convention it lists is absent
+  rather than the line's place in the declaration.
+  btclib-org/.github#910 stays open for the copies in the other trees.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

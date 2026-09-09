@@ -251,6 +251,21 @@ release-notes length in the first place, and are still in
   `update-ref` to a branch tip is not. `btclib-org/.github` carries that
   wording at `5b9d76f`, and its closing sentence names `origin/main`.
 
+### CI-reproduction entries in `CONTRIBUTING.md` cover more of what CI runs
+
+- **The `Build the documentation` entry's fenced block now includes
+  `docs.yml`'s unresolved-link check alongside the `sphinx-build` call**
+  (closes #837): that check is the one defect a local build cannot
+  report on itself, since a link myst cannot resolve becomes an anchor
+  on the page it is already on rather than a warning, and `-n -W` gives
+  no signal for it.
+- **The `deps-latest` sentinel entry now names every job of that
+  workflow, `lint-latest` and `dist-latest` included, not only the suite
+  matrix and the coverage job** (closes #838): `lint-latest` reduces to
+  `Lint and type-check`'s own block run against an upgraded lock, and
+  `dist-latest` gets its own block, building with `uv build` directly
+  rather than with `python -m build -s` as `Build sdist` does.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

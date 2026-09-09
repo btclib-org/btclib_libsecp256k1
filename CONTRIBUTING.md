@@ -798,7 +798,16 @@ command at all, for the reason below, and nothing requires its result.
   ```shell
   uv run --locked --no-default-groups --group docs \
       sphinx-build -n -W -b html docs/source docs/build/html
+  if grep -rn 'href="#\./' docs/build/html --include='*.html'; then
+      echo "::error::the links above resolve to no page (unresolved relative path)"
+      exit 1
+  fi
   ```
+
+  That `grep` catches what the build above cannot report on its own: a
+  link myst cannot resolve turns into an anchor on the page it is
+  already on — an id nothing defines — rather than into a warning, so
+  `-n -W` gives no signal for it
 
 The `pypi-install` workflow has no local equivalent by design: what it
 installs is what PyPI serves.
@@ -828,12 +837,16 @@ run locally.
   interpreter) pair passes, and coverage is measured and gated once, on
   the gate's cell
 
-- `deps-latest`, which resolves every dependency at its newest and then
-  runs the suite over a matrix of its own, narrower than `test.yml`'s,
-  and the coverage union in a job of its own. The block below is one
-  cell of that matrix, so only the row matching the machine and the
-  interpreter at hand reproduces. The upgrade rewrites `uv.lock`, so
-  restore it afterwards with `git checkout uv.lock`:
+- `deps-latest`, which resolves every dependency at its newest and runs
+  four jobs against it: the suite over a matrix of its own, narrower
+  than `test.yml`'s; the coverage union in a job of its own;
+  `Lint and type-check, dependencies at latest`; and
+  `Build the distributions and inspect them, dependencies at latest`.
+  The upgrade rewrites `uv.lock`, so restore it afterwards with
+  `git checkout uv.lock`.
+
+  The suite matrix's own block is one cell of it, so only the row
+  matching the machine and the interpreter at hand reproduces:
 
   ```shell
   uv lock --upgrade
@@ -848,6 +861,29 @@ run locally.
   `Measure coverage, gated at 100%`'s block above run against an
   upgraded lock, so reproducing it is `uv lock --upgrade` in front of
   that block rather than a recipe of its own.
+
+  `Lint and type-check, dependencies at latest` is the same shape:
+  `uv lock --upgrade` in front of `Lint and type-check`'s own block
+  above, the identical `pre-commit run --all-files
+  --show-diff-on-failure` run against the upgraded lock rather than
+  the pinned one, so it is not repeated here.
+
+  `Build the distributions and inspect them, dependencies at latest`
+  builds with `uv build` directly, unlike `Build sdist`'s
+  `python -m build -s`:
+
+  ```shell
+  uv lock --upgrade
+  uv build --sdist
+  uv build --wheel
+  uv run --locked --only-group check twine check --strict dist/*
+  uv run --locked --only-group check check-wheel-contents dist/*.whl
+  uv run --locked --only-group check pyroma --min 10 dist/*.tar.gz
+  ```
+
+  Its last three lines are `Inspect the distribution files and install
+  one`'s own block, run here against the upgraded lock rather than the
+  pinned one.
 
 - `links` needs a tool uv does not provide, lychee being a rust binary, so
   the workflow uses the action. `.lycheeignore` holds the URLs a checker

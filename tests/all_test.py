@@ -11,8 +11,9 @@ public name fails until it is exported or recorded" (#357,
 btclib-org/.github#79). The modules sitting directly under
 `btclib_secp256k1` are all in the census -- `_scalar`, `_secret` and
 `_cdata` excepted by their own leading underscore -- and the walk below
-has none of btclib's own `tests/all_test.py` group-or-unpublished
-partition, no module here re-exporting another by name.
+has none of a sibling repository's own `tests/all_test.py`
+group-or-unpublished partition, no module here re-exporting another by
+name.
 
 `zkp` is a subpackage, and the census descends into it: what it holds
 wraps secp256k1-zkp the way the modules above wrap libsecp256k1, and a
@@ -383,7 +384,8 @@ def test_no_module_exports_a_name_it_imported() -> None:
     import section, where `btclib_secp256k1.ffi` is the name a caller
     wants. No module in this package has a reason to re-export anything,
     so the check is unconditional -- a name here would be the first one
-    to need the escape hatch btclib's own version of this test carries.
+    to need the escape hatch a sibling repository's own version of this
+    test carries.
     """
     for module in library_modules():
         imported = imported_names(module)

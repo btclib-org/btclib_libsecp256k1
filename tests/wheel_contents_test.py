@@ -17,10 +17,10 @@ beside a script is a second copy of one list, and two copies are one
 that can be wrong -- the page saying `.so` is a shared-library suffix
 while the script's tuple does not carry it, with nothing to notice.
 Those two compare the page against the script's own constants in both
-directions, the same way `btclib`'s own
-`tests/verify_dist_contents_test.py` does; the parsing helpers below are
-copied from there rather than written twice, the two pages having the
-same "list stated by the paragraph naming it" shape.
+directions, the same way a sibling repository's own
+`tests/verify_dist_contents_test.py` does; the parsing helpers below
+are copied from there rather than written twice, the two pages having
+the same "list stated by the paragraph naming it" shape.
 
 The script is loaded by path, `.github/scripts` being no package, as
 `submodule_pin_test.py` loads its own subject.

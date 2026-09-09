@@ -3,10 +3,10 @@
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 #
 # The dotted name is the canonical one; readthedocs.yml is honored too,
-# but documented as deprecated. btclib's copy of this line goes on to
-# say that "include *.yml" would drag the file into the sdist; there is
-# no MANIFEST.in here and no site served from this root for that clause
-# to be about.
+# but documented as deprecated. A sibling repository's copy of this
+# line goes on to say that "include *.yml" would drag the file into the
+# sdist; there is no MANIFEST.in here and no site served from this root
+# for that clause to be about.
 #
 # What this file cannot say is *which* versions run it, and here that is
 # where the defect is rather than a footnote. `latest`, `stable` and each
@@ -57,9 +57,10 @@ submodules:
   recursive: false
 
 # the interpreter is declared rather than left to whatever read the docs
-# defaults to, matching btclib's own file and `.python-version` here: these
-# docs are built twice, on the website and by docs.yml, and one interpreter
-# is what keeps the two from being different questions
+# defaults to, matching a sibling repository's own file and
+# `.python-version` here: these docs are built twice, on the website and
+# by docs.yml, and one interpreter is what keeps the two from being
+# different questions
 build:
   os: ubuntu-24.04
   tools:

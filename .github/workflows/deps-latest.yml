@@ -41,7 +41,7 @@ name: deps-latest
 # That is the second of the two answers section 4 of the organization
 # standard gives, and the right one for a package whose types rest on a
 # handful of stubs rather than on itself. It is also why the lint job
-# below reaches less here than the job of the same name in btclib.
+# below reaches less here.
 #
 # What an upgrade writes and what it falsifies are two questions, and
 # that hook's declarations are outside the first and inside the second:

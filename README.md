@@ -137,7 +137,8 @@ reviewing the delta against the commit named here.
 This package was `btclib_libsecp256k1` up to and including 0.7.1.3, and
 0.8.0 is the first release under this name. `lib` named the C library
 being wrapped, and a python distribution is not that library: it is
-btclib's bindings to secp256k1, which is what the name now says.
+bindings to secp256k1 for the library downstream of this package,
+which is what the name now says.
 
 Nothing on PyPI bridges the two, deliberately: `btclib_libsecp256k1`
 stops at 0.7.1.3 and stays installable, wrapping libsecp256k1 0.7.1, and

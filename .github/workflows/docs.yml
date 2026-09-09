@@ -99,8 +99,7 @@ jobs:
         with:
           persist-credentials: false
           # every automodule directive imports this package, which compiles
-          # the vendored libsecp256k1 to do that -- unlike btclib's own
-          # docs job, which builds nothing
+          # the vendored libsecp256k1 to do that
           submodules: true
 
       - name: Setup uv
@@ -125,7 +124,8 @@ jobs:
           sphinx-build -n -W -b html docs/source docs/build/html
 
       # the one defect the build above cannot report on itself, matching
-      # btclib's own second step and the reasoning in its docs/source/conf.py:
+      # a sibling repository's own second step and the reasoning in its
+      # docs/source/conf.py:
       # a link myst cannot resolve becomes an anchor on the page it is
       # already on -- an id nothing has -- rather than a warning, which
       # conf.py's RootFileLinks transform exists to prevent. This is the

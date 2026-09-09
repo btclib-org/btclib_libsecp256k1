@@ -17,7 +17,7 @@ lift secp256k1-zkp's own vectors from
 `2*G`'s serialization, parsed both as a generator and as a commitment,
 each with the malleated-marker-byte cases the C test also carries.
 
-`test_h_is_pinned_against_btclib` is `ISS 608
+`test_h_matches_the_downstream_pin` is `ISS 608
 <https://github.com/btclib-org/btclib-secp256k1/issues/608>`_'s own
 measurement made an assertion: btclib-org/btclib#1055 already pins
 `pedersen.second_generator(secp256k1, sha256)`'s x-coordinate to this
@@ -75,8 +75,8 @@ def test_pedersen_commitment_fixed_vector() -> None:
         g.pedersen_commitment_parse(bytes(malleated))
 
 
-def test_h_is_pinned_against_btclib() -> None:
-    """`h()` matches btclib's own independent pin of the same point.
+def test_h_matches_the_downstream_pin() -> None:
+    """`h()` matches a sibling repository's own independent pin of this point.
 
     btclib-org/btclib#1055's own pin, tests/ecc/pedersen_test.py's
     test_second_generator, for the (secp256k1, sha256) pair: the x

@@ -219,9 +219,10 @@ repos:
   # .github/dependabot.yml is validated by nothing else, and a typo in it
   # updates nothing and says nothing: the whole point of that file is to
   # move the pins this repository depends on for its security updates.
-  # .readthedocs.yaml is the same argument again, matching btclib's own
-  # hook list: a build definition nothing but check-yaml reads, on a
-  # service whose failure mode is a docs build that stops happening
+  # .readthedocs.yaml is the same argument again, matching a sibling
+  # repository's own hook list: a build definition nothing but
+  # check-yaml reads, on a service whose failure mode is a docs build
+  # that stops happening
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.38.0
     hooks:
@@ -543,11 +544,12 @@ repos:
     rev: v2.3.1
     hooks:
       - id: mypy
-        # matching btclib's own mypy hook, which checks btclib, tests and
-        # .github/scripts and nothing under docs/: sphinx and its stub-less
-        # extensions are build tooling, not part of what py.typed promises
-        # a downstream type checker, and mypy's own `exclude` config (unlike
-        # this key) does not apply to a file pre-commit names explicitly
+        # matching a sibling repository's own mypy hook, which checks its
+        # own package, tests and .github/scripts and nothing under docs/:
+        # sphinx and its stub-less extensions are build tooling, not part
+        # of what py.typed promises a downstream type checker, and mypy's
+        # own `exclude` config (unlike this key) does not apply to a file
+        # pre-commit names explicitly
         exclude: ^docs/
         # the mirror injects --ignore-missing-imports by default, which
         # silently turns an unresolved (or misspelled) import into Any:

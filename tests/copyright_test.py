@@ -4,9 +4,9 @@
 
 """LICENSE, COPYRIGHT and pyproject.toml, checked against each other.
 
-btclib's own LICENSE named "Ferdinando M. Ametrano and btclib
-contributors" for years after the rest of that project had moved to "The
-btclib developers", with nothing comparing the two
+A sibling repository's own LICENSE named "Ferdinando M. Ametrano and
+btclib contributors" for years after the rest of that project had
+moved to "The btclib developers", with nothing comparing the two
 (btclib-org/btclib#389). LICENSE here named "Giacomo Caironi" the same
 way, against this project's own COPYRIGHT and `authors` already saying
 "The btclib developers" -- caught by hand, not by a check, which is what

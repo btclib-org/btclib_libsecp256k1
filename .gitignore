@@ -132,7 +132,7 @@ celerybeat-schedule
 
 # MACOS
 .DS_Store
-btclib.prof
+btclib_secp256k1.prof
 
 _site/
 .sass-cache/

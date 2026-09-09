@@ -4,8 +4,9 @@
 
 """What `tests/README.md` must not say about itself.
 
-The same claim btclib's own `vendored_data_test.py` forbids, for the
-same reason: a stated count is a line every open branch has to edit, so
+The same claim a sibling repository's own `vendored_data_test.py`
+forbids, for the same reason: a stated count is a line every open
+branch has to edit, so
 a pull request vendoring a fourth file is guaranteed to conflict on it,
 and the Summary's own `git ls-files` command already answers the
 question on demand. The lists stay; the number in front of them goes.

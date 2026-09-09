@@ -7,7 +7,8 @@ name: vendored vectors
 # that procedure weekly instead, over every pin the script can check,
 # and opens or updates an issue on drift rather than fixing anything:
 # refreshing a vector file is a decision the script does not get to
-# make. Matches btclib's own workflow of the same name, script included.
+# make. Matches a sibling repository's own workflow of the same name,
+# script included.
 #
 # issues: write is what the job below takes, and links.yml's own comment
 # is where the opposite choice is argued: an automatic issue is the usual

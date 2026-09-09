@@ -8,9 +8,10 @@ Quick start
 -----------
 
 uv installs sphinx, the theme, and this package itself. That last part
-is the one that matters, and it takes longer here than in btclib's own
-build: every directive under ``source/`` is an ``automodule``, so sphinx
-imports the package in order to document it, and that means compiling
+is the one that matters, and it takes longer here than in a sibling
+repository's own build: every directive under ``source/`` is an
+``automodule``, so sphinx imports the package in order to document it,
+and that means compiling
 the vendored libsecp256k1 -- the git submodule and a C toolchain, as the
 main README's Build section describes -- not merely installing pure
 Python. A module sphinx cannot import gets a bare heading and nothing

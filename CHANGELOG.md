@@ -233,6 +233,24 @@ release-notes length in the first place, and are still in
   is there because the job carries it rather than because a local
   checkout, which still holds what the fixers wrote, needs it.
 
+### `CLAUDE.md` takes the standard's worktree and `refs/heads/main` text
+
+- **The worktree paragraph says the four parts run most general first,
+  an issue filed in `btclib-org/.github`'s tracker being the key and the
+  repository a detail of it** (issue btclib-org/.github#854): one issue
+  is owed by several repositories rather than one repository having
+  several issues at a time, which is why `repo` comes after `issue`. The
+  sentence saying the name also sorts every worktree of one issue
+  together moves out of the `repo` clause to sit after that argument,
+  sorting depending on the order and not on `repo` alone.
+- **The clause closing `The primary checkout is the maintainer's` says
+  `refs/heads/main` moves only onto `origin/main`**
+  (issue btclib-org/.github#919): a ruleset binds the forge's copy and
+  does not reach the local branch, so the fast-forward above the clause
+  is inside the rule where a merge, a commit on `main` or an
+  `update-ref` to a branch tip is not. `btclib-org/.github` carries that
+  wording at `5b9d76f`, and its closing sentence names `origin/main`.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

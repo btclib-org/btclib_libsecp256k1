@@ -120,6 +120,34 @@ release-notes length in the first place, and are still in
   rather than the line's place in the declaration.
   btclib-org/.github#910 stays open for the copies in the other trees.
 
+### The caller-permissions comments keep each tree's own words
+
+- **This supersedes *`release.yml`'s caller-permissions comment says what
+  the cap does* above, whose entry says the issue asks one wording of both
+  trees and the two comments differ until `btclib`'s half lands**
+  (closes btclib-org/.github#912): that half is
+  btclib-org/btclib@7522369d, and the issue's box asks instead that each
+  tree's comment fix the reading in its own words, so the two differ by
+  decision. The ruling is at
+  <https://github.com/btclib-org/.github/issues/912#issuecomment-5597329437>.
+- **This repository's comment meets that box as it stands**: it quotes the
+  error string from this workflow's own refusal where `btclib`'s states
+  its refusal counterfactually, so one text for both would make one tree
+  assert the other's measurement.
+
+### Each tree that took the declaration's replacement is named with its sha
+
+- **This supersedes *The declaration says what it is and leaves its
+  assertions to the module* above, whose entry says
+  btclib-org/.github#910 stays open for the copies in the other trees**
+  (issue btclib-org/.github#946): that issue is closed, on 2026-09-08.
+  `btclib` took the same replacement in btclib-org/btclib@bd4a4654, this
+  repository in `d80e2c07`, `bitcoin-core-rpc` in
+  btclib-org/bitcoin-core-rpc@a0bb7ef6 and `btclib-node` in
+  btclib-org/btclib-node@c8586937. The trees and the shas are what that
+  sentence owed a reader, an issue's state being what a landing in
+  another tree moves.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

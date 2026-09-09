@@ -22,6 +22,19 @@ release-notes length in the first place, and are still in
 
 ## v0.8.0.7 (work in progress, not released yet)
 
+### `RELEASING.md` stops naming two different actions "open the next version"
+
+- **The phrase named both the `pyproject.toml` version bump and the
+  `CHANGELOG.md`/`RELEASE_NOTES.md` heading swap that starts the next
+  cycle's section, with nothing telling the two apart** (closes #845):
+  0.8.0.6's release pull request (#843) did the heading swap and
+  stopped, and `main` kept declaring `0.8.0.6` in `pyproject.toml` past
+  the tag until a separate pull request caught it. The heading swap is
+  now "start the next version's section," and each of the two steps
+  now names the other by its new or its reserved name, so a reader
+  reaching the last of the two after everything in between still finds
+  it flagged as owed.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

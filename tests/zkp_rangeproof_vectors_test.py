@@ -27,6 +27,19 @@ min_value", quoted as the issue's own shorthand rather than a count of
 this test's own parametrization: `test_sign_verify_rewind_round_trips`
 is parametrized over three values of `exp` (`-1`, a single-value proof;
 `0`; and `4`) crossed with two of `min_value`.
+
+`BORROMEAN_*` below is not lifted from the header: `ISS 828
+<https://github.com/btclib-org/btclib-secp256k1/issues/828>`_'s own body
+has the reason -- `secp256k1_borromean_sign` stays internal, and
+`test_borromean_internal`, the one C test that draws a signature, prints
+nothing, so no fixed vector exists anywhere to transcribe. The tuple is
+one accepted call captured from a temporary `fprintf` inserted into
+`test_borromean_verify_api_internal`
+(`src/modules/rangeproof/tests_impl.h`, in the fork this issue's own
+submodule pin points at) and triple-verified before being written here:
+the original C test run confirming it, a standalone C program linking
+the same build confirming it a second way, and a raw `lib` call through
+this package's own cffi binding confirming it a third.
 """
 
 from __future__ import annotations
@@ -202,3 +215,62 @@ def test_max_size_bounds_a_real_proof() -> None:
     commit = g.pedersen_commit(blind, 12345)
     proof = r.sign(commit, blind, secrets.token_bytes(32), 12345)
     assert len(proof) <= r.max_size(2**64 - 1, 0)
+
+
+# captured from test_borromean_verify_api_internal, two rings of 4 and 2
+# members -- the module docstring above has how, and the triple
+# verification it was put through before landing here
+BORROMEAN_RSIZES = [4, 2]
+BORROMEAN_E0 = bytes.fromhex(
+    "b290c94c649f2ba65776a1fdb66a13f380b6b20befbf4c3e6bd3533b30b376ad"
+)
+BORROMEAN_S = bytes.fromhex(
+    "185ab3b091b9dda5b12cdcca92457f268f2edcf2d2bfbbbe13fe4853f9b22ad"
+    "6d712dbea3448379f539c9ae555cb623acfb9433ecd6c09482db20aa96d5e34"
+    "ded9470ea4d0e27e1a172884e70dce8922684c14266ababd558daec77807e6d"
+    "b824bffa9daac39ee3a05b255eb7d196156436952d268ec00db6fd3fb58cf1e"
+    "0c4b602bd8a0f0a9b9a95453ba1a5dae8c10fda95ab43b9a460990bb71e0444"
+    "b6a693217cf9ffa903732576a586c504bd955f9a2bb476a6083c457189bb5f8"
+    "d22b56"
+)
+BORROMEAN_M = bytes.fromhex(
+    "00000000ffffffffffffffff0f000000001ffc030080ff0180ff010000000000"
+)
+BORROMEAN_PUBKEYS = [
+    bytes.fromhex("0363340d8318905ff6a917ee5520e9e4ead2291734f727cac38acd62550db57c76"),
+    bytes.fromhex("0300000000f0ffff1f0000f0ff7f0000000000000000000000000f0000ffff0000"),
+    bytes.fromhex("0200ffffff03000000e0ffffff0f0000e0ffffffc7ffffffffffffff0000000000"),
+    bytes.fromhex("027c0080ff71c0e3ffffffff0100f08fffffff1f00007f000000000000fe000000"),
+    bytes.fromhex("0200000000e003000000000000f03f0000f0ffff00000000e0ffff0300feffff7f"),
+    bytes.fromhex("0396f8e01c7636b0f53674e7edb0897e58eed50ae698f15945e398f8585527fd5f"),
+]
+
+
+def test_borromean_verify_accepts_the_captured_vector() -> None:
+    """The captured tuple verifies against the real library."""
+    assert (
+        r.borromean_verify(
+            BORROMEAN_E0,
+            BORROMEAN_S,
+            BORROMEAN_M,
+            BORROMEAN_PUBKEYS,
+            BORROMEAN_RSIZES,
+        )
+        is True
+    )
+
+
+def test_borromean_verify_rejects_a_tampered_signature() -> None:
+    """Flipping one byte of `s` is a verification failure, not an exception."""
+    tampered = bytearray(BORROMEAN_S)
+    tampered[0] ^= 0xFF
+    assert (
+        r.borromean_verify(
+            BORROMEAN_E0,
+            bytes(tampered),
+            BORROMEAN_M,
+            BORROMEAN_PUBKEYS,
+            BORROMEAN_RSIZES,
+        )
+        is False
+    )

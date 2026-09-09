@@ -121,12 +121,16 @@ same reason the paragraph above gives for its own link. -->
 secp256k1-zkp (btclib-org/btclib-secp256k1#603) is vendored beside
 secp256k1, not in place of it, and carries no release of its own to
 track: it is pinned at
-[037cc6d7](https://github.com/BlockstreamResearch/secp256k1-zkp/commit/037cc6d74cbb4a89e443117459b577d56a582e54),
-the commit merging BlockstreamResearch/secp256k1-zkp#368, that fork's
-sync of a batch of upstream secp256k1 pull requests. The published
-wheels do not build against it; #605 is what reads this submodule at
-all. A re-pin is a pull request of its own, reviewing the delta against
-the commit named here.
+[a8f6b86a](https://github.com/fametrano/secp256k1-zkp/commit/a8f6b86a804cdfd455dfb943937d254ec6ccc70a),
+on `fametrano/secp256k1-zkp` rather than on
+`BlockstreamResearch/secp256k1-zkp` directly (#828) -- the commit that
+exposes `secp256k1_borromean_verify` as a public function, internal
+linkage there keeping it out of `BlockstreamResearch/secp256k1-zkp`'s own
+built library. Proposed upstream as
+[BlockstreamResearch/secp256k1-zkp#373](https://github.com/BlockstreamResearch/secp256k1-zkp/pull/373),
+not yet merged. The published wheels do not build against this submodule
+at all; #605 is what reads it. A re-pin is a pull request of its own,
+reviewing the delta against the commit named here.
 
 ## The name
 

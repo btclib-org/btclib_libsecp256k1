@@ -266,6 +266,23 @@ release-notes length in the first place, and are still in
   `dist-latest` gets its own block, building with `uv build` directly
   rather than with `python -m build -s` as `Build sdist` does.
 
+### The vendored `secp256k1-zkp` submodule tracks a fork carrying `secp256k1_borromean_verify`
+
+- **`.gitmodules`'s `secp256k1-zkp` entry points at
+  `fametrano/secp256k1-zkp`, branch `expose-borromean-verify`, rather
+  than at `BlockstreamResearch/secp256k1-zkp` directly** (closes #828):
+  `secp256k1_borromean_verify` is not internal-linkage there, unlike on
+  `BlockstreamResearch/secp256k1-zkp`, where the symbol is `static` and
+  no header declares it. The fork's own commit is proposed upstream as
+  `BlockstreamResearch/secp256k1-zkp#373`, not yet merged.
+- **`zkp.rangeproof.borromean_verify` wraps the new public function**,
+  over the ordinary SEC-compressed pubkey and 32-octet-scalar
+  serialization the header itself takes: `e0`, `s` ring-major, `m`, one
+  public key per ring member, and `rsizes`. It is verify-only --
+  `secp256k1_borromean_sign` stays internal -- which discharges the
+  direction `btclib-org/btclib#1853`'s own module docstring can check: a
+  signature btclib produces, accepted by zkp.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

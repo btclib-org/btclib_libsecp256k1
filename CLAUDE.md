@@ -57,11 +57,12 @@ the boundary. No module is one call of another: `mult` had become that
 
 MuSig2 is deliberately *not* wrapped as a protocol: its two-round session
 holds a secret nonce that cannot be reused, which belongs where the
-signing state lives, in btclib. `musig.KeyAggCache` and `musig.Session`
-are the one place this package holds a libsecp256k1 object with no
-serialization to be one, and `musig.py`'s module docstring carries the
-reasoning for taking that exception. See the Design section of the README
-before adding a module.
+signing state lives, in the library downstream of these bindings.
+`musig.KeyAggCache` and `musig.Session` are the one place this package
+holds a libsecp256k1 object with no serialization to be one, and
+`musig.py`'s module docstring carries the reasoning for taking that
+exception. See the Design section of the README before adding a
+module.
 
 Below it, `scripts/cffi_build.py` builds the vendored library with CMake
 and then compiles the extension by one of three paths — static with

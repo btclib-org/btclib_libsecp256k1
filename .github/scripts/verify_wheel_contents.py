@@ -10,12 +10,13 @@ renders, whether the classifiers a package should declare are there.
 None of them reads every member, and what is in the archive is what a
 user installs.
 
-`check-wheel-contents --package btclib_secp256k1`, configured in
-`pyproject.toml` for `btclib`, is the closest built-in answer, and it
-does not fit here: it diffs the wheel's whole library against the one
-named package tree, and this package's wheel is not one package tree.
-Every wheel this project ships also carries a compiled artifact at the
-wheel's own root, beside `btclib_secp256k1/` rather than inside it -- the
+`check-wheel-contents --package btclib_secp256k1`, the same option a
+sibling repository's own `pyproject.toml` configures for its own
+package, is the closest built-in answer, and it does not fit here: it
+diffs the wheel's whole library against the one named package tree,
+and this package's wheel is not one package tree. Every wheel this
+project ships also carries a compiled artifact at the wheel's own
+root, beside `btclib_secp256k1/` rather than inside it -- the
 extension module for a static wheel, that module's ABI-mode source and
 the shared `libsecp256k1` for a dynamic one -- which `--package` reports
 as "files not in package tree" whether or not they are the ones this
@@ -49,10 +50,11 @@ it -- source, `py.typed`, nothing more and nothing less -- which is
 `--package`'s own question, asked here by hand rather than through a
 flag that would also judge the sibling artifact.
 
-The sdist is not this script's subject. `btclib`'s sibling script checks
-it because `MANIFEST.in` there is an *include* list -- a file the tree
-gains and MANIFEST.in does not name is a file the sdist silently drops,
-which is the failure this whole class of check exists for.
+The sdist is not this script's subject. A sibling repository's own
+script checks it because `MANIFEST.in` there is an *include* list -- a
+file the tree gains and MANIFEST.in does not name is a file the sdist
+silently drops, which is the failure this whole class of check exists
+for.
 `[tool.hatch.build.targets.sdist] exclude` here is the opposite shape: a
 file the tree gains ships by default, and has to be named to be left
 out, so the failure mode is an sdist too wide rather than one silently

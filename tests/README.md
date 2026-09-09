@@ -53,7 +53,7 @@ The comparison is on git blob SHA-1, not sha256: it is what a tree
 entry already carries, so nothing has to be downloaded twice. Where
 upstream is CRLF and this comparison still holds -- every csv here from
 `bitcoin/bips` is the case -- the entry says so, this repository not
-being LF throughout the way btclib's is: `.pre-commit-config.yaml`'s
+being LF throughout: `.pre-commit-config.yaml`'s
 `mixed-line-ending` hook excludes `tests/bip3(40|24)_*.csv`, byte for
 byte against `bitcoin/bips` being the point.
 
@@ -78,9 +78,9 @@ held to, while `ssa.sign` takes the 32-byte rows. Every row carrying a
 secret key is therefore signed and compared byte for byte, and the
 32-byte ones twice, once through each function -- `sign_custom`
 answering a 32-byte message with the signature `sign` returns is itself
-part of what is checked. btclib's own copy of this file takes the
-pure-Python path for the same four, having the fallback this package
-does not.
+part of what is checked. A sibling repository's own copy of this file
+takes the pure-Python path for the same four, having the fallback this
+package does not.
 
 ### `tests/bip324_ellswift_decode_test_vectors.csv`
 
@@ -254,9 +254,9 @@ behind  0 revisions; still the blob on master
 ```
 
 Verdict: **reformatted**. 199 vectors, JSON-equal to the upstream blob;
-ours is pretty-printed at four spaces -- byte-identical to btclib's own
-copy of the same file, which vendored it independently from the same
-upstream.
+ours is pretty-printed at four spaces -- byte-identical to a sibling
+repository's own copy of the same file, which vendored it
+independently from the same upstream.
 
 ### `tests/ecdsa_custom_nonce_sig.json`
 
@@ -270,7 +270,7 @@ behind  0 revisions; still the blob on master
 ```
 
 Verdict: **reformatted**. 199 vectors, JSON-equal, and again
-byte-identical to btclib's own copy.
+byte-identical to a sibling repository's own copy.
 
 ## Summary
 

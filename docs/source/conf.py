@@ -31,9 +31,9 @@ PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "btclib_secp256k1"
-# no __copyright__ in this package to read back, unlike btclib's own
-# conf.py: LICENSE is the only place the holder is declared, so this reads
-# that file instead, minus the "Copyright (c) " sphinx prepends itself.
+# no __copyright__ in this package to read back: LICENSE is the only
+# place the holder is declared, so this reads that file instead, minus
+# the "Copyright (c) " sphinx prepends itself.
 # What comes out carries no year, section 14 of the organization standard
 # having LICENSE name the holder and no range, so the footer dates nothing
 project_copyright = re.search(
@@ -61,10 +61,10 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
-# no sphinx.ext.todo, for the reason btclib's own conf.py gives: a
-# ``.. todo::`` left at the default renders as nothing at all, and without
-# the extension it is an unknown directive that -W turns into a failed
-# build instead
+# no sphinx.ext.todo, for the reason a sibling repository's own conf.py
+# gives: a ``.. todo::`` left at the default renders as nothing at all,
+# and without the extension it is an unknown directive that -W turns
+# into a failed build instead
 
 source_suffix = [".rst", ".md"]
 
@@ -87,9 +87,10 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 # root file links to by anchor today
 myst_heading_anchors = 2
 
-# no suppress_warnings, matching btclib: the transform at the bottom
-# resolves every link the included root files carry, so a myst target
-# still missing is a link with nowhere to go and -W is what says so
+# no suppress_warnings, matching a sibling repository's own choice: the
+# transform at the bottom resolves every link the included root files
+# carry, so a myst target still missing is a link with nowhere to go
+# and -W is what says so
 
 exclude_patterns: list[str] = []
 
@@ -98,10 +99,10 @@ exclude_patterns: list[str] = []
 
 html_theme = "furo"
 
-# no html_static_path, matching btclib's own conf.py and for the same
-# reason: neither an overridden stylesheet nor a shipped image exists
-# here, and sphinx warns about a declared "_static" directory that has
-# never existed
+# no html_static_path, matching a sibling repository's own conf.py and
+# for the same reason: neither an overridden stylesheet nor a shipped
+# image exists here, and sphinx warns about a declared "_static"
+# directory that has never existed
 
 # -- Links out of the included root markdown files ----------------------------
 
@@ -119,9 +120,10 @@ html_theme = "furo"
 # not one of those links once the file is lifted into this tree.
 #
 # What it emits instead is the reason this needs code rather than a
-# warning filter, exactly as btclib's own conf.py explains: a target myst
-# cannot resolve becomes an anchor on the page it is already on,
-# href="#SECURITY.md", an id nothing has. The transform below answers
+# warning filter, exactly as a sibling repository's own conf.py
+# explains: a target myst cannot resolve becomes an anchor on the page
+# it is already on, href="#SECURITY.md", an id nothing has. The
+# transform below answers
 # each link from the repository rather than from a table that would have
 # to be kept in step with this directory: a path a *_link.md shim
 # includes becomes a reference to that page, any other path that exists

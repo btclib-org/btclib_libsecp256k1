@@ -94,10 +94,11 @@
 # no part in that build, so where it sits does not bear on the question.
 # .github/ is simply where the rest of the CI configuration already lives.
 #
-# One file where btclib has two, and the asymmetry that makes it want two is
-# absent: there the two halves of the scope cost 1.1 s and 7.2 s of cpu per
-# mutant, so one shared test command would make every cheap mutant pay the
-# expensive one's price. Here the whole suite is the cheap command.
+# A sibling repository in the organization needs two files rather than
+# one, and the asymmetry that makes it want two is absent here: there the
+# two halves of its scope cost 1.1 s and 7.2 s of cpu per mutant, so one
+# shared test command would make every cheap mutant pay the expensive
+# one's price. Here the whole suite is the cheap command.
 
 [cosmic-ray]
 # the package, not one module: it is small enough that scoping it further
@@ -170,9 +171,10 @@ excluded-modules = []
 #
 # Every hit today is an annotation, and there is no bitwise operator of any
 # kind in the package -- no `^`, no `&`, no shift outside a doctest prompt --
-# which is why the pattern excludes the BitOr family and nothing else. btclib
-# keeps the same exclusion that narrow for the opposite reason: `^` is what
-# one of its own checks is written with.
+# which is why the pattern excludes the BitOr family and nothing else. A
+# sibling repository in the organization keeps the same exclusion that
+# narrow for the opposite reason: `^` is what one of its own checks is
+# written with.
 #
 # What this does to the one number the workflow prints is why
 # .github/scripts/mutation_counts.py exists: `cr-rate` counts anything that

@@ -124,12 +124,12 @@ jobs:
         with:
           # the prose, and named by path rather than as `**/*.md`, so that
           # adding `submodules: true` above could not silently widen the
-          # sweep to upstream's documentation. Narrower than btclib's and
-          # bitcoin-core-rpc's own globs, which reach docs/ and tests/,
-          # and not by omission: what those two would add carries no
-          # external URL, which `grep -rl http --include='*.md' docs
-          # tests` is what says rather than a claim here about what
-          # those pages are.
+          # sweep to upstream's documentation. Narrower than a sibling
+          # repository's and bitcoin-core-rpc's own globs, which reach
+          # docs/ and tests/, and not by omission: what those two would
+          # add carries no external URL, which
+          # `grep -rl http --include='*.md' docs tests` is what says
+          # rather than a claim here about what those pages are.
           # The retries and the timeout are what keep a slow or throttling
           # host from being reported as a dead one, and the measurement
           # behind them is this repository's own: a URL here answered 418

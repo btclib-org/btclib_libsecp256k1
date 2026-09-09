@@ -180,9 +180,10 @@ jobs:
       # CHANGELOG.md is checked beside it because RELEASING.md retitles
       # the two together, and RELEASE_NOTES.md's section points at
       # CHANGELOG.md for the detail: a heading left open there makes
-      # that a link into nothing. Matching btclib and bitcoin-core-rpc,
-      # which carry this same step -- the awk is theirs, and the three
-      # repositories now refuse the same tag for the same three reasons.
+      # that a link into nothing. Matching a sibling repository and
+      # bitcoin-core-rpc, which carry this same step -- the awk is
+      # theirs, and the three repositories now refuse the same tag for
+      # the same three reasons.
       #
       # Release-only, like the comparison above and for the same reason: a
       # rehearsal is what runs *before* the retitle, so requiring it there
@@ -284,8 +285,9 @@ jobs:
   # about which ones are allowed. Here the answer arrives while
   # RELEASE_NOTES.md is already being written, so a break with no entry
   # is refused at the moment somebody is already writing entries.
-  # Matches btclib's own job of the same name, the landed precedent for
-  # this check (btclib-org/btclib .github/workflows/release.yml)
+  # Matches a sibling repository's own job of the same name, the landed
+  # precedent for this check (that sibling's own
+  # .github/workflows/release.yml)
   public-api:
     name: Check the public API against the last release
     runs-on: ubuntu-latest
@@ -756,8 +758,9 @@ jobs:
   # a tag it refuses produces one verdict and not two; and nothing needs
   # it: a late documentation build is not a reason to withhold a wheel,
   # and the fix for a red run here is a build on their side, never a
-  # moved tag. Matches btclib's own job of the same name, the landed
-  # precedent for this check (btclib-org/btclib .github/workflows/release.yml)
+  # moved tag. Matches a sibling repository's own job of the same name,
+  # the landed precedent for this check (that sibling's own
+  # .github/workflows/release.yml)
   #
   # What the wait bounds is a read the docs build's own latency -- their
   # queue, then a build that checks the vendored submodule out and

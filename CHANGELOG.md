@@ -35,6 +35,28 @@ release-notes length in the first place, and are still in
   reaching the last of the two after everything in between still finds
   it flagged as owed.
 
+### Prose outside the shipped package stops naming btclib by comparison
+
+- **Every comment, docstring and workflow annotation naming `btclib` to
+  argue this repository's own choice by contrast now states the fact on
+  its own, or names the relationship without the name** (closes #846,
+  btclib-org/.github#81): `no-downstream-name-in-package` only reaches
+  `src/btclib_secp256k1/*.py`, and the rest of the tree -- the GitHub
+  workflows, the mutation and wheel-content scripts, `CLAUDE.md`,
+  `README.md`'s naming history, the sphinx configuration,
+  `pyproject.toml`'s own comments, and the test suite's own docstrings
+  -- carried the same shape `RELEASING.md`, `REPOSITORY.md` and
+  `CONTRIBUTING.md` already dropped (#365): "matching btclib's own X",
+  "unlike btclib's Y", now stated as "a sibling repository's own X" or
+  "the library downstream of these bindings" where the relationship
+  itself is what the sentence is about. Left as they were: README.md's
+  positioning-in-family sentence, SECURITY.md's organization-domain
+  address, `tests/vectors_test.py`'s "used by btclib" (the same "what
+  the package is used by" shape `CONTRIBUTING.md`'s own routing
+  sentence was already left in at #365), every cross-repository issue
+  citation, the hook's own explanatory comment, and
+  `scripts/cffi_build.py`'s own build-artifact names.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

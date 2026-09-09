@@ -8,9 +8,9 @@ tests/README.md pins each vendored vector to a commit and a git blob
 SHA-1, with a documented manual procedure to re-check one.
 This automates that procedure and reports drift, rather than fixing it:
 refreshing a vector file is a decision this script does not get to
-make, so what it opens is an issue, never a commit. Ported from
-btclib's own check_vendored_vectors.py, which this package's README
-convention matches by design.
+make, so what it opens is an issue, never a commit. Ported from a
+sibling repository's own check_vendored_vectors.py, which this
+package's README convention matches by design.
 
 Scope is narrower than the README could need, though nothing in this
 project's own entries reaches the narrower part: only
@@ -18,15 +18,16 @@ an entry whose `behind` already reads 0 -- what a human last confirmed
 was exactly at upstream's tip -- is checked. An entry already
 documented as behind would be a decision already made, and
 re-reporting the same gap every week would be noise rather than news;
-btclib's own README carries that shape and this one does not.
+a sibling repository's own README carries that shape and this one
+does not.
 
 A path upstream has renamed or deleted is reported rather than raising:
 it has no commit to name as a tip, and a pin standing on a file that is
 not there any more is the one drift nobody would otherwise notice.
 
-Two more shapes this script does not attempt, for the same reason
-btclib's does not, present or not in this project's own README today: a
-path carrying a `<name>` placeholder, where one pin serves several
+Two more shapes this script does not attempt, for the same reason the
+sibling script does not, present or not in this project's own README
+today: a path carrying a `<name>` placeholder, where one pin serves several
 files at once, and an entry with no `commit` at all. A heading owning no
 fenced block of its own is a third, and different in kind from the other
 two: there is no block to read a field out of, so it is listed under its
@@ -37,7 +38,7 @@ report by name. Every heading the README carries but this script did not
 check is listed in its own report, so nothing silently reads as "checked
 and clean" that was not checked at all.
 
-btclib's own copy also collapses skip lines that repeat one heading and
+The sibling copy also collapses skip lines that repeat one heading and
 one reason, a shape that only a heading owning several fenced blocks
 can produce. tests/README.md gives every heading here exactly one
 block, so no skip line this script builds ever repeats today -- a
@@ -45,15 +46,16 @@ property of this file, not a shape the parsing above forbids, and not
 carried here for that reason.
 
 The issue title is the caller's, which is what the copies owe each
-other: btclib passes two ledgers through one script -- a pin behind
-upstream and a verdict read at a revision that has moved are different
-news, acted on differently -- so a title fixed in the module would name
-one issue for the pair, each run rewriting what the other wrote. One
-ledger passes through this copy, so the argument buys nothing here on
-its own; it is taken because a caller's argument list is the half of
-the two files that is meant to stay identical. What answers to btclib's
-own two-ledger shape is not taken: `readme_path` keeps its name, this
-tree calling that file a README everywhere else it names it.
+other: the sibling repository passes two ledgers through one script --
+a pin behind upstream and a verdict read at a revision that has moved
+are different news, acted on differently -- so a title fixed in the
+module would name one issue for the pair, each run rewriting what the
+other wrote. One ledger passes through this copy, so the argument buys
+nothing here on its own; it is taken because a caller's argument list
+is the half of the two files that is meant to stay identical. What
+answers to the sibling's own two-ledger shape is not taken:
+`readme_path` keeps its name, this tree calling that file a README
+everywhere else it names it.
 
     python .github/scripts/check_vendored_vectors.py \
         tests/README.md "Vendored vectors behind upstream"
@@ -80,8 +82,9 @@ _GH = shutil.which("gh") or "gh"
 _HEADING = re.compile(r"^### (.+)$", re.MULTILINE)
 
 # a fenced block's key/value lines; a value's own continuation onto a
-# further, unindented-marker line (btclib's README wraps "behind" that
-# way in a couple of entries) is not captured, and is not needed --
+# further, unindented-marker line (the sibling repository's README wraps
+# "behind" that way in a couple of entries) is not captured, and is not
+# needed --
 # every check below reads only the first line of a field
 _FIELD = re.compile(r"^(repo|path|commit|blob|pulled|behind)\s+(.*)$", re.MULTILINE)
 
@@ -302,8 +305,8 @@ def main() -> int:
     The title names the issue this run opens, updates or closes. It is
     required, which is what makes it a positional beside the path: a
     default would be this file's own opinion about an issue the caller
-    owns, and the caller is the one thing this script shares with
-    btclib's copy. The one option here is a boolean, so what reads it is
+    owns, and the caller is the one thing this script shares with its
+    sibling copy. The one option here is a boolean, so what reads it is
     the filter below rather than a parser.
 
     --dry-run skips opening, updating or closing the issue: what the

@@ -4,17 +4,19 @@
 
 """Every module this package ships is documented.
 
-Matching btclib's own tests/docs_test.py: the page under `docs/source/`
-is hand written, which invites drift, and telling contributors to re-run
-`sphinx-apidoc -f` is no answer -- `-f` regenerates it from the template,
+Matching a sibling repository's own tests/docs_test.py: the page under
+`docs/source/` is hand written, which invites drift, and telling
+contributors to re-run `sphinx-apidoc -f` is no answer -- `-f`
+regenerates it from the template,
 discarding the myst links to the markdown files. What drift costs is a
 module absent from the automodule directives, and therefore from the
 published documentation, with nothing anywhere to say so; this test is
 the thing that says so.
 
-Simpler than btclib's version in one way: `zkp`, the one subpackage this
-package has, gets its stanzas on the same page as everything else rather
-than a nested page of its own, so there is no toctree-entry pattern to
+Simpler than a sibling repository's version in one way: `zkp`, the one
+subpackage this package has, gets its stanzas on the same page as
+everything else rather than a nested page of its own, so there is no
+toctree-entry pattern to
 also check. `_shipped()` below needs no case for it either -- a
 subpackage's `__init__.py` maps to the dotted package name the same way
 the top package's own does, stripping the trailing `__init__` rather

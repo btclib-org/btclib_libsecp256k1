@@ -181,10 +181,11 @@ paths builds it.
 
 ## The benchmark is not here
 
-It compared these bindings against `coincurve`, `secp256k1` and btclib's
-pure python arithmetic, which made the packages it timed dependencies of
-this repository's lock — btclib among them, and btclib is what depends on
-this package rather than the other way round. It lives in
+It compared these bindings against `coincurve`, `secp256k1` and the
+downstream library's own pure python arithmetic, which made the
+packages it timed dependencies of this repository's lock — that
+library among them, and it is what depends on this package rather than
+the other way round. It lives in
 [btclib-benchmarks](https://github.com/btclib-org/btclib-benchmarks) now,
 as `scripts/libsecp256k1_wrappers.py`, where its comparands are what the
 project is for.

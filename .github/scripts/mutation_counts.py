@@ -40,8 +40,8 @@ object has no attribute 'value'` at the first one -- after printing the
 records before it, so its output is both short and truncated mid-line.
 The three columns read below are the whole of what this needs.
 
-Ported from btclib's own mutation_counts.py, the two mutation workflows
-being the same workflow with a different scope.
+Ported from a sibling repository's own mutation_counts.py, the two
+mutation workflows being the same workflow with a different scope.
 
     python .github/scripts/mutation_counts.py session.sqlite
 """

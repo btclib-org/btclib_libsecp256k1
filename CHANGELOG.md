@@ -163,6 +163,35 @@ release-notes length in the first place, and are still in
   the sentence says instead that `--init` is the registering and the
   cloning of that `console` block in one command.
 
+### The documentation quick start syncs what the build runs on
+
+- **`docs/README.rst`'s quick start passes `--locked
+  --no-default-groups --group docs`** (closes #831): `uv sync` re-locks
+  the project before syncing unless the flag is given, and `uv.lock` is
+  tracked, so a lockfile out of step with `pyproject.toml` was rewritten
+  under the reader rather than reported to them. `git grep 'uv sync'`
+  over this tree, less `CHANGELOG.md`, `uv.lock` and `RELEASE_NOTES.md`,
+  is the census: the other sites omitting the flag are prose, a comment
+  or a docstring, none of them a line a reader types.
+- **The groups are restricted on the sync rather than left to the build
+  below**: `uv run` adds what its own groups ask for and removes nothing
+  else, so a sync taking the default groups above it leaves the build
+  below running with every group `dev` includes on its path, where read
+  the docs performs it with the docs group alone. That makes the sync
+  line `.readthedocs.yaml`'s own, which the page already claims of the
+  build under it.
+- **The reading on which a documentation quick start resolves fresh is
+  not taken**: it carries a contributor whose lockfile is stale forward
+  rather than stopping them, and what it gives up is the property `-W`
+  is on that build for — that a build green here is green there — the
+  versions the two share being the ones `uv.lock` pins.
+- **The page says what the narrower sync removes**: a sync is exact, so
+  this line takes `.venv` down to the `docs` group and mypy, ruff,
+  pre-commit and pytest go with the groups `CONTRIBUTING.md`'s
+  `uv sync --locked` installs, which is also what puts them back.
+  `.vscode/settings.json` points the editor's type checker at that
+  `.venv`.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

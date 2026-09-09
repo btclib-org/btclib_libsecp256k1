@@ -19,7 +19,21 @@ beneath it.
 .. sourcecode:: bash
 
     $ git submodule update --init
-    $ uv sync
+    $ uv sync --locked --no-default-groups --group docs
+
+``--locked`` is what holds the resolution ``uv.lock`` pins: without it
+the project is re-locked before the sync, and ``uv.lock`` is tracked, so
+a lockfile out of step with ``pyproject.toml`` is rewritten rather than
+reported. The groups are the build's own below and belong here as well:
+``uv run`` adds what its groups ask for and removes nothing else, so a
+wider sync leaves the build here running in an environment read the docs
+does not have.
+
+A sync is exact, so this one narrows ``.venv`` to the ``docs`` group:
+mypy, ruff, pre-commit and pytest go with the groups
+``CONTRIBUTING.md``'s own ``uv sync --locked`` installs, and
+``.vscode/settings.json`` has the editor's type checker reading this
+``.venv``. ``uv sync --locked`` puts them back.
 
 Build from the project root, exactly as ``.readthedocs.yaml`` does:
 

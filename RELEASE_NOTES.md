@@ -5,7 +5,23 @@ release is in [CHANGELOG.md](./CHANGELOG.md); what follows is what a user
 has to act on and what a user gains, and it is what the GitHub release of
 a tag is generated from.
 
-## v0.8.0.6 (work in progress, not released yet)
+## v0.8.0.7 (work in progress, not released yet)
+
+## v0.8.0.6
+
+Non-breaking: no public name was added, removed or renamed, and no
+signature changed. The vendored libsecp256k1 is still the v0.8.0 this
+line has wrapped since 0.8.0.
+
+`zkp.rangeproof.borromean_verify` is new: verify-only, over ordinary
+SEC-compressed pubkeys and 32-octet scalars. It wraps
+`secp256k1_borromean_verify`, internal linkage upstream and reachable
+only through a fork exposing it as a public symbol — the vendored
+`secp256k1-zkp` submodule now tracks `fametrano/secp256k1-zkp`'s
+`expose-borromean-verify` branch rather than
+`BlockstreamResearch/secp256k1-zkp` directly, proposed upstream at
+[BlockstreamResearch/secp256k1-zkp#373](https://github.com/BlockstreamResearch/secp256k1-zkp/pull/373),
+not yet merged.
 
 ## v0.8.0.5
 

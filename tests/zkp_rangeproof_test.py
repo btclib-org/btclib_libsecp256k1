@@ -35,6 +35,7 @@ _fake_ffi = cffi.FFI()
 _fake_ffi.cdef("""
 typedef struct { unsigned char data[64]; } secp256k1_generator;
 typedef struct { unsigned char data[64]; } secp256k1_pedersen_commitment;
+typedef struct { unsigned char data[64]; } secp256k1_pubkey;
 """)
 
 
@@ -181,6 +182,32 @@ class _FakeLib:
         min_value[0] = 0
         max_value[0] = 63
         return 1
+
+    def secp256k1_ec_pubkey_parse(
+        self, _ctx: Any, pubkey: Any, input_: bytes, inputlen: int
+    ) -> int:
+        if inputlen != 33 or input_[0] == FAIL:
+            return 0
+        _put(pubkey, bytes(input_))
+        return 1
+
+    def secp256k1_borromean_verify(
+        self,
+        _ctx: Any,
+        e0: bytes,
+        _s: bytes,
+        _m: bytes,
+        _mlen: int,
+        _pubkeys: Any,
+        _n_pubkeys: int,
+        _rsizes: Any,
+        _nrings: int,
+    ) -> int:
+        # e0's own first byte is this fake's one sentinel, the same shape
+        # every other call in this class answers a failure through: never
+        # the ring shape, which `borromean_verify`'s own Python-side
+        # checks already refuse before any of this is called
+        return 0 if e0[0] == FAIL else 1
 
 
 def _install(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -441,3 +468,77 @@ def test_info_rejects_an_undecodable_proof() -> None:
     """A proof the fake reads as invalid makes `info` raise."""
     with pytest.raises(ValueError, match="invalid proof"):
         r.info(FAIL_PROOF)
+
+
+PUBKEY = bytes([0x02]) + bytes(range(1, 33))
+FAIL_PUBKEY = bytes([FAIL]) + bytes(range(1, 33))
+
+
+def test_borromean_verify_succeeds() -> None:
+    """A well-formed call the fake reads as verifying answers True."""
+    e0 = bytes(32)
+    s = bytes(32) * 3
+    assert r.borromean_verify(e0, s, b"msg", [PUBKEY, PUBKEY, PUBKEY], [2, 1]) is True
+
+
+def test_borromean_verify_fails() -> None:
+    """A signature the fake reads as not verifying answers False, not a raise.
+
+    `e0`'s own first byte is this file's `FAIL` sentinel -- the same
+    "well-formed but does not verify" case a scalar at or above the
+    curve order is, in the real library.
+    """
+    e0 = bytes([FAIL]) + bytes(31)
+    s = bytes(32) * 3
+    assert r.borromean_verify(e0, s, b"msg", [PUBKEY, PUBKEY, PUBKEY], [2, 1]) is False
+
+
+def test_borromean_verify_rejects_a_short_e0() -> None:
+    """A wrong-length e0 is refused before the extension is touched."""
+    with pytest.raises(ValueError, match="e0 must be 32 bytes"):
+        r.borromean_verify(bytes(31), bytes(32), b"msg", [PUBKEY], [1])
+
+
+def test_borromean_verify_rejects_a_wrong_length_s() -> None:
+    """`s` must be exactly 32 bytes per pubkey, ring-major."""
+    with pytest.raises(ValueError, match="s must be 64 bytes"):
+        r.borromean_verify(bytes(32), bytes(32), b"msg", [PUBKEY, PUBKEY], [2])
+
+
+def test_borromean_verify_rejects_an_invalid_pubkey() -> None:
+    """An unparsable public key is refused before the library sees anything."""
+    with pytest.raises(ValueError, match="invalid public key at index 0"):
+        r.borromean_verify(bytes(32), bytes(32), b"msg", [FAIL_PUBKEY], [1])
+
+
+def test_borromean_verify_rejects_a_mismatched_ring_shape() -> None:
+    """`sum(rsizes) != len(pubkeys)` is the ring-shape ARG_CHECK, refused first.
+
+    `secp256k1_borromean_verify` itself would refuse this same shape
+    through its illegal callback (btclib-org/btclib-secp256k1#828's own
+    issue body has the ARG_CHECK); this wrapper never reaches it, the
+    fake's own `secp256k1_borromean_verify` above having no branch for
+    it at all.
+    """
+    with pytest.raises(ValueError, match=r"sum\(rsizes\) must equal len\(pubkeys\)"):
+        r.borromean_verify(bytes(32), bytes(32) * 2, b"msg", [PUBKEY, PUBKEY], [1])
+
+
+def test_borromean_verify_rejects_an_empty_pubkeys() -> None:
+    """`n_pubkeys` must be at least 1, the header's own ARG_CHECK."""
+    with pytest.raises(ValueError, match="pubkeys must hold between 1 and 128"):
+        r.borromean_verify(bytes(32), b"", b"msg", [], [])
+
+
+def test_borromean_verify_rejects_too_many_pubkeys() -> None:
+    """`n_pubkeys` must be at most 128, the header's own ARG_CHECK."""
+    with pytest.raises(ValueError, match="pubkeys must hold between 1 and 128"):
+        r.borromean_verify(
+            bytes(32), bytes(32) * 129, b"msg", [PUBKEY] * 129, [1] * 129
+        )
+
+
+def test_borromean_verify_rejects_too_many_rings() -> None:
+    """`nrings` must be at most 32, the header's own ARG_CHECK."""
+    with pytest.raises(ValueError, match="rsizes must hold between 1 and 32"):
+        r.borromean_verify(bytes(32), bytes(32) * 33, b"msg", [PUBKEY] * 33, [1] * 33)

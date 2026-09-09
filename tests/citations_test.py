@@ -104,6 +104,13 @@ _FOREIGN = {
     "test_rangeproof_fixed_vectors": (
         "BlockstreamResearch/secp256k1-zkp, src/modules/rangeproof/tests_impl.h"
     ),
+    "test_borromean_internal": (
+        "BlockstreamResearch/secp256k1-zkp, src/modules/rangeproof/tests_impl.h"
+    ),
+    "test_borromean_verify_api_internal": (
+        "fametrano/secp256k1-zkp (expose-borromean-verify),"
+        " src/modules/rangeproof/tests_impl.h"
+    ),
 }
 
 

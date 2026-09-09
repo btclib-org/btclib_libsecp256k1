@@ -148,6 +148,21 @@ release-notes length in the first place, and are still in
   sentence owed a reader, an issue's state being what a landing in
   another tree moves.
 
+### The submodule step comes before the environment
+
+- **`CONTRIBUTING.md` puts `git submodule update --init` above the
+  `uv sync --locked` fence** (closes #827): that sync builds the
+  extension out of `secp256k1/`, and a `git worktree` starts that
+  directory empty, so a session reading the section in order reached
+  cmake with no `CMakeLists.txt` under it and stopped at exit 1. One
+  sequence serves a clone and a worktree alike now, and the `console`
+  block above it stays where it is as what a clone prints.
+- **The moved paragraph names `--init` rather than the gates below**:
+  the environment is below it now as well as the gates, and what the
+  gates need from the submodules is stated under the sync already, so
+  the sentence says instead that `--init` is the registering and the
+  cloning of that `console` block in one command.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

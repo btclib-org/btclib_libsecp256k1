@@ -223,7 +223,7 @@ Then:
    libsecp256k1' README.md` finds the line without a search through
    the prose).
 
-   In the same pull request, open the next version's section in both
+   In the same pull request, start the next version's section in both
    files, above the one just closed: headed `## v<version> (work in
    progress, not released yet)` with the fourth number the step that
    opens the next version will declare, and nothing under it yet. What
@@ -231,7 +231,7 @@ Then:
    is the whole of closing the release notes at the end of the cycle —
    with one branch and no long-lived release pull request to hold a
    body, it is also the whole of what giving the pull request its title
-   and body reads the cycle off. Opening it in a pull request of its own
+   and body reads the cycle off. Starting it in a pull request of its own
    after this one, ahead of anything else landing, is the rejected
    alternative: until that pull request lands the topmost section of
    each file is the release's, so a branch landing in between files its
@@ -239,7 +239,16 @@ Then:
    release commit having touched only the heading. `version-check` reads
    the section headed by the tag alone, so a heading above it is nothing
    it sees, and it is not what the release publishes: the notes are
-   lifted from the section whose heading is the tag's own
+   lifted from the section whose heading is the tag's own.
+
+   This step's own action is not what this file calls "open the next
+   version" below — the two names differ because the two actions do.
+   0.8.0.6's release pull request (#843) did only this one and stopped,
+   leaving `main` still declaring `0.8.0.6` in `pyproject.toml` past the
+   tag, the `pypi` approval and every check after it, until a separate
+   pull request caught the gap. This file reused one phrase for both
+   steps until that prompted splitting it into the two names used here
+   (#845)
 1. give the pull request its title and its body before merging it, not
    after. The title is the version; the body says what the release is —
    what moved, what did not, and which of the two a user would notice.
@@ -664,8 +673,11 @@ Then:
     `0.7.0.1` sorts *under* `0.7.1`, so nothing would ever resolve it,
     and `version-check` accepts it, being digits and dots. The sections
     for it in `CHANGELOG.md` and in `RELEASE_NOTES.md` are already
-    there, closing the release notes above having opened them in the
-    release's own pull request. What stays here is the version, which
+    there, closing the release notes above having started them in the
+    release's own pull request — this step is the one this file means
+    by "open the next version," and it is owed only after the tag, the
+    `pypi` approval and every check above it, in its own pull request
+    and never inside the release's. What stays here is the version, which
     cannot move earlier with them: `version-check` compares the tag
     against what `pyproject.toml` declares, so a tree already bumped
     would offer it the placeholder instead of the version being released

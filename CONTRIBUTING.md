@@ -304,6 +304,16 @@ writes to, elided above. A `Submodule path ...: checked out ...` line
 follows per submodule, left out here because the commit it names moves
 with the pin.
 
+A `git worktree` starts with those directories empty however complete
+the checkout it was made from, so it needs the same step; `--init` is
+the registering and the cloning above in one command:
+
+```shell
+git submodule update --init
+```
+
+With no path after it, that reaches every submodule `.gitmodules` names.
+
 Then the environment. `.python-version` pins the interpreter and uv
 installs it if it is missing, so neither pyenv nor a hand-made virtualenv
 is needed; the development dependencies are the PEP 735 groups declared
@@ -315,16 +325,6 @@ uv sync --locked
 
 That also builds and installs the extension in editable mode, which is
 the minutes rather than seconds part of it.
-
-A `git worktree` starts with those directories empty however complete
-the checkout it was made from, so the submodules are a precondition of
-the gates below and not of a clone alone:
-
-```shell
-git submodule update --init
-```
-
-With no path after it, that reaches every submodule `.gitmodules` names.
 
 The test and documentation gates install this package, and installing it
 compiles libsecp256k1 out of `secp256k1/` before any `automodule`

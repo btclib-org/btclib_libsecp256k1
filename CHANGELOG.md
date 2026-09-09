@@ -192,6 +192,34 @@ release-notes length in the first place, and are still in
   `.vscode/settings.json` points the editor's type checker at that
   `.venv`.
 
+### The gate commands' group flags say what they do not do
+
+- **`CONTRIBUTING.md` says that a gate command's group restriction
+  removes nothing already installed** (closes #832): `uv run` takes
+  `--exact` to remove extraneous packages, so a restriction without it
+  installs what its groups ask for and leaves the rest, and each gate
+  runs against the whole dev set the setup recipe's `uv sync --locked`
+  leaves. A package a group does not declare passes there, something
+  else on the machine providing it, and fails in the workflow, whose
+  environment holds only what the group asks for.
+- **The section carries the sync that reproduces a workflow's
+  environment**: `uv sync` is exact, so a restricted one before a gate
+  narrows `.venv` to that group and `uv sync --locked` puts the other
+  groups back — the line `.readthedocs.yaml` and `docs/README.rst`
+  already carry for the documentation build.
+- **The lead-in stops naming coverage as the whole gap between a
+  command and its workflow**: what it names now is the one flag between
+  the second gate and `test.yml`'s, the environment being the
+  difference the paragraph below states and every gate's rather than
+  that one's.
+- **`--exact` on the gate commands is not taken**: it would give each
+  gate its workflow's environment, and `uv run --locked --only-group
+  lint --exact` uninstalls the project along with the rest, leaving
+  `.venv` without the extension that `.vscode/settings.json`'s
+  `fromEnvironment` has the editor's type checker read. The commands a
+  contributor runs before every commit are the wrong place to pay that
+  for a gap the workflows close on every push.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

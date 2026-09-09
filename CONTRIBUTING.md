@@ -339,7 +339,7 @@ invocation, whatever the commit touches.
 
 Three gates decide a merge, and each command below is close to the one
 its workflow runs — the second is what a contributor types, not what
-`test.yml` runs, and the difference is coverage's own:
+`test.yml` runs, and coverage is the one flag between the two:
 
 ```shell
 uv run --locked --only-group lint pre-commit run --all-files
@@ -389,9 +389,25 @@ why.
 
 The group flags are not decoration. `uv run` syncs the environment
 itself, and without `--no-default-groups --group test` it installs the
-whole dev set, wider than what the suite needs. After touching
-`pyproject.toml`, `uv lock` — the `uv-lock` hook does it too, and then the
-gate is a second run.
+whole dev set, wider than what the suite needs.
+
+What they do not do is narrow an environment that is already wide.
+`uv run` takes `--exact` to remove extraneous packages, so a restriction
+without it installs what its groups ask for and leaves everything else
+in place: after the `uv sync --locked` above, each gate runs against the
+whole dev set rather than against its own group. A package a group does
+not declare passes there, something else on the machine providing it,
+and fails in the workflow, whose environment holds only what the group
+asks for.
+
+`uv sync` is exact, so a `uv sync --locked --no-default-groups --group
+<g>` before a gate gives it the environment its workflow has, and
+`uv sync --locked` puts the other groups back. That is the line
+`.readthedocs.yaml` and `docs/README.rst` carry for the documentation
+build.
+
+After touching `pyproject.toml`, `uv lock` — the `uv-lock` hook does it
+too, and then the gate is a second run.
 
 **Check exit codes, not filtered output.** `pre-commit run ... | grep -v
 Passed` hides a failure, and `grep` finding nothing exits 1, which is not

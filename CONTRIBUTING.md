@@ -342,7 +342,8 @@ its workflow runs — the second is what a contributor types, not what
 `test.yml` runs, and coverage is the one flag between the two:
 
 ```shell
-uv run --locked --only-group lint pre-commit run --all-files
+uv run --locked --only-group lint pre-commit run --all-files \
+    --show-diff-on-failure
 uv run --locked --no-default-groups --group test pytest
 uv run --locked --no-default-groups --group docs \
     sphinx-build -n -W -b html docs/source docs/build/html
@@ -599,8 +600,15 @@ command at all, for the reason below, and nothing requires its result.
 - `Lint and type-check`
 
   ```shell
-  uv run --locked --only-group lint pre-commit run --all-files
+  uv run --locked --only-group lint pre-commit run --all-files \
+      --show-diff-on-failure
   ```
+
+  `--show-diff-on-failure` runs `git diff` after a failing run and
+  changes nothing else, the exit status included. A local checkout
+  still holds what the fixers wrote, so the flag is in the block
+  because the job carries it rather than because a local run needs
+  the diff printed
 
 - `Ask which files the pull request touches`, whose answer decides whether
   the rest of `test.yml` runs at all

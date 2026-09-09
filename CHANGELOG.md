@@ -220,6 +220,19 @@ release-notes length in the first place, and are still in
   contributor runs before every commit are the wrong place to pay that
   for a gap the workflows close on every push.
 
+### The lint gate's command carries `--show-diff-on-failure`
+
+- **Wherever `CONTRIBUTING.md` gives the lint gate's command it gives
+  `--show-diff-on-failure`, which `lint.yml` runs it with**
+  (closes #834): `Running what CI runs` promises the local command that
+  reproduces a job, and the gate block above it says each command is
+  close to the one its workflow runs.
+- **The `Lint and type-check` entry says why a local command carries a
+  runner's flag**: `--show-diff-on-failure` runs `git diff` after a
+  failing run and changes nothing else, the exit status included, so it
+  is there because the job carries it rather than because a local
+  checkout, which still holds what the fixers wrote, needs it.
+
 ## v0.8.0.5
 
 ### `ruff` selects every rule family

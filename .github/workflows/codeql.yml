@@ -214,8 +214,9 @@ jobs:
 
   # one context for a branch rule to name, in place of job names that
   # move: the matrix above produces one per language, a set that changes
-  # whenever CodeQL gains a language worth adding, and this job depends on
-  # the matrix instead, so adding one is enough to be covered by it.
+  # whenever CodeQL gains a language worth adding, and the step below
+  # judges every job of the run, so a language added there is covered
+  # without touching this.
   # A required status check reports on the run a pull request has, so this
   # name is requirable only because the pull_request trigger above exists
   # — btclib-org/.github#90 is where the organization settled that reading
@@ -229,6 +230,10 @@ jobs:
     # ambiguous check -- and test.yml's aggregate is required, so the two
     # names must not converge
     name: "codeql: every job passed"
+    # ordering, and nothing else: nothing in this tree calls this workflow
+    # (btclib-org/.github#982), so the step below reads the run's own job
+    # listing rather than `needs.*.result`, and `needs` here only
+    # sequences this job after the matrix
     needs: [analyze]
     # not success(): a job whose dependencies failed is skipped, and a
     # skipped check reports "skipped", which reads as satisfied wherever a
@@ -244,51 +249,76 @@ jobs:
       && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      # what asking the API for this run's own jobs takes. A read, so the
+      # write-only census REPOSITORY.md's "Token permissions" hands the
+      # reader does not list it, as it does not list analyze's above
+      actions: read
     steps:
-      # the loop reads the whole needs context rather than naming each job, so a
-      # job added to `needs` above is covered without touching this. `skipped`
-      # still fails the gate: `analyze` above and this job carry the same
-      # draft/closed guard, so the two are never out of step on it, and the only
-      # way this job's own `needs` reports `skipped` is a dependency that did
-      # not run for a reason of its own -- which is the failure this step exists
-      # to catch, not one to excuse (btclib-org/.github#537, the same allowlist
-      # `test.yml`'s own aggregate carries, narrowed to `success` alone here
-      # since nothing this job depends on may legitimately skip).
+      # the run's own job listing rather than `needs.*.result`, which is
+      # section 10 of the organization standard's shape for a workflow
+      # nothing calls: a matrix cell that died in *Set up job* is a
+      # `failure` row in the listing where `needs.analyze.result` does not
+      # carry it (btclib-org/btclib#1001). The price is a step per
+      # workflow rather than one shared with test.yml's aggregate, `needs`
+      # reaching nothing outside its own workflow -- and test.yml keeps
+      # `needs`, release.yml calling it
       #
-      # This step used to decide with a boolean `contains(needs.*.result, ...)`
-      # expression, one comparison per unwanted result: issue
-      # btclib-org/btclib#1001 saw four matrix cells die in "Set up job"
-      # downloading a pinned action, the run's own conclusion was `failure`, and
-      # yet `needs.*.result` carried none of the three patterns this `if:`
-      # checked -- so the step was skipped, and a skipped step leaves the job
-      # green by construction. Looping over every result here instead means the
-      # step always runs and the log always carries what `needs` actually held.
-      #
-      # The loop decides one field at a time, and word splitting does not hand
-      # it every field: a trailing empty one is dropped and an empty join gives
-      # no iteration at all, so the loop by itself would pass on the results
-      # beside the empty one, or on nothing. The `case` before it is what
-      # refuses those, and the comma separator is what lets it: an empty result
-      # is an empty field, and the commas wrapped around `$results` make an
-      # empty first field, an empty last one, an empty one between two others
-      # and an empty join a single pattern.
-      - name: Fail unless every job above succeeded
+      # the allowlist below names "success" alone and not "success" and
+      # "skipped": analyze carries no condition narrower than this job's
+      # own draft/closed one above, so whenever analyze would report
+      # "skipped" this job skips with it and never reaches this step, and
+      # no job here is conditional on the diff, there being no `changes`
+      # job. A "skipped" row in the listing would mean this step ran
+      # without its dependency having, which its own `if:` already rules
+      # out, so the allowlist refuses it rather than tolerating it.
+      # btclib-org/.github#990 is where the standard settles whether a
+      # listing step accepts "skipped" whatever its jobs can report
+      - name: Fail unless every other job of this run succeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          results='${{ join(needs.*.result, ',') }}'
-          echo "results: $results"
-          case ",$results," in
-            *,,*)
-              echo "::error::a job this gate depends on reported no result"
-              exit 1
-              ;;
-          esac
-          IFS=,
-          for result in $results; do
-            case "$result" in
-              success) ;;
-              *)
-                echo "::error::a job this gate depends on reported $result"
-                exit 1
-                ;;
-            esac
-          done
+          set -euo pipefail
+          # `.status` beside the conclusion so that an unfinished job says
+          # which kind it is: queued and running are one word to
+          # `.conclusion` and two facts to a reader of the log
+          jobs=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | "\(.conclusion // "unfinished")\t\(.status)\t\(.name)"')
+          # printed before it is judged: the job whose purpose is to be
+          # trusted is the one that has to be able to say what it saw
+          printf '%s\n' "${jobs}"
+          # awk and not grep: a tab in a grep pattern is one
+          # implementation's extension and a literal "t" in another's,
+          # where awk's field separator is POSIX
+          bad=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+          unfinished=$(printf '%s\n' "${jobs}" |
+            awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
+          # each annotation names the rows it is about, an annotation
+          # being what the checks page shows without the log being
+          # opened. `%0A` is a newline to one, and the tab goes with it:
+          # the columns line up in a log and not in this
+          annotate() {
+            printf '::error::%s' "$1"
+            printf '%s' "$2" | tr '\t' ' ' | awk '{ printf "%%0A%s", $0 }'
+            printf '\n'
+          }
+          verdict=0
+          if [ -n "${bad}" ]; then
+            annotate "these jobs of the run did not succeed:" "${bad}"
+            verdict=1
+          fi
+          # exactly one job of the run may be unfinished, and it is this
+          # one. Counted rather than excluded by name, a name being what
+          # goes stale when this job is renamed -- and none unfinished at
+          # all is refused too, a listing with no job running not being a
+          # listing of the run this step is running in
+          if [ "${unfinished}" -ne 1 ]; then
+            annotate \
+              "this check should be the run's one unfinished job; ${unfinished} are" \
+              "$(printf '%s\n' "${jobs}" | awk -F'\t' '$1 == "unfinished"')"
+            verdict=1
+          fi
+          exit "${verdict}"

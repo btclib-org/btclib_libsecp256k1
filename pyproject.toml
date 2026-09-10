@@ -733,9 +733,9 @@ max-complexity = 10
 # stub (btclib-org/btclib-secp256k1#605)
 "stubs/_btclib_secp256k1_zkp.pyi" = ["docstring-in-stub"]
 # flake8-no-pep420: every file here is a standalone entry point a workflow
-# step invokes with "python .github/scripts/<name>.py", never an import --
-# the directory holds no __init__.py because it is not a package, and
-# adding one to satisfy this rule would make it look like one
+# step or a hook invokes with "python .github/scripts/<name>.py", never an
+# import -- the directory holds no __init__.py because it is not a
+# package, and adding one to satisfy this rule would make it look like one
 ".github/scripts/*.py" = ["implicit-namespace-package"]
 # BEHIND, SKIPPED and the all-clear line are what a monthly run's log
 # says happened, the issue it opens or closes being the same report a
@@ -777,6 +777,10 @@ max-complexity = 10
 # comes, or the ::error:: annotation naming the last answer and the
 # builds page that says why
 ".github/scripts/wait_for_readthedocs_build.py" = ["print"]
+# and the changelog check, run by the check-changelog hook and read on
+# the terminal of whoever's commit it refused: what it prints is each
+# line it refuses and the reason, which is the whole of its report
+".github/scripts/check_changelog.py" = ["print"]
 # one keyword per sdist member field the script and its tests care
 # about; splitting it into a dataclass would move the same seven names
 # one level down rather than removing any of them

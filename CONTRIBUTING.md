@@ -1017,61 +1017,94 @@ run locally.
   workflow
 
   `zkp-pin` asks the narrower question its own block comment states:
-  whether the pinned secp256k1-zkp commit is one Andrew Poelstra signed,
-  not whether it is a tagged release — secp256k1-zkp cuts none. The key
-  comes from his own published bundle rather than from
-  `keys.openpgp.org`, which serves this one stripped of the user IDs
-  GnuPG needs before it accepts a key (#690), and the fingerprint is
-  lifted from the same step's own env block, keyed off `KEY_URL:`,
-  which appears nowhere else in the file:
+  whether the pin's delta against `BlockstreamResearch/secp256k1-zkp`'s
+  own master does not exceed what README.md documents as reviewed, and
+  whether every commit in that delta is one a recognized signer wrote —
+  not whether the pin itself is a tagged release, secp256k1-zkp cutting
+  none. Two keys are recognized while the submodule points at the fork
+  (issue #855): Andrew Poelstra's, from his own published bundle rather
+  than from `keys.openpgp.org`, which serves this one stripped of the
+  user IDs GnuPG needs before it accepts a key (#690); and the
+  maintainer's own, from `https://github.com/<user>.gpg`, the only copy
+  found for it. Both fingerprint/URL pairs are lifted from the two
+  import steps' own env blocks, keyed off `FINGERPRINT:` (singular),
+  which appears nowhere else in the file — `FINGERPRINTS:` (plural) is
+  the `pin` job's own env key and the last `zkp-pin` step's, excluded by
+  the same reasoning the `pin` recipe above gives for the opposite
+  direction:
 
   ```shell
-  fingerprint=$(grep -B1 'KEY_URL:' \
-      .github/workflows/vendored-vectors.yml \
-      | sed -n 's/^ *FINGERPRINT: //p')
-  key=$(mktemp)
-  curl --fail --silent --show-error --location --output "$key" \
-      https://www.wpsoftware.net/andrew/andrew.gpg
-  gpg --import "$key"
-  gpg --list-keys "$fingerprint"
+  grep -A1 'FINGERPRINT:' .github/workflows/vendored-vectors.yml
+  curl --fail --silent --show-error --location \
+      --output andrew.gpg https://www.wpsoftware.net/andrew/andrew.gpg
+  curl --fail --silent --show-error --location \
+      --output maintainer.gpg https://github.com/<user>.gpg
+  gpg --import andrew.gpg maintainer.gpg
+  gpg --list-keys <fingerprint 1> <fingerprint 2>
+  ```
+
+  `gpg --list-keys` on both is the job's own import-step assertion,
+  kept for the same reason it is there: GnuPG accepts a key stripped of
+  every user ID and exits 0 having imported nothing (#690), so a `curl`
+  that silently failed to fetch a usable key is caught here rather than
+  misread, one step later, as a bad pin.
+
+  ```shell
   sed -n 's|.*secp256k1-zkp/commit/\([0-9a-f]\{40\}\).*|\1|p' README.md
   pinned=$(git ls-tree HEAD secp256k1-zkp | awk '{print $3}')
   git ls-tree HEAD secp256k1-zkp
-  git -C secp256k1-zkp fetch --force origin "$pinned"
-  git -C secp256k1-zkp verify-commit --raw "$pinned" 2>&1
+  git -C secp256k1-zkp fetch --unshallow origin "$pinned" 2>/dev/null || \
+      git -C secp256k1-zkp fetch --force origin "$pinned"
+  git -C secp256k1-zkp fetch --force \
+      https://github.com/BlockstreamResearch/secp256k1-zkp.git \
+      master:refs/remotes/upstream/master
+  delta=$(git -C secp256k1-zkp rev-list --count \
+      refs/remotes/upstream/master.."$pinned")
+  echo "delta=$delta"
   ```
 
-  `$key` is a temporary file rather than a name written into the
-  checkout, for the same reason the job writes its own copy to
-  `$RUNNER_TEMP` — a fetched key is not something this recipe leaves
-  behind for `git status` to find. `gpg --list-keys "$fingerprint"` is
-  the job's own import-step assertion, kept for the same reason it is
-  there: GnuPG accepts a key stripped of every user ID and exits 0
-  having imported nothing (#690), so a `curl` that silently failed to
-  fetch a usable key is caught here rather than misread, one step
-  later, as a bad pin. The `sed` line and the `git ls-tree` line beside
-  it are the comparison itself, the same way `pin`'s own two closing
-  lines above are: the first prints what `README.md` links to and the
-  second what this tree's gitlink pins, and the pin is correct where
-  the two commits agree.
+  the `sed` line and the `git ls-tree` line beside it are the comparison
+  the `pin` recipe's own two closing lines make for the other submodule:
+  the first prints what `README.md` links to and the second what this
+  tree's gitlink pins, and the pin is correct where the two commits
+  agree. `--unshallow` falls back to a plain `--force` fetch on a clone
+  this recipe already ran once and so is no longer shallow — unlike the
+  job, which checks out fresh every run and always needs it — and `delta`
+  is what the workflow step gates at `EXPECTED_DELTA`, read from that
+  same step's own env block since a hand recipe is exactly the case
+  the block comment above says to update it for at the next re-pin.
 
-  What the last command prints is the whole answer, and it is read
-  directly rather than filtered: an unanchored search for `$fingerprint`
+  ```shell
+  if [ "$delta" -eq 0 ]; then
+    subjects="$pinned"
+  else
+    git -C secp256k1-zkp rev-list refs/remotes/upstream/master.."$pinned"
+    subjects=$(git -C secp256k1-zkp rev-list \
+        refs/remotes/upstream/master.."$pinned")
+  fi
+  for commit in $subjects; do
+    git -C secp256k1-zkp verify-commit --raw "$commit" 2>&1
+  done
+  ```
+
+  What the last loop prints is the whole answer for each commit in the
+  delta, or for the pin alone where the delta is empty, and it is read
+  directly rather than filtered: an unanchored search for a fingerprint
   in that output also matches `ERRSIG`'s own trailing field, which
   carries the *expected* signer's fingerprint even when the key never
   arrived, so a missing key can print the very string the reader was
-  told to look for — measured against the real pin, with the key above
+  told to look for — measured against the real pin, with the keys above
   never imported. Read the status lines the way the job's own comment
   reads them instead: a line starting `[GNUPG:] VALIDSIG` followed by
-  `$fingerprint` is the pin verifying. `NO_PUBKEY` naming a different
-  key id is, past the assertion above, a re-pin signed by somebody this
-  recipe holds no fingerprint for. `BADSIG` is a pin that does not
-  verify at all. `REVKEYSIG` — which can sit beside a `VALIDSIG` for the
-  same fingerprint — is the one status that means stop trusting the key
-  regardless, its own owner's act rather than a calendar date;
-  `EXPKEYSIG` beside a `VALIDSIG` instead is the opposite: the key's
-  stated expiry lapsing, which does not weaken a signature it already
-  made.
+  one of the two fingerprints is that commit verifying. `NO_PUBKEY`
+  naming a different key id is, past the assertion above, a commit
+  signed by somebody this recipe holds no fingerprint for. `BADSIG` is a
+  signature that does not verify at all. `REVKEYSIG` — which can sit
+  beside a `VALIDSIG` for the same fingerprint — is the one status that
+  means stop trusting the key regardless, its own owner's act rather
+  than a calendar date; `EXPKEYSIG` beside a `VALIDSIG` instead is the
+  opposite: the key's stated expiry lapsing, which does not weaken a
+  signature it already made.
 
 - `wheel-reproducibility`, which builds this commit's wheel twice, from
   two directories it extracts `HEAD` into, and diffs the two archives

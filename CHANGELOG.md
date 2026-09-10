@@ -192,6 +192,37 @@ release-notes length in the first place, and are still in
   and the file matches `btclib-org/.github`'s at `69a47e6` byte for
   byte, which is section 14's comparison.
 
+### `codeql.yml`'s aggregate reads the run's job listing
+
+- **`codeql.yml`'s `codeql-passed` job asks the run's own job listing
+  through the API rather than reading `needs.*.result`** (issue
+  btclib-org/.github#982): section 10 of `btclib-org/.github`'s
+  `README.md` keys the shape on whether something in the tree calls the
+  workflow, and nothing here calls `codeql.yml`, where `release.yml`
+  calls `test.yml`, so `test-passed` keeps `needs` and only
+  `codeql-passed` takes the listing. The job elevates to `actions: read`
+  for the call, a read the write-only command `REPOSITORY.md`'s *Token
+  permissions* hands the reader does not list, as it does not list
+  `analyze`'s.
+- **Its allowlist names `success` alone rather than `success` and
+  `skipped`** (issue btclib-org/.github#990): `analyze` carries no
+  condition narrower than this job's own draft/closed one, and no job of
+  the workflow is conditional on the diff, so a `skipped` row would mean
+  this job ran without its dependency having, which its own `if:` rules
+  out. btclib-org/.github#990 is where the standard settles the answer
+  for every listing step; this tree's is the narrowing, which can redden
+  a check and never green one.
+- **The step's comment cites btclib-org/btclib#1001 as what the listing
+  carries and `needs` does not, and no longer cites
+  btclib-org/btclib#1454**: the empty join that issue guards against
+  has no counterpart in a listing, so the paragraph on the `case` guard
+  goes with the loop. The entry above titled *`test.yml`'s and
+  `codeql.yml`'s aggregates take btclib's own allowlist shape* described
+  `codeql-passed`'s loop over `needs.*.result`; that job reads the
+  listing now. Of that entry, the allowlist of `success` alone and its
+  reason, the unchanged job and check names, and what it says about
+  `test-passed` still hold.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

@@ -1094,13 +1094,51 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Fail unless every job above succeeded
-        # the results are read rather than the run's conclusion, which is
-        # not available to a job of the run it would describe
-        env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+      - name: Fail unless every job above succeeded or was legitimately skipped
+        # the loop reads the whole needs context rather than naming each job, so
+        # a job added to needs above is covered without touching this. "skipped"
+        # is not a failure on its own: coverage, zkp, build-cibuildwheel,
+        # build-dynamic, build-sdist and build-windows are each conditional on
+        # changes' own output, so a prose-only pull request skips every one of
+        # them by design, and reading that as a defect would fail the gate the
+        # changes job exists to let pass cheaply. changes is named in needs
+        # directly though, so its own failure still shows up as "failure" in the
+        # results and still fails this job.
+        #
+        # This step used to decide with a `case` denylist over a space-joined
+        # `join(needs.*.result, ' ')`: its blindness was passing any result this
+        # file did not anticipate, the empty string included -- not word
+        # splitting, which that single string comparison never did
+        # (btclib-org/btclib#1454's own title: "shell loop passes vacuously").
+        #
+        # The loop below decides one field at a time, and word splitting does
+        # not hand it every field: a trailing empty one is dropped and an empty
+        # join gives no iteration at all, so the loop by itself would pass on
+        # the results beside the empty one, or on nothing. The `case` before it
+        # is what refuses those, and the comma separator is what lets it: an
+        # empty result is an empty field, and the commas wrapped around
+        # `$results` make an empty first field, an empty last one, an empty one
+        # between two others and an empty join a single pattern.
+        #
+        # An allowlist of the two legitimate results rather than a denylist of
+        # the bad ones, so a result this file does not anticipate fails the gate
+        # instead of passing it for not being named (btclib-org/.github#537).
         run: |
-          echo "$RESULTS"
-          case " $RESULTS " in
-            *" failure "* | *" cancelled "*) exit 1 ;;
+          results='${{ join(needs.*.result, ',') }}'
+          echo "results: $results"
+          case ",$results," in
+            *,,*)
+              echo "::error::a job this gate depends on reported no result"
+              exit 1
+              ;;
           esac
+          IFS=,
+          for result in $results; do
+            case "$result" in
+              success | skipped) ;;
+              *)
+                echo "::error::a job this gate depends on reported $result"
+                exit 1
+                ;;
+            esac
+          done

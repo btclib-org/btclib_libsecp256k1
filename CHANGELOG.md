@@ -264,6 +264,19 @@ release-notes length in the first place, and are still in
   fed `has_wiki` or `has_projects`, that loop answers non-zero against
   the standard, which is what its list excludes.
 
+### The hyphen hook reads Python and rst beside markdown
+
+- **`no-hyphen-at-end-of-line` carries `types_or: [markdown, python, rst]`,
+  under `btclib-org/.github`'s own comment, its `README.md` read as the
+  organization standard the way `.pre-commit-config.yaml`'s other hook comments
+  read it** (issue btclib-org/.github#921): section 4 of the organization
+  standard gives the hook the file types whose prose a build renders. A
+  docstring reaches that rendering through docutils, which leaves the source
+  break inside the paragraph it builds, and html collapses it to a space, so a
+  word wrapped at its own hyphen reads on the built page with the hyphen and a
+  space inside it, as a markdown one does. `docs/source/conf.py`'s module
+  docstring wrapped its URL at `sphinx-`; the URL is on one line.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

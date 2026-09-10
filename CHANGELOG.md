@@ -89,6 +89,18 @@ release-notes length in the first place, and are still in
   the same contradiction and is left untouched here, for the branch already
   changing that file.
 
+### `CONTRIBUTING.md`'s coverage sequence gives the static step its own reinstall
+
+- **The first of the five commands in `Measure coverage, gated at 100%` carried
+  no `--reinstall-package btclib-secp256k1 --no-cache`, so a venv left holding
+  the zkp-flagged build by an earlier pass through the sequence served it back
+  under the name `coverage-data-static`** (closes #851): `uv run --locked`'s
+  build cache is keyed on the source tree, not on `BTCLIB_LIBSECP256K1_ZKP`, so
+  even a `uv sync --locked` run between two passes leaves the flagged build in
+  place -- measured directly, by running the sequence, syncing, and re-running
+  the static command alone. It now carries `--reinstall-package
+  btclib-secp256k1 --no-cache` like the other two.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

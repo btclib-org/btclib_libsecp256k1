@@ -645,7 +645,8 @@ command at all, for the reason below, and nothing requires its result.
 
   ```shell
   COVERAGE_FILE=coverage-data-static \
-      uv run --locked --no-default-groups --group test pytest \
+      uv run --locked --no-default-groups --group test \
+      --reinstall-package btclib-secp256k1 --no-cache pytest \
       --cov-fail-under=0
   BTCLIB_LIBSECP256K1_DYNAMIC=true COVERAGE_FILE=coverage-data-dynamic \
       uv run --locked --no-default-groups --group test \
@@ -660,6 +661,15 @@ command at all, for the reason below, and nothing requires its result.
       coverage-data-zkp
   uv run --locked --no-default-groups --group test coverage report
   ```
+
+  the static run carries `--reinstall-package btclib-secp256k1
+  --no-cache` too, for the same reason the other two do: `uv run
+  --locked`'s build cache is keyed on the source tree, not on
+  `BTCLIB_LIBSECP256K1_DYNAMIC` or `BTCLIB_LIBSECP256K1_ZKP`, so
+  without it a venv already holding either flagged build -- left there
+  by an earlier pass through this sequence in the same environment --
+  serves that build back under the name `coverage-data-static` instead
+  of rebuilding for the run at hand.
 
   none of the three is gated at 100 on its own any more, each carrying
   its own `--cov-fail-under=0` for a different line it cannot execute:

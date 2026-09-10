@@ -111,6 +111,34 @@ release-notes length in the first place, and are still in
   and to the signal such a session sees: no error, only the suite's own
   counts moving.
 
+### `vendored-vectors.yml`'s zkp-pin job checks the delta, not only the signer
+
+- **The `VALIDSIG` check in the job's last step named one fingerprint,
+  Andrew Poelstra's, so #828's re-pin of `secp256k1-zkp` onto the fork --
+  a commit the maintainer authored and signed with his own key -- fails
+  it, and had not run since the pin moved, so nothing was red yet**
+  (closes #855): a single recognized-signer check cannot tell that pin
+  apart from self-attestation, one of the two fingerprints it would hold
+  being the same person who wrote the pin. The job now checks that the
+  pin's delta against `BlockstreamResearch/secp256k1-zkp`'s own master
+  does not exceed what README.md documents as reviewed, and that every
+  commit in that delta carries a valid signature from a fingerprint the
+  job holds, the recognized set extended with the maintainer's own key,
+  sourced from `https://github.com/fametrano.gpg` for lack of an
+  independent second copy the way Poelstra's has. Where the delta is
+  empty -- what #841's eventual re-point to upstream directly produces --
+  this reduces to checking the pinned commit's own signature, unchanged
+  from before #855. The step's name no longer says "a recognized
+  secp256k1-zkp contributor", which is no longer the whole of what it
+  asserts.
+- The schedule's own comment claiming this workflow is reachable off the
+  default branch through the dispatch trigger alone, left uncorrected by
+  btclib-org/.github#736's entry above for the branch already touching
+  this file, now also names the `pull_request` trigger beside it.
+- `CONTRIBUTING.md`'s `zkp-pin` manual recipe carried the single-signer
+  check this replaces and is rewritten to match: both fingerprints, the
+  delta computation, and the loop over the delta's own commits.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

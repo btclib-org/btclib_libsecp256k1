@@ -223,6 +223,32 @@ release-notes length in the first place, and are still in
   reason, the unchanged job and check names, and what it says about
   `test-passed` still hold.
 
+### `CLAUDE.md` carries the shared primary-checkout section byte for byte
+
+- **`CLAUDE.md`'s `## The primary checkout is the maintainer's` matches
+  `btclib-org/.github`'s `CLAUDE.md` at `7a8f4c2`, heading to heading**
+  (issue btclib-org/.github#739): section 14 of the organization
+  standard compares that section byte for byte in every repository.
+  The section defers the environment step to `CONTRIBUTING.md`'s *The
+  environment and the gates*, which is what btclib-org/.github#983
+  settled, so its fence no longer carries `git submodule update --init`
+  and `uv sync --locked`; its worked example names `btclib`, the
+  standard's own.
+- **What the copy said of this tree's submodules inside a worktree moves
+  below the section, under `## The worktree's submodules`**: `--init`
+  with no path and what `submodules-checked-out` and `check-sdist` each
+  see of a half-initialized worktree, the `--reference` measurement and
+  why it is declined, the CMake failure a missing submodule step ends
+  in, and the measured facts about `core.worktree` and `git worktree
+  remove`. The move changes what those paragraphs point at and nothing
+  else: the `refs/stash` paragraph is above them now rather than below,
+  and the submodule command is named where the copy said "the submodule
+  line".
+- Dropped rather than moved, being git's behaviour rather than this
+  tree's: the sentences on `git stash pop` after a push that created
+  nothing and on `git fsck --unreachable`, and the paragraph on
+  `git checkout -- <file>` restoring from the index.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

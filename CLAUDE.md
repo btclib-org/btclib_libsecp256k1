@@ -74,41 +74,41 @@ module that only exists after a build.
 
 ## The primary checkout is the maintainer's
 
-**Never work in it.** No edit, no `git add`, no commit, no branch switch,
-no rebase, no `git stash`, no `pre-commit run` — the hooks fix files in
-place. It is the maintainer's window on the tree: whatever is open in
-their editor, whatever they have half-staged, and the branch they are
-looking at are theirs, and one working tree has one index and one HEAD to
-lose. Reading it is fine — `git log`, `git show`, `git diff`, `gh`, and a
-`git fetch`, which writes refs and leaves the work tree alone.
+**Never work in it.** No edit, no `git add`, no commit, no branch
+switch, no rebase, no `git stash` — the hooks fix files in place. It is a
+local reference only, and it stays on `main`.
 
-So a `grep` or a `Read` against the checkout's files answers for whenever
-it was last brought forward, not for now. The read that cannot go stale
-is `git show origin/main:<path>`: it answers from the ref `git fetch`
-just moved, never from the tree. Where the checkout has to be current
-rather than merely readable, a fast-forward of a clean `main` brings it
-up:
+Reading it is fine, but `git fetch` moves `refs/remotes/origin/main` and
+leaves the work tree where it was, so a `grep` or a `Read` against the
+checkout answers for whenever it was last brought forward, not for now.
+The read that cannot go stale is `git show origin/main:<path>`: it
+answers from the ref `git fetch` just moved, never from the tree.
+
+Where the checkout has to be current rather than merely readable, a
+fast-forward of a clean `main` brings it up:
 
 ```shell
 git fetch origin && git merge --ff-only origin/main
 ```
 
 That writes no commit, switches no branch and runs no hook, so it is on
-the permitted side of *never work in it*, not an exception to it. Stop if
-the checkout is not on `main` or is not clean: that is no longer bringing
-it forward.
+the permitted side of *never work in it*, not an exception to it. Stop
+if the checkout is not on `main` or is not clean: that is no longer
+bringing it forward.
 
-**Every session works in a worktree**, its own, from the first edit,
-named `wt-<tracker>-<issue>-<repo>-<role>` rather than after the issue
-alone, most general part first: an issue filed in `btclib-org/.github`'s
-tracker is the key and the repository is a detail of it —
-`btclib-org/.github#255` is one issue owed by seven repositories,
-`btclib-org/.github#177` by two — so the repository is what varies
-underneath an issue rather than the other way round, which is why `repo`
-comes after `issue`. Naming it that way also sorts every worktree of one
-issue together, which is what a port leaves behind. `tracker` is the
-repository whose issue tracker holds the issue: an issue number is
-unique only within one tracker, so `btclib-org/.github#45` and
+**Every session works in a worktree**, its own, from the first edit, named
+`wt-<tracker>-<issue>-<repo>-<role>` rather than after the issue alone, most
+general part first: an issue filed in `btclib-org/.github`'s tracker is the key
+and the repository is a detail of it — `btclib-org/.github#255` is one issue
+owed by seven repositories, `btclib-org/.github#177` by two — so the repository
+is what varies underneath an issue rather than the other way round, which is why
+`repo` comes after `issue`. Naming it that way also sorts every worktree of one
+issue together, which is what a port leaves behind.
+
+Each of the four parts earns its place against a different collision,
+and none of them is the same collision. `tracker` is the repository
+whose issue tracker holds the issue: an issue number is unique only
+within one tracker, so `btclib-org/.github#45` and
 `btclib-org/btclib#45` are different issues that would otherwise name
 the same worktree. `issue` is what prevents the collision that has
 actually happened — two worktrees of different work sharing a generic
@@ -117,27 +117,83 @@ basename in one repository's own `.git`, keyed on its path's basename.
 one: two repositories each keep their own `.git/worktrees/<basename>`
 and cannot collide there, but the workers of one session share one
 scratchpad directory, so a session carrying one issue into several
-repositories computes the same target path for each of them, and
-`git worktree add` refuses a directory that already exists — or worse, a
+repositories computes the same target path for each of them, and `git
+worktree add` refuses a directory that already exists — or worse, a
 second worker reads the first one's tree. `role` covers the narrower
 case of a coder and its reviewer holding a worktree at once, which the
 ordinary sequence avoids by each removing its own.
 
-An issue in `btclib-org/.github`'s tracker, worked in `btclib-secp256k1`
-by a coder, names its worktree `wt-github-255-btclib-secp256k1-coder`. A
-worktree isolates files, and a submodule is a checkout of its own that it
-does not inherit, which is why the block below carries `git submodule
-update --init`; `uv sync --locked` after it is a second venv and a second
-build of the extension, minutes rather than seconds. The editing, the
-gates and the commits all happen in the worktree before the push.
+An issue of `btclib-org/.github`'s tracker, worked in `btclib` by a coder, names
+its worktree `wt-github-255-btclib-coder`. The environment is created in the
+worktree, not the checkout, by whatever that tree's own `CONTRIBUTING.md` names
+under *The environment and the gates*, and a session reads that section, not
+this one, for the command. The editing, the gates and the commits all happen in
+the worktree before the push.
 
 ```shell
 WT=<scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
 git worktree add "$WT" origin/main -b <branch>
-git -C "$WT" submodule update --init
-env -C "$WT" uv sync --locked
 git -C "$WT" push origin HEAD:refs/heads/<branch>
 ```
+
+`-b <branch>` sits after the path and the commit-ish so that the placeholder
+ends the command, which is section 9 of `btclib-org/.github`'s rule. With the
+placeholder ahead of `"$WT"`, its `<` and its `>` are redirections performed
+left to right, so the `>` is reached only where the reader's own directory
+already holds the name `branch`: there the `<` succeeds, the line runs, and the
+`>` takes `"$WT"` as its target — a path with no directory at it is the file it
+creates. Ordinarily nothing holds that name, so the `<` fails first (`no such
+file or directory: branch`) and the line ends before the `>` opens anything.
+
+The push names the worktree with `git -C "$WT"` because a `cd` binds the
+shell that runs it: a session that runs each line as its own command
+starts the next one in the directory it began in, the primary checkout,
+so a push after a `cd` offers that checkout's `HEAD` instead of the
+worktree's. `env -C <dir>` is the same binding for a command that takes
+no `-C` of its own. Neither binding rescues the assignment above it: a
+session that loses the `cd` loses `WT` with it, and `git -C ""` is
+documented to leave the working directory unchanged, so that push lands
+the same way, exit 0 and no diagnostic. That silence is `git`'s rather
+than the binding's: the BSD `env` macOS ships documents no case for an
+empty `-C` and refuses one — `cannot change directory to ''`, exit 125 —
+so a line bound with `env -C` stops there instead of running against the
+wrong tree. What the `-C` buys is a path that can be written out in
+full; write it out.
+
+Removing the worktree is part of finishing, and it stands in a block of
+its own: the block above ends in a placeholder, and a shell that
+discards that line as a parse error reads the next as a fresh command —
+which, in one block, is this line against whatever `$WT` already held.
+Standing alone it is a second fence, so `${WT:?}` is what it writes:
+with `$WT` unset or empty the expansion fails and the removal does not
+run. Those are the only cases it catches — a `$WT` an earlier session or
+command left holding a path expands, and the removal runs against
+whatever worktree that path names.
+
+```shell
+git worktree remove --force "${WT:?}"
+```
+
+**Never `git stash` in a worktree either: `refs/stash` is shared.** A
+worktree isolates files, not refs, so `git stash push` pushes onto the
+same stack every other session pops from. Commit to your own branch
+instead.
+
+**Do not rewrite `refs/heads/main`, and move it only onto
+`origin/main`.** That name is the local branch's, and no ruleset reaches
+it: a ruleset binds the forge's copy. The fast-forward above moves it
+onto `origin/main` and is inside that, where a merge, a commit on `main`
+or an `update-ref` to a branch tip leaves the ref somewhere
+`origin/main` is not. Your own branch is what you push, and the pull
+request is what moves `origin/main`.
+
+## The worktree's submodules
+
+The environment step *The environment and the gates* names is two
+commands here, `git submodule update --init` and then `uv sync --locked`:
+a worktree isolates files, and a submodule is a checkout of its own that
+it does not inherit; the sync after it is a second venv and a second
+build of the extension, minutes rather than seconds.
 
 `--init` with no path initializes every submodule `.gitmodules` lists,
 `secp256k1-zkp` (btclib-org/btclib-secp256k1#604) alongside `secp256k1`
@@ -169,42 +225,6 @@ written about all of them. The build compiles `secp256k1-zkp` where
 which is a different question from what the sdist gate sees: a build
 that leaves the flag unset is no reason to leave the submodule
 uninitialized.
-
-`-b <branch>` sits after the path and the commit-ish so that the
-placeholder ends the command, which is section 9 of the organization
-standard's rule. With the placeholder ahead of `"$WT"`, its `<` and its
-`>` are redirections performed left to right, so the `>` is reached only
-where the reader's own directory already holds the name `branch`: there
-the `<` succeeds, the line runs, and the `>` takes `"$WT"` as its
-target — a path with no directory at it is the file it creates.
-Ordinarily nothing holds that name, so the `<` fails first (`no such
-file or directory: branch`) and the line ends before the `>` opens
-anything.
-
-The push names the worktree with `git -C "$WT"` because a `cd` binds the
-shell that runs it: a session that runs each line as its own command
-starts the next one in the directory it began in, the primary checkout,
-so a push after a `cd` offers that checkout's `HEAD` instead of the
-worktree's. `env -C <dir>` is the same binding for a command that takes
-no `-C` of its own. Neither binding rescues the assignment above it: a
-session that loses the `cd` loses `WT` with it, and `git -C ""` is
-documented to leave the working directory unchanged, so that push lands
-the same way, exit 0 and no diagnostic. What the `-C` buys is a path
-that can be written out in full; write it out.
-
-Removing the worktree is part of finishing, and it stands in a block of
-its own: the block above ends in a placeholder, and a shell that
-discards that line as a parse error reads the next as a fresh command —
-which, in one block, is this line against whatever `$WT` already held.
-Standing alone it is a second fence, so `${WT:?}` is what it writes:
-with `$WT` unset or empty the expansion fails and the removal does not
-run. Those are the only cases it catches — a `$WT` an earlier session or
-command left holding a path expands, and the removal runs against
-whatever worktree that path names.
-
-```shell
-git worktree remove --force "${WT:?}"
-```
 
 The venv, the C build and a clone of each submodule are the whole of the
 cost, and they buy the thing that matters: a commit cannot contain work
@@ -242,15 +262,15 @@ the state lives rather than a refusal to share objects, which is why
 anyway that is a trade worth declining, and declining knowingly is the
 point of the paragraph.
 
-**The submodule line is what makes the rest of the recipe run**, and
-leaving it out costs a session rather than a build: `git submodule status`
-answers a leading `-` in a fresh worktree, and `uv sync --locked` then dies
-inside CMake naming the empty `secp256k1/` and closing on "Build failures
-usually indicate a problem with the package or the build environment" —
-the two things that are not wrong. CI never meets it, every checkout there
-passing `submodules: true`. It is the same sentence as the one below about
-`refs/stash`: a worktree isolates files, and neither a submodule checkout
-nor a ref is one.
+**`git submodule update --init` is what makes `uv sync --locked` run**,
+and leaving it out costs a session rather than a build: `git submodule
+status` answers a leading `-` in a fresh worktree, and `uv sync --locked`
+then dies inside CMake naming the empty `secp256k1/` and closing on
+"Build failures usually indicate a problem with the package or the build
+environment" — the two things that are not wrong. CI never meets it,
+every checkout there passing `submodules: true`. It is the same sentence
+as the one above about `refs/stash`: a worktree isolates files, and
+neither a submodule checkout nor a ref is one.
 
 **Two things the recipe leans on, both measured rather than assumed**, and
 worth knowing because a submodule inside a linked worktree is a known sharp
@@ -262,28 +282,6 @@ status` there stays clean through the whole sequence. And `git worktree
 remove --force` still finishes with an initialized submodule inside: exit
 0, tree gone, `.git/worktrees` gone with it, nothing left for
 `git worktree prune`. So the recipe's last line needs no companion.
-
-**Never `git stash`, in the primary checkout or in a worktree:
-`refs/stash` is shared.** A worktree isolates files, not refs, so
-`git stash push` pushes onto the same stack every other session pops
-from — and on a clean tree it creates nothing, so the `git stash pop`
-that follows applies and *drops* whatever another session shelved. Commit
-to your own branch instead. What is already lost is still in the object
-store: `git fsck --unreachable` names the commit and `git stash store
-<sha>` puts the ref back.
-
-**`git checkout -- <file>` is the other way to lose work**, and it does it
-quietly: it restores from the index, so an edit made and not staged is
-gone with no output at all. Reverting a deliberate experiment is what a
-copy is for — `cp file file.bak`, then put it back.
-
-**Do not rewrite `refs/heads/main`, and move it only onto
-`origin/main`.** That name is the local branch's, and no ruleset reaches
-it: a ruleset binds the forge's copy. The fast-forward above moves it
-onto `origin/main` and is inside that, where a merge, a commit on `main`
-or an `update-ref` to a branch tip leaves the ref somewhere
-`origin/main` is not. Your own branch is what you push, and the pull
-request is what moves `origin/main`.
 
 ## Model
 

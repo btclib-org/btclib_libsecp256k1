@@ -101,6 +101,16 @@ release-notes length in the first place, and are still in
   the static command alone. It now carries `--reinstall-package
   btclib-secp256k1 --no-cache` like the other two.
 
+### `CLAUDE.md` names uv's build cache as blind to the linkage flags
+
+- **`CLAUDE.md` now names `uv run --locked`'s build cache as keyed on
+  the source tree, not on `BTCLIB_LIBSECP256K1_DYNAMIC` or
+  `BTCLIB_LIBSECP256K1_ZKP`** — the fact `CONTRIBUTING.md`'s coverage
+  sequence already states for its own three commands, generalised to
+  any local measurement that alternates linkages in one environment,
+  and to the signal such a session sees: no error, only the suite's own
+  counts moving.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

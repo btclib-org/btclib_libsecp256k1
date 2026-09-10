@@ -432,6 +432,20 @@ Do not use Fable unless explicitly instructed.
   comparing byte for byte; the `markdownlint-cli2` `pre-commit` hook
   above is what repairs it, since the bare `uv run --only-group lint`
   invocation cannot reach the tool at all
+- **`uv run --locked`'s build cache is keyed on the source tree, not on
+  `BTCLIB_LIBSECP256K1_DYNAMIC` or `BTCLIB_LIBSECP256K1_ZKP`, so a venv
+  already holding a flagged build serves that build back to every later
+  measurement taken in the same environment.** `uv sync --locked` alone
+  does not rebuild it — it reports the packages it checked and returns,
+  and `import _btclib_secp256k1_zkp` still succeeds afterwards. Nothing
+  fails and nothing warns: the signal is the suite's own `passed`/
+  `skipped` counts, which move by exactly the `zkp`-marked tests, and a
+  session that does not know what they should read reads the flagged
+  run as a better result. `CONTRIBUTING.md`'s coverage sequence states
+  the same fact for its own three commands, but the cache does not know
+  which command asked — any local measurement that alternates linkages
+  in one environment needs `--reinstall-package btclib-secp256k1
+  --no-cache` between builds, not only that one
 
 ## Conventions to match
 

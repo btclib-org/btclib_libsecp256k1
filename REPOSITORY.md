@@ -805,8 +805,9 @@ second number in view.
 ## Features
 
 ```shell
-gh api repos/btclib-org/btclib-secp256k1 --jq '{visibility, has_issues}'
-# {"has_issues":true,"visibility":"public"}
+gh api repos/btclib-org/btclib-secp256k1 \
+  --jq '{visibility, has_issues, wiki: .has_wiki, projects: .has_projects}'
+# {"has_issues":true,"projects":true,"visibility":"public","wiki":true}
 ```
 
 Section 10's `scorecard` sentinel rests on the first answer: public is
@@ -817,6 +818,14 @@ what it reads at all, so a flip to private leaves `scorecard.yml` and
 `has_issues` is what `CONTRIBUTING.md`'s *The issue tracker* rests on —
 an issue about this tree alone stays here — and so does the
 `.github/ISSUE_TEMPLATE/` section 16's checklist gives every repository.
+
+[Section 11 of the organization
+standard](https://github.com/btclib-org/.github#11-github-settings) turns
+the wiki and the projects board off on every tree: an unused wiki is a
+second place a reader can land looking for what the tracker already
+records, and the projects board is a per-user view of the same issues the
+tracker holds. The call above still answers `true` for both, so neither
+has been turned off here yet.
 
 ## Topics
 
@@ -1023,8 +1032,3 @@ The `delete_branch_on_merge` count is the control that makes those zeros
 an absence rather than a read of nothing. Recording a field on no rule
 grows this file with GitHub's API rather than with the standard, and the
 price is that a change to any of them is invisible here.
-
-`has_wiki` and `has_projects` are outside the perimeter by section 11's
-own sentence, which states no rule about either, so this file neither
-reads them back nor explains an answer to them. That sentence is what
-the grep above would find, which is why the pair is not in its list.

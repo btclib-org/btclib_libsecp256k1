@@ -249,6 +249,21 @@ release-notes length in the first place, and are still in
   nothing and on `git fsck --unreachable`, and the paragraph on
   `git checkout -- <file>` restoring from the index.
 
+### `REPOSITORY.md` reads the wiki and the projects board back
+
+- **`.has_wiki` and `.has_projects` are read back under *Features*, in
+  the call that reads `has_issues` and the visibility** (issue
+  btclib-org/.github#550): section 11 of `btclib-org/.github`'s
+  `README.md` turns both off on every tree, an unused wiki being a second
+  place a reader can land looking for what the tracker already records
+  and the projects board a per-user view of the same issues, and the call
+  answers `true` for both today. Turning them off is the setting half of
+  that issue and is not made here. The paragraph under *What this file
+  passes over* that held the pair outside the perimeter on section 11
+  stating no rule for either goes, and the loop above it keeps its list:
+  fed `has_wiki` or `has_projects`, that loop answers non-zero against
+  the standard, which is what its list excludes.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

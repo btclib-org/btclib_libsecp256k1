@@ -139,6 +139,59 @@ release-notes length in the first place, and are still in
   check this replaces and is rewritten to match: both fingerprints, the
   delta computation, and the loop over the delta's own commits.
 
+### The gate runs section 4's local hooks
+
+- **`reasonless-coverage-pragma` refuses a `#`-comment `pragma: no cover`
+  or `pragma: no branch` with nothing after it on its line** (issue
+  btclib-org/.github#965): the hook's `entry:` and `types:` are
+  `btclib-org/.github`'s at `69a47e6`, with no `files:` narrowing them.
+  The tree is green under the hook at the run that adds it.
+- **`unquoted-placeholder` refuses a placeholder standing as a whole
+  argument in quotes, in every markdown file but `CHANGELOG.md` and
+  `RELEASE_NOTES.md`** (issue btclib-org/.github#706): section 9 of the
+  organization standard keeps the rule and section 4 names the quotes
+  the pattern exempts and the three shapes it cannot see; the exclusion
+  is the standard's own, both files being append-only. The tree is green
+  under the hook at the run that adds it.
+- **`check-changelog` refuses a `###` heading repeated in this file's
+  open section, an issue `(closes #N)` by two entries, and a heading
+  with no blank line above it** (issue btclib-org/.github#21):
+  `.github/scripts/check_changelog.py` is `btclib-org/.github`'s at
+  `69a47e6` byte for byte, which section 14 owes every repository, and
+  the hook sits ahead of `markdownlint-cli2`, whose `--fix` repairs the
+  seam the third check names. `pyproject.toml` lets the script print as
+  it lets the hook scripts beside it: what it prints is its report.
+- **`tests/check_changelog_test.py` holds the script at the coverage
+  floor** (issue btclib-org/.github#21): `[tool.coverage.run]` measures
+  `.github/scripts` by path, so a script no test reaches reports at 0%
+  and the union `test.yml` gates at 100% falls short of it. The tests
+  are `btclib-org/.github`'s own for the script, in this tree's by-path
+  shape, plus what a suite with no floor never needed -- a changelog
+  with no release heading, and the entry-point guard run as `__main__`,
+  the way the hook scripts beside it are tested.
+- **`check-docstring-first` passes over that script** (issue
+  btclib-org/.github#995): the script's `_BLANK_LINE` carries an
+  attribute docstring the hook reads as a second module docstring, and
+  `btclib-org/.github` runs no `check-docstring-first` of its own, so
+  the file passes the gate there and fails it here. The exclusion is the
+  price of carrying the file byte for byte rather than repairing a copy
+  the verbatim test would refuse, and it goes the day the script passes
+  the hook.
+- **`toml-comment-width`'s `name:` states the pattern's own predicate,
+  an unbroken final token past byte 80** (issue btclib-org/.github#843,
+  issue btclib-org/.github#885): the width is bytes, pygrep matching the
+  pattern against the raw line, and the comment above the hook says
+  "byte 80" where it said "column 80"; the `entry:` is unchanged.
+  v0.8.0.5's *The `toml-comment-width` comment states its pattern's own
+  predicate* left the `name:` to a decision every tree carrying the hook
+  takes together, and `btclib-org/.github` took it at `51f717e`.
+- **`.yamllint.yaml`'s `allow-non-breakable-words` comment states only
+  the setting's own predicate** (issue btclib-org/.github#883): the
+  clause comparing it to MD013's exemption for a bare URL goes rather
+  than being corrected, which is what btclib-org/.github#883 settled,
+  and the file matches `btclib-org/.github`'s at `69a47e6` byte for
+  byte, which is section 14's comparison.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

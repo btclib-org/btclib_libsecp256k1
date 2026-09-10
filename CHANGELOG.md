@@ -57,6 +57,38 @@ release-notes length in the first place, and are still in
   citation, the hook's own explanatory comment, and
   `scripts/cffi_build.py`'s own build-artifact names.
 
+### `test.yml`'s and `codeql.yml`'s aggregates take btclib's own allowlist shape
+
+- **`test.yml`'s `test-passed` step decided with a `case` denylist over
+  `join(needs.*.result, ' ')`, blind to any result the file did not anticipate,
+  the empty string included** (closes btclib-org/.github#537): the step now
+  loops over an allowlist of `success` and `skipped`, guarded ahead of the loop
+  by `case ",$results," in *,,*)`, which is what btclib-org/btclib#1454 asked
+  for. `coverage`, `zkp`, `build-cibuildwheel`, `build-dynamic`, `build-sdist`
+  and `build-windows` are each conditional on `changes`' own output, so
+  `skipped` is not on its own a failure; `changes` is named in `needs` directly,
+  so its own failure still fails the gate.
+- **`codeql.yml`'s `codeql-passed` step decided with a boolean
+  `contains(needs.*.result, ...)` expression, one comparison per unwanted
+  result** (closes btclib-org/.github#537): `btclib-org/btclib#1001`'s failure
+  mode -- a matrix cell dying in "Set up job" without `needs.*.result` ever
+  reading `'failure'` -- leaves such an `if:` false and the step skipped, which
+  is green by construction. It now takes the same loop `test-passed` above does,
+  allowlisting `success` alone rather than `success` and `skipped`: `analyze`,
+  this job's only dependency, carries the same draft/closed guard this job does,
+  so nothing it depends on may report `skipped` while this step runs. The job
+  name and the check name are unchanged.
+
+### Three schedule comments stop claiming the dispatch alone reaches a branch
+
+- **`wheel-reproducibility.yml`, `links.yml` and `codeql.yml` each said, beside
+  their `schedule:` trigger, that a branch reaches the workflow through the
+  dispatch below alone** (issue btclib-org/.github#736): each also carries a
+  `pull_request` trigger -- below the comment in the first two, above it in
+  `codeql.yml` -- and the sentence now names it. `vendored-vectors.yml` carries
+  the same contradiction and is left untouched here, for the branch already
+  changing that file.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

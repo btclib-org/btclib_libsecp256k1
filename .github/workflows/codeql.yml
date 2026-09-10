@@ -98,7 +98,8 @@ on:
     # A sibling repository analyses on the same day and not at the same
     # minute, which is the whole of what the grid's minute is for.
     # Only the default branch schedules workflows, so on any other branch
-    # this is reachable through the dispatch below alone
+    # this is reachable through the dispatch below, and through the
+    # pull_request trigger above.
     - cron: "8 4 * * 0"
   # the escape hatch: the analysis on demand for a branch whose pull
   # request is not open yet, which the trigger above cannot reach
@@ -244,16 +245,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      # the condition reads the whole needs context rather than naming each
-      # job, so a job added to `needs` above is covered without touching
-      # this. "skipped" is a failure here too: no job this one depends on
-      # is conditional on anything the condition above does not already
-      # exclude, so a skip means something upstream did not run
+      # the loop reads the whole needs context rather than naming each job, so a
+      # job added to `needs` above is covered without touching this. `skipped`
+      # still fails the gate: `analyze` above and this job carry the same
+      # draft/closed guard, so the two are never out of step on it, and the only
+      # way this job's own `needs` reports `skipped` is a dependency that did
+      # not run for a reason of its own -- which is the failure this step exists
+      # to catch, not one to excuse (btclib-org/.github#537, the same allowlist
+      # `test.yml`'s own aggregate carries, narrowed to `success` alone here
+      # since nothing this job depends on may legitimately skip).
+      #
+      # This step used to decide with a boolean `contains(needs.*.result, ...)`
+      # expression, one comparison per unwanted result: issue
+      # btclib-org/btclib#1001 saw four matrix cells die in "Set up job"
+      # downloading a pinned action, the run's own conclusion was `failure`, and
+      # yet `needs.*.result` carried none of the three patterns this `if:`
+      # checked -- so the step was skipped, and a skipped step leaves the job
+      # green by construction. Looping over every result here instead means the
+      # step always runs and the log always carries what `needs` actually held.
+      #
+      # The loop decides one field at a time, and word splitting does not hand
+      # it every field: a trailing empty one is dropped and an empty join gives
+      # no iteration at all, so the loop by itself would pass on the results
+      # beside the empty one, or on nothing. The `case` before it is what
+      # refuses those, and the comma separator is what lets it: an empty result
+      # is an empty field, and the commas wrapped around `$results` make an
+      # empty first field, an empty last one, an empty one between two others
+      # and an empty join a single pattern.
       - name: Fail unless every job above succeeded
-        if: >-
-          contains(needs.*.result, 'failure') ||
-          contains(needs.*.result, 'cancelled') ||
-          contains(needs.*.result, 'skipped')
         run: |
-          echo "::error::a job this gate depends on did not succeed"
-          exit 1
+          results='${{ join(needs.*.result, ',') }}'
+          echo "results: $results"
+          case ",$results," in
+            *,,*)
+              echo "::error::a job this gate depends on reported no result"
+              exit 1
+              ;;
+          esac
+          IFS=,
+          for result in $results; do
+            case "$result" in
+              success) ;;
+              *)
+                echo "::error::a job this gate depends on reported $result"
+                exit 1
+                ;;
+            esac
+          done

@@ -27,7 +27,8 @@ on:
     # and its hour and this repository its minute, and is not this
     # file's to restate.
     # Only the default branch schedules workflows, so on any other branch
-    # this is reachable through the dispatch below alone
+    # this is reachable through the dispatch below, and through the
+    # pull_request trigger further down.
     - cron: "8 4 * * 6"
   # the escape hatch, and the way to check a branch before merging a
   # change that adds links

@@ -237,6 +237,16 @@ repos:
     hooks:
       - id: check-dependabot
       - id: check-readthedocs
+      # .github/ISSUE_TEMPLATE/ is read the same way and by nothing else
+      # here either: a form whose `type:` is misspelt is still yaml, and
+      # the reader who meets it is a person on the New issue page rather
+      # than a run. Each brings its own files: and types: -- config.yml
+      # under that spelling for the first, the directory's yaml that is
+      # neither config.yml nor config.yaml for the second, a markdown
+      # template for neither -- so check-hooks-apply above is what says
+      # this tree still holds one of each
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
   # the shape of the yaml itself, which actionlint and zizmor do not read:
   # the first says whether a workflow is valid, the second whether it is
   # safe, and neither says whether a line has grown to 118 columns, a key

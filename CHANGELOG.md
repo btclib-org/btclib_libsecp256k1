@@ -277,6 +277,19 @@ release-notes length in the first place, and are still in
   space inside it, as a markdown one does. `docs/source/conf.py`'s module
   docstring wrapped its URL at `sphinx-`; the URL is on one line.
 
+### The mention job's pull-requests grant carries its reason
+
+- **`claude-review.yml`'s `mention` job names what its
+  `pull-requests: write` is for, in a comment at the line** (issue
+  btclib-org/.github#915): `# what posting the reply takes`, the wording
+  `btclib-node` and `btclib-benchmarks` carry at that line. The `review`
+  job's own grant and the `id-token: write` beside this one each carry a
+  reason at their line. Section 14 of `btclib-org/.github`'s `README.md`
+  leaves `claude-review.yml` out of the list its `tests/verbatim_test.py`
+  compares, section 15's existence loop being what checks the file, so
+  no gate reads the copies against one another and nothing red follows
+  from their disagreeing at this line.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

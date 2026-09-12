@@ -13,10 +13,19 @@ coverage of 100.0% not reached` -- true of that run and saying nothing
 about the tree. A gate whose red cannot be read is what teaches whoever
 runs it to reach for `--no-cov`, so a run that asked for less than the
 suite is gated at zero instead, and its report still prints.
+
+The second thing here is a guard on that threshold reaching the run at
+all. coverage looks for its configuration in the directory the process
+started in, so a run started from `tests/` finds no `fail_under`, no
+`source` and no `branch = true`. Section 8 of the organization standard
+leaves a tree to point such a run at its configuration or to make it say
+it is ungated, and this file is the second of the two: such a run is
+refused (btclib-org/.github#443).
 """
 
 import argparse
 from pathlib import Path
+from typing import Protocol
 
 import pytest
 
@@ -131,6 +140,95 @@ def coverage_fail_under(
     return configured
 
 
+class CoverageConfiguration(Protocol):
+    """What this file reads of coverage's own configuration object.
+
+    `config_file` is the file coverage took its settings from, and
+    `None` where it took them from none: coverage sets it as it reads a
+    file, so the attribute is the run's own answer to whether the
+    configuration reached it, rather than an inference from a value
+    that reached it.
+    """
+
+    config_file: str | None
+
+
+def coverage_configuration(config: pytest.Config) -> CoverageConfiguration | None:
+    """Return the configuration coverage is measuring with, or `None`.
+
+    `None` is the two ways there is nothing to ask about: `--no-cov`,
+    where pytest-cov registers its plugin and returns from `__init__`
+    with the controller left unbuilt, and a run whose plugin was never
+    registered, where `getplugin` hands back `None` and the same
+    `getattr` default answers for both.
+
+    Args:
+        config: the pytest configuration of this run.
+
+    Returns:
+        coverage's configuration, or `None` where nothing is measuring.
+    """
+    plugin = config.pluginmanager.getplugin("_cov")
+    controller = getattr(plugin, "cov_controller", None)
+    if controller is None:
+        return None
+    # annotated because the plugin manager hands back `Any`, and a
+    # return of that is what mypy's --strict refuses here
+    measuring: CoverageConfiguration = controller.cov.config
+    return measuring
+
+
+def configuration_went_unread(
+    cov_config: CoverageConfiguration | None,
+    inipath: Path | None,
+    options: argparse.Namespace,
+) -> bool:
+    """Return whether a run held to the floor cannot see one.
+
+    A guard and not a sentence in `CONTRIBUTING.md`. What it catches is
+    a plausible spelling switching the floor off, and a reader told to
+    start from the root is not the run that does not: the sentence
+    leaves the same failure, with somebody having been told about it.
+
+    What it compares is not the threshold. `pyproject.toml` is the one
+    place the number lives, and a `== 100` here would be the second, so
+    what decides is whether coverage read a file at all against whether
+    pytest read one -- the asymmetry the defect leaves behind, pytest
+    walking up from where it was invoked to find its configuration and
+    coverage looking only where the process started.
+
+    Args:
+        cov_config: what `coverage_configuration` answered.
+        inipath: `config.inipath`, the configuration pytest read.
+        options: `config.option`, i.e. what the command line and
+            `addopts` asked for.
+
+    Returns:
+        Whether this run is held to a floor it cannot see.
+    """
+    if cov_config is None:
+        return False
+    if options.cov_fail_under is not None:
+        # section 8 of the organization standard has the hook never
+        # overruling an explicit `--cov-fail-under`, and a caller who
+        # named the floor has not had one taken away in silence
+        return False
+    if options.help or options.collectonly:
+        # neither run is held to a floor to begin with: `--help` exits
+        # before a session, and pytest-cov never fails a
+        # `--collect-only` run on the floor whatever its report prints.
+        # The pair is an enumeration rather than every run pytest-cov
+        # leaves ungated, and `--markers` and `--fixtures` are refused
+        # knowingly. Widening it is the rejected alternative: what
+        # would decide the question is whether pytest-cov would have
+        # gated this run, which is no property to read here, so a
+        # longer list is the same guess under more names
+        return False
+    # `inipath` is what the message has to name, so a run pytest read no
+    # configuration for is one this cannot tell anybody anything about
+    return cov_config.config_file is None and inipath is not None
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Gate a whole run at `fail_under`, and a selective one at nothing.
 
@@ -141,9 +239,26 @@ def pytest_configure(config: pytest.Config) -> None:
     changes nothing, the plugin never reading it back, so the run still
     fails on the whole tree's coverage.
 
+    A run coverage's configuration never reached is refused instead,
+    `pytest.UsageError` being what pytest prints without a traceback and
+    exits `4` for -- an exit of its own, so the code says the run
+    measured nothing rather than that something failed.
+
     Args:
         config: the pytest configuration of this run.
     """
+    if configuration_went_unread(
+        coverage_configuration(config), config.inipath, config.option
+    ):
+        raise pytest.UsageError(
+            "coverage read no configuration, so this run is held to no floor"
+            " and measures a different set of files: coverage looks only in"
+            f" the directory the run started in, {Path.cwd()}, and pytest"
+            f" read {config.inipath}. Run from {config.rootpath};"
+            " --cov-config restores the floor and not the file set, a"
+            " relative source entry being resolved against the directory"
+            " the run started in."
+        )
     namespace = config.known_args_namespace
     namespace.cov_fail_under = coverage_fail_under(
         namespace.cov_fail_under,

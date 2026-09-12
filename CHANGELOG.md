@@ -373,6 +373,38 @@ release-notes length in the first place, and are still in
   setting the driver at all is the alternative that comment rejects, on
   the conflict at the shared anchor a branch would then resolve by hand.
 
+### A run coverage's configuration never reached is refused
+
+- **`tests/conftest.py` let a run coverage read no configuration for pass
+  as the gate** (issue btclib-org/.github#443): coverage looks for its
+  configuration in the directory the process started in, so
+  `env -C tests uv run pytest` finds no `fail_under`, no `source` and no
+  `branch = true`, while pytest walks up and reads `pyproject.toml` all
+  the same. That asymmetry is what the hook keys on, rather than the
+  floor's own value, which `pyproject.toml` is the one place for; what it
+  raises is `pytest.UsageError`, which pytest prints without a traceback
+  and exits 4 for, so the exit code says the run measured nothing rather
+  than that something in the tree failed. Its message names the root as
+  the remedy, and `--cov-config` as one that restores the floor and not
+  the file set. A `source` entry that is a path rather than an importable
+  name is resolved against the directory the run started in, so
+  `--cov-config` from `tests/` drops `.github/scripts` from the report
+  and holds what is left to 100%. Section 8 of the organization standard
+  leaves a tree to point such a run at its configuration or to make it
+  say it is ungated, and this is the second of the two. A sentence in
+  `CONTRIBUTING.md` telling a reader to start from the root is the
+  rejected alternative, on the defect being that a plausible spelling
+  switches the floor off in silence: what the sentence buys is a silent
+  failure somebody had been told about. Left alone are `--no-cov`,
+  `--help`, `--collect-only` and an explicit `--cov-fail-under`, none of
+  them a run held to a floor it cannot see. `--markers` and `--fixtures`
+  from `tests/` are refused with the rest, that exemption being an
+  enumeration rather than every run pytest-cov leaves ungated. `btclib`,
+  `btclib-node`, `bitcoin-core-rpc` and `btclib-benchmarks` are owed the
+  same guard, btclib-org/.github#443 having taken that decision for the
+  family and left the section 8 sentence naming which of the two limbs
+  it took to land with the last of them.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

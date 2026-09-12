@@ -307,6 +307,50 @@ release-notes length in the first place, and are still in
   matches a file and `check-hooks-apply` has nothing to report. Both pass
   on those files as they are; nothing in the directory changes.
 
+### The anchor depth, the gate's closure and the allowlist follow the standard
+
+- **`docs/source/conf.py` set `myst_heading_anchors` to the depth of the
+  one heading a root file links to by anchor** (issue
+  btclib-org/.github#715): section 2 of `btclib-org/.github`'s `README.md`
+  makes the key 6, every level a markdown heading reaches, so that the
+  number is a fixed point rather than a value re-derived from files that
+  move -- part of what such a re-derivation reads is `CONTRIBUTING.md`'s
+  shared half, which section 14 ports into every repository at once. The
+  comment at the key gives that reason rather than the depth of
+  `README.md`'s `## Build`. No link here needed the wider depth: the same
+  build at 2 is green under `-n -W` and writes pages that do not differ
+  from this one's, while a link planted into a `###` heading fails at 2
+  with `myst.xref_missing` and resolves at 6.
+- **`tests/interpreters_test.py` read the free-threading biconditional's
+  second side off `test.yml` whole** (issue btclib-org/.github#634):
+  section 3 of the organization standard makes it the jobs the required
+  check waits on -- `test-passed`'s own `needs:` closure -- a job nothing
+  waits on reporting what a sentinel reports, which that section declines.
+  The module now finds the aggregate by the name a required context is
+  keyed on, follows `needs:` whether it names one job, a flow list or a
+  block list under the key, and reads the interpreters those jobs name and
+  no others. Every job of `test.yml` sits in that closure, so the answer is
+  unchanged: `3.14`, and no free-threaded interpreter named. What a job
+  leaves to cibuildwheel is outside that read either way, and #867 is where
+  that gap sits.
+- **`codeql.yml`'s aggregate allowed `success` alone** (issue
+  btclib-org/.github#990): section 10 of the organization standard asks a
+  listing step for `success` and `skipped` both, whatever the workflow's
+  own jobs can report today, because the constant does not follow the jobs
+  -- one added later re-opens `skipped`, and what says a narrowed allowlist
+  has stopped matching the run is this job going red on the first run that
+  legitimately skips, in the Actions tab rather than on the merge path:
+  `codeql: every job passed` is no required check here, which
+  `REPOSITORY.md`'s *Required checks on main* states as a decision of its
+  own. The step's `awk` names both, and the comment
+  above it keeps the narrowing's own reasoning as a condition of the run
+  rather than a property of the shape. Two entries above -- *`test.yml`'s
+  and `codeql.yml`'s aggregates take btclib's own allowlist shape* and
+  *`codeql.yml`'s aggregate reads the run's job listing* -- state that
+  allowlist as `success` alone and give that reason; both stay as they are,
+  and this bullet is what says what the allowlist now names. What they say
+  about `test.yml`'s own loop over `needs.*.result` is untouched.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

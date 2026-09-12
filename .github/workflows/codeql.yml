@@ -265,16 +265,23 @@ jobs:
       # reaching nothing outside its own workflow -- and test.yml keeps
       # `needs`, release.yml calling it
       #
-      # the allowlist below names "success" alone and not "success" and
-      # "skipped": analyze carries no condition narrower than this job's
-      # own draft/closed one above, so whenever analyze would report
-      # "skipped" this job skips with it and never reaches this step, and
-      # no job here is conditional on the diff, there being no `changes`
-      # job. A "skipped" row in the listing would mean this step ran
-      # without its dependency having, which its own `if:` already rules
-      # out, so the allowlist refuses it rather than tolerating it.
-      # btclib-org/.github#990 is where the standard settles whether a
-      # listing step accepts "skipped" whatever its jobs can report
+      # the allowlist below names "success" and "skipped" both, which
+      # section 10 of the organization standard asks of a listing step
+      # whatever the workflow's own jobs can report today. Narrowing it to
+      # "success" reads well against the jobs here -- analyze carries no
+      # condition narrower than this job's own draft/closed one above, so
+      # a run that skips analyze skips this job with it, and no job is
+      # conditional on the diff, there being no `changes` job -- but that
+      # is a condition of the run rather than a property of the shape: a
+      # job added later, or an `if:` on one narrower than this job's own,
+      # re-opens "skipped", and the constant does not follow the jobs.
+      # What would report a narrowed allowlist having stopped matching
+      # the run is this job going red on the first run that legitimately
+      # skips, with no defect under it and nothing in the tree pointing
+      # here -- read in the Actions and Security tabs rather than on the
+      # merge path, `codeql: every job passed` being no required check
+      # here, which REPOSITORY.md's *Required checks on main* states as a
+      # decision of its own (btclib-org/.github#990)
       - name: Fail unless every other job of this run succeeded
         env:
           GH_TOKEN: ${{ github.token }}
@@ -293,7 +300,7 @@ jobs:
           # implementation's extension and a literal "t" in another's,
           # where awk's field separator is POSIX
           bad=$(printf '%s\n' "${jobs}" |
-            awk -F'\t' '$1 != "success" && $1 != "unfinished"')
+            awk -F'\t' '$1 != "success" && $1 != "skipped" && $1 != "unfinished"')
           unfinished=$(printf '%s\n' "${jobs}" |
             awk -F'\t' '$1 == "unfinished"' | wc -l | tr -d ' ')
           # each annotation names the rows it is about, an annotation

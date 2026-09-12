@@ -70,16 +70,55 @@ _FREE_THREADING_CLASSIFIER = re.compile(
 _PYTHONS = re.compile(
     r'^        python-version:\n(?P<block>(?:^          - "\S+"\n)+)', re.MULTILINE
 )
-# the merge gate, which its own header says is one suite cell rather
-# than a matrix: each job writes the interpreter it runs into itself, as
-# `python-version: "3.14"` or `--python 3.14`, so the gate's interpreters
-# are read as tokens off the file rather than out of a matrix block. A
-# free-threaded build there is a "3.14t" of the same shape. Comments go
-# first, so that a sentence about a sentinel's free-threaded cell does
-# not read as the gate running one
+# the merge gate, and inside it the jobs a landing waits on: the
+# aggregate's own `needs:` closure, which is what section 3 of the
+# organization standard asks for. It declares a free-threading classifier
+# where the gate exercises that build, a gate being what refuses the
+# landing that breaks it, so an interpreter named only by a job nothing
+# waits on is the "it passed somewhere" that section refuses. Reading the
+# file whole is the alternative it names as rejected, and it answers the
+# same here, every job of this workflow sitting in that closure; what it
+# costs is the day one is moved out, which the file read cannot see
 _GATE = _ROOT / ".github/workflows/test.yml"
+# the aggregate, by the name a required context is keyed on, which is a
+# job's `name:` and not its key
+_AGGREGATE = "test: every job passed"
+# comments go first, so that a sentence about a sentinel's free-threaded
+# cell does not read as the gate running one
 _COMMENT = re.compile(r"(?:^|\s)#.*$", re.MULTILINE)
+# a job names in its own text the interpreter it runs, as
+# `python-version: "3.14"` or `--python 3.14`, so a job's interpreters
+# are read as tokens off that text rather than out of a matrix block:
+# the gate's own header says it is one suite cell rather than a matrix. A
+# free-threaded build named that way is a "3.14t" of the same shape. What
+# a job leaves to cibuildwheel is outside this read: those identifiers
+# come from `requires-python`, `enable` and `skip`, spelled `cp314t`
+# rather than as a version in any file here (#867)
 _INTERPRETER = re.compile(r"\b3\.\d+t?\b")
+# `jobs:` and everything under it. The keys of `on:` sit at the indent a
+# job key does, so a pattern that did not cut here would offer
+# `pull_request` to the closure below as a job of the workflow
+_JOBS = re.compile(r"^jobs:\n(?P<block>.*)\Z", re.MULTILINE | re.DOTALL)
+# a job key at the one indent `jobs:` gives them, and everything it
+# indents under. The block runs a space below a job attribute's own
+# indent and takes a whitespace-only line, which is the slack that
+# absorbs what dropping a comment leaves: `_COMMENT` takes the
+# whitespace before the `#` with it, so a comment on a line of its own
+# arrives here one space short of where it was written
+_JOB = re.compile(
+    r"^  (?P<key>[a-z0-9_-]+):\n(?P<block>(?:^ {3,}.*\n|^ *\n)*)", re.MULTILINE
+)
+# a job's own `name:`, at the indent its attributes take: a step's name
+# is deeper and is not matched here. A block scalar reads as `>-`, which
+# is no aggregate's name and needs no excluding
+_NAME = re.compile(r'^    name: "?(?P<name>[^"\n]*?)"?$', re.MULTILINE)
+# `needs:` in each of the three shapes this workflow writes it -- one job
+# after the key, a flow list there, and a block list under it -- read as
+# whatever follows the key on its own line plus the items below it
+_NEEDS = re.compile(
+    r"^    needs:(?P<inline>[^\n]*)\n(?P<items>(?:^      - \S+\n)*)", re.MULTILINE
+)
+_ITEM = re.compile(r"^      - (?P<key>\S+)$", re.MULTILINE)
 
 
 def _versions(pattern: re.Pattern[str], text: str) -> tuple[str, ...]:
@@ -87,10 +126,50 @@ def _versions(pattern: re.Pattern[str], text: str) -> tuple[str, ...]:
     return tuple(m["version"] for m in pattern.finditer(text))
 
 
+def _jobs() -> dict[str, str]:
+    """Return each job of the merge gate against its text, comments dropped."""
+    jobs = _JOBS.search(_COMMENT.sub("", _GATE.read_text(encoding="utf-8")))
+    assert jobs, f"{_GATE.name} declares no jobs"
+    return {match["key"]: match["block"] for match in _JOB.finditer(jobs["block"])}
+
+
+def _waits_on(block: str) -> list[str]:
+    """Return the jobs one job's `needs:` names, in whichever shape."""
+    needs = _NEEDS.search(block)
+    if not needs:
+        return []
+    listed = needs["inline"].strip("[] ").replace(",", " ").split()
+    return listed + _ITEM.findall(needs["items"])
+
+
+def _closure(jobs: dict[str, str], key: str) -> set[str]:
+    """Return `key` and every job it waits on, however deep."""
+    found = {key}
+    pending = [key]
+    while pending:
+        for name in _waits_on(jobs[pending.pop()]):
+            if name not in found:
+                found.add(name)
+                pending.append(name)
+    return found
+
+
 def _gate_interpreters() -> tuple[str, ...]:
-    """Return every interpreter the merge gate names outside its comments."""
-    text = _COMMENT.sub("", _GATE.read_text(encoding="utf-8"))
-    return tuple(sorted(set(_INTERPRETER.findall(text))))
+    """Return every interpreter the jobs the merge gate waits on name."""
+    jobs = _jobs()
+    keyed = {
+        match["name"]: key
+        for key, block in jobs.items()
+        for match in _NAME.finditer(block)
+    }
+    assert _AGGREGATE in keyed, (
+        f"{_GATE.name} carries no job named {_AGGREGATE!r}, which is the"
+        " required check the closure is read from"
+    )
+    closure = _closure(jobs, keyed[_AGGREGATE])
+    return tuple(
+        sorted({v for key in closure for v in _INTERPRETER.findall(jobs[key])})
+    )
 
 
 def _matrix(text: str) -> tuple[str, ...]:
@@ -193,15 +272,20 @@ def test_free_threading_is_classified_exactly_when_the_gate_runs_it() -> None:
     The organization standard declares one where the gate exercises the
     free-threaded build: a gate refuses the landing that breaks that
     build, where a sentinel runs beside a landing and blocks nothing. So
-    the second side here is test.yml alone and not `_MATRIX` -- the
-    sentinels name "3.14t" as readily as the gate would, and a sentinel
-    passing is the ground the standard declines.
+    the second side here is the jobs the required check waits on and not
+    `_MATRIX` -- the sentinels name "3.14t" as readily as the gate would,
+    and a sentinel passing is the ground the standard declines.
+
+    The aggregate's own job names no interpreter, so the assertion below
+    is the `needs:` read's control as much as the pattern's: a read that
+    matched nothing leaves the closure at that one job and this empty.
     """
     gate = _gate_interpreters()
-    assert gate, "test.yml names no interpreter"
+    assert gate, "the jobs test.yml's gate waits on name no interpreter"
     classified = bool(_FREE_THREADING_CLASSIFIER.search(_PYPROJECT))
     run = [v for v in gate if v.endswith("t")]
     assert classified == bool(run), (
         f"the free-threading classifier is {'present' if classified else 'absent'}"
-        f" and test.yml names {', '.join(run) or 'no free-threaded interpreter'}"
+        f" and the jobs test.yml's gate waits on name"
+        f" {', '.join(run) or 'no free-threaded interpreter'}"
     )

@@ -82,9 +82,13 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # CONTRIBUTING.md links to "README.md#build", an anchor into a markdown
 # heading rather than a whole file, and myst generates no heading ids at
-# all unless told to. 2 is the depth of "## Build", the one heading a
-# root file links to by anchor today
-myst_heading_anchors = 2
+# all unless told to. 6 is every level a markdown heading reaches, which
+# section 2 of the organization standard makes the value here: a depth
+# read off the headings a root file links to is re-derived every time one
+# of them moves, and part of what it would read belongs to no one tree --
+# section 14 ports CONTRIBUTING.md's shared half into every repository,
+# so a heading added there moves the number in each of them at once
+myst_heading_anchors = 6
 
 # no suppress_warnings, matching a sibling repository's own choice: the
 # transform at the bottom resolves every link the included root files

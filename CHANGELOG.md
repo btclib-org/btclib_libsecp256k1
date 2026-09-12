@@ -351,6 +351,28 @@ release-notes length in the first place, and are still in
   and this bullet is what says what the allowlist now names. What they say
   about `test.yml`'s own loop over `needs.*.result` is untouched.
 
+### `REVIEWING.md` and `.gitattributes` take `btclib-org/.github`'s copy
+
+- **`REVIEWING.md` above `## This repository in particular` differed from
+  `btclib-org/.github`'s copy** (issue btclib-org/.github#353): section 14
+  of the organization standard compares the file up to that heading and
+  leaves what stands below it to this tree. The half above it is that
+  repository's at `1058ef3` byte for byte, so *Every collateral finding
+  becomes an issue* says which findings are named at the foot of the review
+  rather than filed, *A fix small enough to read at a glance is proposed,
+  not described* gives the signature as what makes a suggestion the right
+  shape, and *Re-review* takes the old sha from the previous round's
+  verdict. The half below the heading, which is this tree's questions and
+  the documents that answer them, is untouched.
+- **`.gitattributes` set `merge=union` without naming the seam the driver
+  leaves** (issue btclib-org/.github#1026): the file is that repository's at
+  `1058ef3` byte for byte, and the comment it gains says that union joins
+  the two sides' added lines directly, so a block opening with a heading
+  lands against the line above it while `git rebase` exits 0 and nothing
+  conflicts, and that section 4's `check-changelog` is what names it. Not
+  setting the driver at all is the alternative that comment rejects, on
+  the conflict at the shared anchor a branch would then resolve by hand.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

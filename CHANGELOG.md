@@ -290,6 +290,23 @@ release-notes length in the first place, and are still in
   no gate reads the copies against one another and nothing red follows
   from their disagreeing at this line.
 
+### The issue-form hooks join the check-jsonschema block
+
+- **`check-github-issue-config` and `check-github-issue-forms` sit in
+  `.pre-commit-config.yaml`'s `check-jsonschema` block at `rev: 0.38.0`,
+  after `check-dependabot` and `check-readthedocs`, under
+  `btclib-org/.github`'s own comment** (issue btclib-org/.github#767):
+  section 4 of the organization standard's *schemas* bullet names the
+  pair, a typo in an issue form being no error to the service that reads
+  it -- the form silently does nothing, and the reader who meets it is a
+  person on the *New issue* page. Both hooks carry `types: [yaml]` and
+  select narrowly: `config.yml` under that spelling for the first, the
+  directory's yaml that is neither `config.yml` nor `config.yaml` for the
+  second. `.github/ISSUE_TEMPLATE/` here holds `config.yml`,
+  `bug_report.yml`, `feature_request.yml` and `question.yml`, so each hook
+  matches a file and `check-hooks-apply` has nothing to report. Both pass
+  on those files as they are; nothing in the directory changes.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

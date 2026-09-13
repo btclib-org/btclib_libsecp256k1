@@ -430,6 +430,27 @@ release-notes length in the first place, and are still in
   sentence for a reason of its own: its `on:` declares the schedule and the
   dispatch and nothing else.
 
+### The `testpaths` resolution takes a case that asks for no symlink
+
+- **`tests/conftest_test.py` asks the coverage gate about a `testpaths`
+  entry whose `..` leaves the directory it names, and the case fails with
+  the `.resolve()` removed from `wanted` in `tests/conftest.py`** (closes
+  btclib-org/.github#1041): `tests/../src` is `src`, which a command line
+  naming `tests` is not above, while unresolved it reads as a directory
+  `tests` contains -- so a run collecting nothing of `src` is handed the
+  whole suite's ratchet. The case asks for no symlink and no privilege.
+- **The whole suite is what says the call was undefended.** With the
+  removal in place and this case out of the file, `uv run --locked
+  --no-default-groups --group test pytest --cov-fail-under=0` exits 0 and
+  every test passes; with the case in, it exits 1 and that case is the
+  failure.
+- **An entry reaching the same directory with no `..` in it leaves the
+  removal undetected**, which is what assigns the kill to the segment
+  rather than to the method:
+  `test_a_path_that_collects_the_suite_is_a_whole_run` names one, and it
+  passes with the removal in place. A `..` that re-enters --
+  `tests/../tests` -- answers the same with the call and without it.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

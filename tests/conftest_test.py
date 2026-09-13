@@ -201,6 +201,36 @@ def test_a_path_that_collects_the_suite_is_a_whole_run(
     )
 
 
+def test_a_testpaths_entry_is_the_directory_its_parent_segment_reaches(
+    tmp_path: Path,
+) -> None:
+    """`tests/../src` is `src`, which a command line naming `tests` misses.
+
+    `pathlib` keeps a parent-directory segment where it collapses `.`
+    and a trailing separator, so the unresolved join carries `..` into a
+    path whose parents include the directory that segment left: `tests`
+    then reads as above `tests/../src`, and a run collecting nothing of
+    `src` is handed the whole suite's ratchet. Resolving the join makes
+    the entry the directory it reaches, which `tests` is not above.
+
+    That is the `testpaths` side's second reason to resolve, the first
+    being the symlinked spelling named in `asks_for_everything`'s own
+    docstring. This one asks for no symlink and no privilege. A `..` that
+    re-enters the directory it left -- `tests/../tests` -- cannot see
+    it: the unresolved target then has more parents and the command
+    line's path is one of them, so containment answers the same with
+    the call and without it.
+    """
+    # both sides are spelled from the same base, so the `..` is the only
+    # difference between them and the case cannot pass for a second
+    # reason
+    base = tmp_path.resolve()
+    entry_that_leaves_the_directory = coverage_fail_under(
+        100.0, _options(file_or_dir=[str(base / "tests")]), ["tests/../src"], base
+    )
+    assert entry_that_leaves_the_directory == 0
+
+
 @pytest.mark.parametrize(
     "asked",
     [

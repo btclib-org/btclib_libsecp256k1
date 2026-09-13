@@ -1254,6 +1254,7 @@ can act on from a branch is noise.
 | `os-macos` | weekly, a release | both macOS images × every interpreter |
 | `os-windows` | weekly, a release | both Windows images × every interpreter |
 | `deps-latest` | weekly | the dependencies, at their newest |
+| `deps-oldest` | weekly | the dependencies, at their floors |
 | `links` | weekly, a pull request touching its own configuration | — |
 | `mutation` | weekly | — |
 | `wheel-reproducibility` | weekly, a pull request touching what it builds | every wheel platform, on two images, built twice on each, and the repaired, dynamic and cross-compiled wheels, built twice on one image per platform |

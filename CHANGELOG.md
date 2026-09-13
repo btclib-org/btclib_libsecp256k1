@@ -451,6 +451,41 @@ release-notes length in the first place, and are still in
   passes with the removal in place. A `..` that re-enters --
   `tests/../tests` -- answers the same with the call and without it.
 
+### The `needs:` reader takes a comment, a blank line and an annotated item
+
+- **`tests/interpreters_test.py`'s `_NEEDS` read a block list as a run
+  of adjacent item lines, so a whole-line comment among the items, a
+  blank line between two of them, or a trailing comment on one, ended
+  that run and dropped every item below it** (issue
+  btclib-org/.github#1038): `test-passed` writes its `needs:` as a
+  block list, and
+  `test_free_threading_is_classified_exactly_when_the_gate_runs_it`
+  reads the closure that list opens, so a comment written among those
+  items narrows what the biconditional measures, and silently wherever
+  the jobs the narrowing keeps still name an interpreter: what that
+  test asserts ahead of the biconditional is a non-empty interpreter
+  tuple and not a full closure, `_closure` opening with the key itself,
+  so a closure is never the empty thing. A narrowing reaching past
+  every job that names one is caught there and a narrowing short of
+  that is not. `_NEEDS` and `_ITEM` are `bitcoin-core-rpc`'s at
+  `b2b9d114` byte for byte, and the comment above them
+  `btclib-node`'s at `07bc1b1d`: one spelling for the organization's
+  copies of this module rather than one derived per tree. Its second
+  paragraph is a conditional naming both residues, because they differ
+  -- `_jobs` here strips comments before the job blocks are read and
+  meets whitespace, where a copy that leaves them meets the comment
+  itself.
+  The run stops at the item: a `- name: Setup uv` at the item indent
+  is a step and not a job, kept out by an item being the whole line up
+  to its comment, and
+  `test_the_closure_reads_no_step_of_a_job_as_a_job_it_waits_on`
+  asserts that against a reader widened to take the rest of the line.
+  The inline half stops at a `#` for the same reason a walk here
+  cannot absorb a phantom: `_closure` indexes `jobs` by every name it
+  reads, so a word of a comment taken as a job key raises `KeyError`.
+  What the reader answers for `test.yml` is unchanged, its own items
+  carrying neither a comment nor a blank line.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about

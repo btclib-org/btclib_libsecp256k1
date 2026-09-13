@@ -405,6 +405,31 @@ release-notes length in the first place, and are still in
   family and left the section 8 sentence naming which of the two limbs
   it took to land with the last of them.
 
+### The claim that the dispatch alone reaches a branch is measured per workflow
+
+- **`os-macos.yml`, `os-ubuntu.yml` and `os-windows.yml` each said, beside
+  their `cron:`, that on a branch other than the default one the workflow
+  is reachable through the dispatch below alone** (closes
+  btclib-org/.github#1040): each declares a `workflow_call:` trigger as
+  well, and `release.yml` calls all three in jobs carrying no `if:`, so a
+  rehearsal -- a `workflow_dispatch` of `release.yml` on a branch --
+  reaches them with their own dispatch untouched. Run
+  [34152202353](https://github.com/btclib-org/btclib-secp256k1/actions/runs/34152202353),
+  dispatched on `release-0.8.0.5`, is that path taken: every cell of the
+  three reports `success`. The sentence names the call trigger as standing
+  *above it*, the dispatch, which is where `workflow_call:` sits in each of
+  the three; `codeql.yml` derives the positional word the same way for its
+  own `pull_request` trigger. It does not name `release.yml`, the comment
+  directly above each `workflow_call:` key already doing that.
+- `pypi-install.yml` carries the sentence beside a `workflow_call:` of its
+  own and keeps it: `release.yml`'s `published` job is that trigger's only
+  caller and is gated on `needs.publish-pypi.result == 'success'`, while
+  `publish-pypi`'s own `if:` requires `github.event_name == 'push'` and the
+  only push `release.yml` declares is a `v*` tag, which is no branch. Both
+  jobs report `skipped` on the run above. `deps-latest.yml` keeps the
+  sentence for a reason of its own: its `on:` declares the schedule and the
+  dispatch and nothing else.
+
 ## v0.8.0.6
 
 ### `release.yml`'s caller-permissions comment names the scope it is about
